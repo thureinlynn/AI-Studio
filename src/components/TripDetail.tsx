@@ -37,7 +37,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
 
   const dropOffStatus = getDropOffStatus(trip.lastDropOffDate);
 
-  const prefilledMsg = `Hi ${trip.traveler.name}, I found your trip from ${trip.departureCity} to ${trip.arrivalCity} on LuggageShare. I would like to inquire about sending a parcel with you. Is luggage space still available?`;
+  const prefilledMsg = `Hi ${trip.traveler.name}, I found your trip from ${trip.departureCity} to ${trip.arrivalCity} on LuuKyone. I would like to inquire about sending a parcel with you. Is luggage space still available?`;
 
   const waUrl = formatWhatsAppUrl(trip.contacts.whatsapp, prefilledMsg);
   const tgUrl = formatTelegramUrl(trip.contacts.telegram);
@@ -52,7 +52,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: `LuggageShare: ${trip.departureCity} to ${trip.arrivalCity}`,
+        title: `LuuKyone: ${trip.departureCity} to ${trip.arrivalCity}`,
         text: `Traveler ${trip.traveler.name} has ${trip.weightAvailableKg}kg luggage space from ${trip.departureCity} to ${trip.arrivalCity}.`,
         url: window.location.href,
       }).catch(() => {});

@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { useAuth, DEMO_USERS } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { useTrips } from '../context/TripContext';
-import { X, User, LogIn, UserPlus, LogOut, MessageCircle, Send, PhoneCall, CheckCircle2 } from 'lucide-react';
+import { X, LogIn, UserPlus, LogOut, MessageCircle, Send, PhoneCall, CheckCircle2, RotateCcw } from 'lucide-react';
 
 export const AuthModal: React.FC = () => {
-  const { user, isAuthenticated, loginAsDemoUser, registerUser, logout } = useAuth();
-  const { isAuthModalOpen, closeAuthModal } = useTrips();
+  const { user, isAuthenticated, loginWithEmail, registerUser, logout, resetAuth } = useAuth();
+  const { isAuthModalOpen, closeAuthModal, resetAllDataToDemoBeginning } = useTrips();
 
   const [mode, setMode] = useState<'signin' | 'register'>('signin');
+  const [signInEmail, setSignInEmail] = useState('');
+  const [signInName, setSignInName] = useState('');
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
@@ -16,6 +19,19 @@ export const AuthModal: React.FC = () => {
   const [bio, setBio] = useState('');
 
   if (!isAuthModalOpen) return null;
+
+  const handleResetData = () => {
+    resetAuth();
+    resetAllDataToDemoBeginning();
+    closeAuthModal();
+  };
+
+  const handleSignIn = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signInEmail.trim()) return;
+    loginWithEmail(signInEmail.trim(), signInName.trim() || undefined);
+    closeAuthModal();
+  };
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +54,7 @@ export const AuthModal: React.FC = () => {
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-base font-bold text-slate-900">
-            {isAuthenticated ? 'Traveler Account' : 'Traveler Sign In'}
+            {isAuthenticated ? 'Traveler Account' : mode === 'signin' ? 'Traveler Sign In' : 'Create Traveler Profile'}
           </h3>
           <button
             onClick={closeAuthModal}
@@ -84,7 +100,7 @@ export const AuthModal: React.FC = () => {
                 {user.contacts.telegram && (
                   <div className="flex items-center gap-2">
                     <Send className="w-3.5 h-3.5 text-sky-500" />
-                    <span>Telegram: @{user.contacts.telegram.replace(/^@/, '')}</span>
+                    <span>Telegram: @{user.contacts.telegram}</span>
                   </div>
                 )}
                 {user.contacts.viber && (
@@ -93,31 +109,6 @@ export const AuthModal: React.FC = () => {
                     <span>Viber: {user.contacts.viber}</span>
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Switch preset accounts for demo testing */}
-            <div className="pt-2 border-t border-slate-100">
-              <span className="text-xs font-semibold text-slate-500 block mb-2">
-                Quick Demo Switch:
-              </span>
-              <div className="grid grid-cols-3 gap-2 text-xs">
-                {Object.entries(DEMO_USERS).map(([key, demo]) => (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      loginAsDemoUser(key as any);
-                    }}
-                    className={`p-2 rounded-xl border text-center transition-colors cursor-pointer ${
-                      user.id === demo.id
-                        ? 'bg-amber-50 border-amber-400 font-bold text-amber-900'
-                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="truncate font-semibold">{demo.name.split(' ')[0]}</div>
-                    <div className="text-[10px] text-slate-500">{demo.contacts.preferred}</div>
-                  </button>
-                ))}
               </div>
             </div>
 
@@ -140,130 +131,197 @@ export const AuthModal: React.FC = () => {
                 Done
               </button>
             </div>
+
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-center">
+              <button
+                type="button"
+                onClick={handleResetData}
+                className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-rose-600 font-medium py-1.5 px-3 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset demo data to beginning</span>
+              </button>
+            </div>
           </div>
         ) : (
           /* Sign In / Register tabs */
-          <div className="p-6 space-y-5">
-            {/* 1-Click Fast Demo Login Buttons */}
-            <div className="space-y-2">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                1-Click Instant Demo Login
-              </span>
-              <div className="space-y-2">
-                {Object.entries(DEMO_USERS).map(([key, demo]) => (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      loginAsDemoUser(key as any);
-                      closeAuthModal();
-                    }}
-                    className="w-full p-2.5 bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 rounded-xl flex items-center justify-between text-left transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <img
-                        src={demo.avatarUrl}
-                        alt={demo.name}
-                        className="w-8 h-8 rounded-lg object-cover ring-1 ring-slate-200"
-                      />
-                      <div>
-                        <div className="text-xs font-bold text-slate-900">{demo.name}</div>
-                        <div className="text-[10px] text-slate-500">{demo.bio}</div>
-                      </div>
-                    </div>
-                    <span className="text-xs font-semibold text-amber-700 bg-white px-2 py-1 rounded-lg border border-slate-200">
-                      Sign In
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-slate-400 font-medium">Or create your traveler profile</span>
-              </div>
-            </div>
-
-            {/* Custom Registration Form */}
-            <form onSubmit={handleRegister} className="space-y-3 text-xs">
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Full Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Maya Lin"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Email Address *</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. maya@example.com"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">WhatsApp</label>
-                  <input
-                    type="text"
-                    value={whatsapp}
-                    onChange={(e) => setWhatsapp(e.target.value)}
-                    placeholder="+66..."
-                    className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Viber</label>
-                  <input
-                    type="text"
-                    value={viber}
-                    onChange={(e) => setViber(e.target.value)}
-                    placeholder="+95..."
-                    className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Telegram</label>
-                  <input
-                    type="text"
-                    value={telegram}
-                    onChange={(e) => setTelegram(e.target.value)}
-                    placeholder="@maya"
-                    className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Bio / Travel Routine</label>
-                <input
-                  type="text"
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  placeholder="e.g. Flying weekly between London & Dubai"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs"
-                />
-              </div>
-
+          <div className="p-6 space-y-4">
+            {/* Tab selector */}
+            <div className="flex rounded-xl bg-slate-100 p-1 text-xs font-semibold">
               <button
-                type="submit"
-                className="w-full py-2.5 bg-slate-950 hover:bg-slate-800 text-amber-400 font-bold text-xs rounded-xl transition-all cursor-pointer shadow-sm mt-3"
+                type="button"
+                onClick={() => setMode('signin')}
+                className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  mode === 'signin'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
               >
-                Create Account & Sign In
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
               </button>
-            </form>
+              <button
+                type="button"
+                onClick={() => setMode('register')}
+                className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  mode === 'register'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Create Account</span>
+              </button>
+            </div>
+
+            {mode === 'signin' ? (
+              /* Sign In Form */
+              <form onSubmit={handleSignIn} className="space-y-3.5 text-xs pt-1">
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Sign in with your email address to manage your trips and post baggage availability.
+                </p>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    value={signInEmail}
+                    onChange={(e) => setSignInEmail(e.target.value)}
+                    placeholder="e.g. traveler@domain.com"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Full Name (Optional)</label>
+                  <input
+                    type="text"
+                    value={signInName}
+                    onChange={(e) => setSignInName(e.target.value)}
+                    placeholder="e.g. Maya Lin"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-2.5 bg-slate-950 hover:bg-slate-800 text-amber-400 font-bold text-xs rounded-xl transition-all cursor-pointer shadow-sm mt-2 flex items-center justify-center gap-1.5"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Sign In as Traveler</span>
+                </button>
+
+                <div className="text-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setMode('register')}
+                    className="text-xs text-amber-700 hover:underline font-medium cursor-pointer"
+                  >
+                    Don't have an account yet? Create one
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* Registration Form */
+              <form onSubmit={handleRegister} className="space-y-3 text-xs pt-1">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Maya Lin"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="e.g. maya@example.com"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">WhatsApp</label>
+                    <input
+                      type="text"
+                      value={whatsapp}
+                      onChange={(e) => setWhatsapp(e.target.value)}
+                      placeholder="+66..."
+                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Viber</label>
+                    <input
+                      type="text"
+                      value={viber}
+                      onChange={(e) => setViber(e.target.value)}
+                      placeholder="+95..."
+                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Telegram</label>
+                    <input
+                      type="text"
+                      value={telegram}
+                      onChange={(e) => setTelegram(e.target.value)}
+                      placeholder="@maya"
+                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Bio / Travel Routine</label>
+                  <input
+                    type="text"
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    placeholder="e.g. Flying weekly between Bangkok & Yangon"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-2.5 bg-slate-950 hover:bg-slate-800 text-amber-400 font-bold text-xs rounded-xl transition-all cursor-pointer shadow-sm mt-3"
+                >
+                  Create Account & Sign In
+                </button>
+
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setMode('signin')}
+                    className="text-xs text-amber-700 hover:underline font-medium cursor-pointer"
+                  >
+                    Already have an account? Sign In
+                  </button>
+                </div>
+              </form>
+            )}
+
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-center">
+              <button
+                type="button"
+                onClick={handleResetData}
+                className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-rose-600 font-medium py-1 px-2.5 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset demo data to beginning</span>
+              </button>
+            </div>
           </div>
         )}
 

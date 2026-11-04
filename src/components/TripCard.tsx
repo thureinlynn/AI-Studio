@@ -14,7 +14,7 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
 
   const waUrl = formatWhatsAppUrl(
     trip.contacts.whatsapp,
-    `Hi ${trip.traveler.name}, I saw your trip from ${trip.departureCity} to ${trip.arrivalCity} on LuggageShare. Do you still have luggage space available?`
+    `Hi ${trip.traveler.name}, I saw your trip from ${trip.departureCity} to ${trip.arrivalCity} on LuuKyone. Do you still have luggage space available?`
   );
   const tgUrl = formatTelegramUrl(trip.contacts.telegram);
   const viberUrl = formatViberUrl(trip.contacts.viber);

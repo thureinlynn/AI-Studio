@@ -29,6 +29,7 @@ interface TripContextType {
   addNewTrip: (tripData: Omit<TripPost, 'id' | 'createdAt' | 'status'>) => TripPost;
   deleteTrip: (id: string) => void;
   toggleTripStatus: (id: string) => void;
+  resetAllDataToDemoBeginning: () => void;
 }
 
 const STORAGE_KEY = 'luggage_share_trips_v1';
@@ -158,6 +159,27 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
   };
 
+  const resetAllDataToDemoBeginning = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('luggage_share_current_user');
+      localStorage.removeItem('luggage_share_user');
+      const url = new URL(window.location.href);
+      url.searchParams.delete('trip');
+      window.history.pushState({}, '', url.toString());
+    } catch (e) {
+      console.error('Error clearing storage on reset', e);
+    }
+    setTrips(INITIAL_TRIPS);
+    setSelectedTripId(null);
+    setFilters(defaultFilters);
+    setActiveTab('browse');
+    setIsPostModalOpen(false);
+    setIsAuthModalOpen(false);
+    setIsSafetyModalOpen(false);
+    setIsMyTripsModalOpen(false);
+  };
+
   const selectedTrip = trips.find((t) => t.id === selectedTripId) || null;
 
   return (
@@ -189,6 +211,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addNewTrip,
         deleteTrip,
         toggleTripStatus,
+        resetAllDataToDemoBeginning,
       }}
     >
       {children}

@@ -20,7 +20,7 @@ import {
 
 export const PostTripModal: React.FC = () => {
   const { isPostModalOpen, closePostModal, addNewTrip, openTripDetail, openAuthModal } = useTrips();
-  const { user, isAuthenticated, loginAsDemoUser } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   // Form states initialized with user contacts if available
   const [departureCity, setDepartureCity] = useState('');
@@ -227,16 +227,11 @@ export const PostTripModal: React.FC = () => {
 
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <button
-                onClick={() => loginAsDemoUser('alex')}
-                className="w-full sm:w-auto px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm rounded-xl transition-all shadow-sm cursor-pointer"
-              >
-                1-Click Sign In as Alex Thant (Traveler)
-              </button>
-              <button
                 onClick={openAuthModal}
-                className="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-sm rounded-xl transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-6 py-3 bg-[#1e60d5] hover:bg-[#1952ba] text-white font-bold text-sm rounded-xl transition-all shadow-md shadow-[#1e60d5]/25 cursor-pointer flex items-center justify-center gap-2"
               >
-                Sign In with My Own Account
+                <LogIn className="w-4 h-4" />
+                <span>Log In or Create Traveler Account</span>
               </button>
             </div>
           </div>

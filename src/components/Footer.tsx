@@ -1,13 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTrips } from '../context/TripContext';
-import { Luggage, ShieldAlert, Heart } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { ShieldAlert, RotateCcw, Check } from 'lucide-react';
 
 export const Footer: React.FC = () => {
-  const { openSafetyModal, setActiveTab, closeTripDetail } = useTrips();
+  const { openSafetyModal, setActiveTab, closeTripDetail, resetAllDataToDemoBeginning } = useTrips();
+  const { resetAuth } = useAuth();
+  const [justReset, setJustReset] = useState(false);
 
   const handleTab = (tab: 'browse' | 'how_it_works' | 'safety' | 'my_trips') => {
     closeTripDetail();
     setActiveTab(tab);
+  };
+
+  const handleReset = () => {
+    resetAuth();
+    resetAllDataToDemoBeginning();
+    setJustReset(true);
+    setTimeout(() => setJustReset(false), 2500);
   };
 
   return (
@@ -48,6 +58,23 @@ export const Footer: React.FC = () => {
               <ShieldAlert className="w-3.5 h-3.5 text-amber-600" />
               <span>Safety & Baggage Rules</span>
             </button>
+            <button
+              onClick={handleReset}
+              className="hover:text-rose-600 transition-colors cursor-pointer flex items-center gap-1 text-slate-400 hover:font-medium"
+              title="Reset all local storage to original beginning state"
+            >
+              {justReset ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="text-emerald-600 font-semibold">Demo Data Reset!</span>
+                </>
+              ) : (
+                <>
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Reset Demo Data</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
 
@@ -63,3 +90,4 @@ export const Footer: React.FC = () => {
     </footer>
   );
 };
+

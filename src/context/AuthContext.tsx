@@ -16,6 +16,7 @@ interface AuthContextType {
   }) => void;
   logout: () => void;
   updateUserContacts: (contacts: { whatsapp: string; viber: string; telegram: string }) => void;
+  resetAuth: () => void;
 }
 
 const STORAGE_KEY = 'luggage_share_current_user';
@@ -83,9 +84,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e) {
       console.error('Failed to parse stored user', e);
     }
-    // Start with logged in demo user for seamless instant demo experience, or null
-    // Let's seed with Alex Thant so the user can immediately experience logged in post state, while also being able to switch accounts or logout
-    return DEMO_USERS.alex;
+    // Default to null so user starts fresh with clean unauthenticated demo
+    return null;
   });
 
   useEffect(() => {
@@ -110,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       name: name || email.split('@')[0],
       email,
       avatarUrl: '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
-      bio: 'Traveler on LuggageShare classified community.',
+      bio: 'Traveler on LuuKyone classified community.',
       isVerified: true,
       contacts: {
         whatsapp: '+15551234567',
@@ -155,6 +155,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
+  const resetAuth = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem('luggage_share_user');
+    } catch {
+      // ignore
+    }
+    setUser(null);
+  };
+
   const updateUserContacts = (contacts: { whatsapp: string; viber: string; telegram: string }) => {
     if (!user) return;
     setUser({
@@ -176,6 +186,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         registerUser,
         logout,
         updateUserContacts,
+        resetAuth,
       }}
     >
       {children}
