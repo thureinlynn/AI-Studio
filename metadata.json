@@ -1,0 +1,6 @@
+{
+  "name": "LuggageShare - Traveler Extra Space Classifieds",
+  "description": "Free mobile-responsive classified community connecting travelers with spare baggage allowance to senders needing items transported. Direct WhatsApp, Viber, and Telegram contact.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
