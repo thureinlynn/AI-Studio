@@ -20,12 +20,16 @@ export const Header: React.FC = () => {
           onClick={() => handleNavClick('browse')}
           className="flex items-center gap-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-lg shrink-0 cursor-pointer"
         >
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-400 flex items-center justify-center text-slate-950 shadow-sm shadow-amber-500/20">
-            <Luggage className="w-5 h-5 stroke-[2.2]" />
+          <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+            <img
+              src="/assets/aistudio/1793174899099_3f8af047.png"
+              alt="LuuKyone Logo"
+              className="w-full h-full object-contain drop-shadow-xs"
+            />
           </div>
           <div>
             <span className="text-lg font-bold tracking-tight text-slate-900 block leading-tight">
-              LuggageShare
+              LuuKyone
             </span>
             <span className="text-[10px] font-medium tracking-wide text-slate-500 block uppercase">
               Traveler Classifieds
@@ -74,7 +78,7 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={openPostModal}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 active:scale-[0.98] rounded-xl transition-all shadow-sm shadow-amber-400/30 whitespace-nowrap shrink-0 cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-[#1e60d5] hover:bg-[#1952ba] active:scale-[0.98] rounded-xl transition-all shadow-sm shadow-[#1e60d5]/30 whitespace-nowrap shrink-0 cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Post a Trip</span>

@@ -15,11 +15,15 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 pb-6 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-bold">
-              <Luggage className="w-4 h-4 stroke-[2.2]" />
+            <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shrink-0">
+              <img
+                src="/assets/aistudio/1793174899099_3f8af047.png"
+                alt="LuuKyone Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
-              <span className="font-bold text-slate-900 block leading-tight">LuggageShare</span>
+              <span className="font-bold text-slate-900 block leading-tight">LuuKyone</span>
               <span className="text-[10px] text-slate-400 block">Free Traveler Classified Bulletin</span>
             </div>
           </div>
@@ -49,7 +53,7 @@ export const Footer: React.FC = () => {
 
         <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400">
           <p>
-            © {new Date().getFullYear()} LuggageShare. A free community connecting travelers with spare baggage space.
+            © {new Date().getFullYear()} LuuKyone. A free community connecting travelers with spare baggage space.
           </p>
           <p className="flex items-center gap-1">
             <span>Direct WhatsApp, Viber & Telegram contact</span>
