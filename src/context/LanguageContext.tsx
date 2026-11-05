@@ -1,0 +1,234 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
+export type Language = 'en' | 'my';
+
+interface Translations {
+  [key: string]: {
+    en: string;
+    my: string;
+  };
+}
+
+export const translations: Translations = {
+  // Brand
+  brandName: { en: 'LuuKyone', my: 'လူကြုံ' },
+  brandSubtitle: { en: 'Traveler Classifieds', my: 'ခရီးသွား ပစ္စည်းကြုံ ကြော်ငြာ' },
+  footerBrandSubtitle: { en: 'Free Traveler Classified Bulletin', my: 'အခမဲ့ ခရီးသွား ပစ္စည်းကြုံ ကြော်ငြာသင်ပုန်း' },
+  footerCopyright: {
+    en: '© 2026 LuuKyone. A free community connecting travelers with luggage space.',
+    my: '© ၂၀၂၆ လူကြုံ (LuuKyone)။ ခရီးသွားများနှင့် ပစ္စည်းကြုံပို့သူများ ချိတ်ဆက်ပေးသော အခမဲ့ ပလက်ဖောင်း။',
+  },
+  footerMessaging: {
+    en: 'Direct WhatsApp, Viber & Telegram contact',
+    my: 'WhatsApp, Viber နှင့် Telegram ဖြင့် တိုက်ရိုက်ဆက်သွယ်နိုင်ပါသည်',
+  },
+
+  // Header Nav
+  navBrowse: { en: 'Browse Trips', my: 'ခရီးစဉ်များ' },
+  navHowItWorks: { en: 'How It Works', my: 'လုပ်ဆောင်ပုံ' },
+  navSafety: { en: 'Safety Rules', my: 'စည်းကမ်းနှင့် လုံခြုံရေး' },
+  navMyPosts: { en: 'My Posts', my: 'ကျွန်ုပ်၏ ပို့စ်များ' },
+  navPost: { en: 'Post', my: 'တင်မည်' },
+  navLogin: { en: 'Log In', my: 'အကောင့်ဝင်ရန်' },
+  navAccount: { en: 'Account', my: 'အကောင့်' },
+
+  // Mobile Nav
+  mobileHome: { en: 'Home', my: 'ပင်မ' },
+  mobileMyTrips: { en: 'My Trips', my: 'ခရီးစဉ်များ' },
+  mobileAccount: { en: 'Account', my: 'အကောင့်' },
+
+  // Search & Filter
+  searchQueryPlaceholder: {
+    en: 'Search any city, country, or announcement...',
+    my: 'မြို့၊ နိုင်ငံ သို့မဟုတ် ကြေညာချက် ရှာရန်...',
+  },
+  fromPlaceholder: { en: 'From: e.g. Bangkok', my: 'ထွက်ခွာ: ဥပမာ ဘန်ကောက်' },
+  toPlaceholder: { en: 'To: e.g. Yangon', my: 'ရောက်ရှိ: ဥပမာ ရန်ကုန်' },
+  clearFilters: { en: 'Clear', my: 'ဖျက်မည်' },
+  sortLabel: { en: 'Sort:', my: 'စီစဉ်ရန်:' },
+  sortDateAsc: { en: 'Departure Date (Earliest First)', my: 'ထွက်ခွာမည့်ရက် (အစောဆုံး)' },
+  sortNewest: { en: 'Recently Posted', my: 'မကြာသေးမီက တင်ထားသော' },
+  availableTripsHeading: { en: 'Available Traveler Trips', my: 'ရရှိနိုင်သော ခရီးစဉ်များ' },
+  tripSingular: { en: 'trip available', my: 'ခု ရရှိနိုင်သည်' },
+  tripPlural: { en: 'trips available', my: 'ခု ရရှိနိုင်သည်' },
+  noTripsTitle: { en: 'No trips posted yet', my: 'ခရီးစဉ် မရှိသေးပါ' },
+  noTripsDesc: {
+    en: 'Start by posting your first trip! Share your flight departure, arrival destination, and spare luggage capacity with senders.',
+    my: 'သင်၏ ပထမဆုံး ခရီးစဉ်ကို စတင်တင်လိုက်ပါ! လေယာဉ်ထွက်ခွာမည့်ရက်၊ ဆိုက်ရောက်မည့်မြို့နှင့် ပစ္စည်းကြုံနေရာများကို မျှဝေလိုက်ပါ။',
+  },
+  postFirstTripBtn: { en: 'Post the First Trip', my: 'ပထမဆုံး ခရီးစဉ် တင်မည်' },
+  noMatchingTitle: { en: 'No matching trips found', my: 'ကိုက်ညီသော ခရီးစဉ် မရှိပါ' },
+  noMatchingDesc: {
+    en: "We couldn't find any traveler trips matching your route or criteria. Try clearing filters or post a new trip.",
+    my: 'သင်ရှာဖွေသော လမ်းကြောင်းနှင့် ကိုက်ညီသည့် ခရီးစဉ် မတွေ့ရှိပါ။ စစ်ထုတ်မှုများကို ရှင်းလင်းပါ သို့မဟုတ် ခရီးစဉ်အသစ် တင်ပါ။',
+  },
+
+  // Trip Card
+  cardDropOff: { en: 'Drop-off', my: 'ပစ္စည်းပေးရက်' },
+  cardDelivery: { en: 'Delivery', my: 'ပစ္စည်းထုတ်ယူရက်' },
+  cardDetails: { en: 'Details', my: 'အသေးစိတ်' },
+  cardTripsCompleted: { en: 'trips completed', my: 'ကြိမ် ခရီးစဉ် ပြီးမြောက်' },
+
+  // Trip Detail
+  detailBack: { en: 'Back to All Trips', my: 'ခရီးစဉ်များအားလုံးသို့' },
+  detailShare: { en: 'Share Trip', my: 'ခရီးစဉ် မျှဝေရန်' },
+  detailLinkCopied: { en: 'Link Copied!', my: 'လင့်ခ် ကူးယူပြီးပါပြီ!' },
+  detailDepartureCity: { en: 'Departure City', my: 'ထွက်ခွာမည့်မြို့' },
+  detailArrivalCity: { en: 'Arrival City', my: 'ရောက်ရှိမည့်မြို့' },
+  detailLastDropOff: { en: 'Last Drop-off', my: 'နောက်ဆုံး ပစ္စည်းပေးရက်' },
+  detailDepartureDate: { en: 'Departure Date', my: 'ထွက်ခွာမည့်ရက်' },
+  detailArrivalDate: { en: 'Arrival Date', my: 'ဆိုက်ရောက်မည့်ရက်' },
+  detailCheckOutDate: { en: 'Check-Out Date', my: 'ပစ္စည်းထုတ်ယူရက်' },
+  detailReadyPickup: { en: 'Ready for pickup', my: 'ထုတ်ယူနိုင်သည့်ရက်' },
+  detailFlightDate: { en: 'Flight date', my: 'လေယာဉ်ပျံသန်းမည့်ရက်' },
+  detailLands: { en: 'Lands at destination', my: 'ဆိုက်ရောက်မည့်အချိန်' },
+  detailAnnouncementTitle: {
+    en: 'Information Announcement for This Trip',
+    my: 'ဤခရီးစဉ်အတွက် ခရီးသွား ကြေညာချက်',
+  },
+  detailDropOffHandover: {
+    en: 'Drop-Off Handover (Departure City)',
+    my: 'ပစ္စည်းပေးအပ်မည့်နေရာ (ထွက်ခွာမည့်မြို့)',
+  },
+  detailPickupLocation: {
+    en: 'Check-Out Pickup (Arrival City)',
+    my: 'ပစ္စည်းထုတ်ယူမည့်နေရာ (ဆိုက်ရောက်မည့်မြို့)',
+  },
+  detailGuidelinesTitle: {
+    en: 'Item Guidelines & Customs Compliance',
+    my: 'ပစ္စည်းပို့ဆောင်မှု စည်းကမ်းချက်များနှင့် အကောက်ခွန် ဥပဒေ',
+  },
+  detailAccepted: { en: 'Accepted Parcel Categories', my: 'လက်ခံနိုင်သော ပစ္စည်းအမျိုးအစားများ' },
+  detailProhibited: { en: 'Strictly Prohibited Items', my: 'လုံးဝ တားမြစ်ထားသော ပစ္စည်းများ' },
+  detailSafetyNotice: {
+    en: 'Inspect all parcels together in person at drop-off.',
+    my: 'ပစ္စည်းပေးအပ်ချိန်တွင် လူချင်းတွေ့ဆုံပြီး အတူတကွ သေချာစစ်ဆေးပါ။',
+  },
+  detailReadSafetyGuide: { en: 'Read Safety Guide', my: 'လုံခြုံရေး လမ်းညွှန် ဖတ်ရန်' },
+  detailTravelerProfile: { en: 'Traveler Profile', my: 'ခရီးသွား ပရိုဖိုင်' },
+  detailMemberSince: { en: 'Member since', my: 'အသုံးပြုသည့်ရက်' },
+  detailDirectContactTitle: { en: 'Direct Traveler Contact', my: 'ခရီးသွားနှင့် တိုက်ရိုက် ဆက်သွယ်ရန်' },
+  detailDirectContactDesc: {
+    en: 'Tap any button below to connect with the traveler directly on their verified messaging apps.',
+    my: 'အောက်ပါ ခလုတ်များကို နှိပ်ပြီး ခရီးသွားထံသို့ တိုက်ရိုက် မက်ဆေ့ခ်ျ ပို့နိုင်ပါသည်။',
+  },
+  detailChatWhatsApp: { en: 'Chat on WhatsApp', my: 'WhatsApp ဖြင့် ဆက်သွယ်ရန်' },
+  detailMessageTelegram: { en: 'Message on Telegram', my: 'Telegram ဖြင့် ဆက်သွယ်ရန်' },
+  detailCallViber: { en: 'Connect on Viber', my: 'Viber ဖြင့် ဆက်သွယ်ရန်' },
+  detailCopy: { en: 'Copy', my: 'ကူးမည်' },
+  detailCopied: { en: 'Copied', my: 'ကူးပြီး' },
+
+  // Post Modal
+  postModalHeading: { en: 'Post a Traveler Trip', my: 'ခရီးသွား ပို့စ်အသစ် တင်မည်' },
+  postModalSubheading: {
+    en: 'Share your upcoming flight route and extra baggage space with the community.',
+    my: 'သင်၏ လေယာဉ်ခရီးစဉ်နှင့် ပစ္စည်းကြုံနေရာများကို မျှဝေလိုက်ပါ။',
+  },
+  postSectionRoute: { en: '1. Route & Flight Schedule', my: '၁။ ခရီးစဉ်နှင့် လေယာဉ် အချက်အလက်' },
+  postSectionTiming: { en: '2. Drop-off & Pickup Dates', my: '၂။ ပစ္စည်းပေးရက်နှင့် ထုတ်ယူရက်များ' },
+  postSectionLocations: { en: '3. Handover & Pickup Locations', my: '၃။ ပစ္စည်းပေးအပ်မည့်နေရာနှင့် ထုတ်ယူမည့်နေရာ' },
+  postSectionAnnouncement: { en: '4. Traveler Announcement & Conditions', my: '၄။ ခရီးသွား ကြေညာချက်နှင့် စည်းကမ်းများ' },
+  postSectionContacts: { en: '5. Direct Contact Channels', my: '၅။ တိုက်ရိုက် ဆက်သွယ်ရန် လိပ်စာများ' },
+  postDepartureCityLabel: { en: 'Departure City *', my: 'ထွက်ခွာမည့်မြို့ *' },
+  postArrivalCityLabel: { en: 'Arrival City *', my: 'ရောက်ရှိမည့်မြို့ *' },
+  postDepartureCountryLabel: { en: 'Departure Country', my: 'ထွက်ခွာမည့်နိုင်ငံ' },
+  postArrivalCountryLabel: { en: 'Arrival Country', my: 'ရောက်ရှိမည့်နိုင်ငံ' },
+  postFlightNumberLabel: { en: 'Flight Number (Optional)', my: 'လေယာဉ်နံပါတ် (မထည့်လည်းရပါသည်)' },
+  postLastDropOffLabel: { en: 'Last Drop-off Date *', my: 'နောက်ဆုံး ပစ္စည်းပေးအပ်ရမည့်ရက် *' },
+  postDepartureDateLabel: { en: 'Flight Departure Date *', my: 'လေယာဉ်ထွက်ခွာမည့်ရက် *' },
+  postArrivalDateLabel: { en: 'Flight Arrival Date *', my: 'လေယာဉ်ဆိုက်ရောက်မည့်ရက် *' },
+  postCheckOutDateLabel: { en: 'Check-out / Pickup Date *', my: 'ပစ္စည်းထုတ်ယူနိုင်မည့်ရက် *' },
+  postDropOffLocationLabel: { en: 'Departure Handover Spot', my: 'ထွက်ခွာမည့်မြို့တွင် ပစ္စည်းပေးအပ်မည့်နေရာ' },
+  postPickUpLocationLabel: { en: 'Destination Pickup Spot', my: 'ဆိုက်ရောက်မည့်မြို့တွင် ပစ္စည်းထုတ်ယူမည့်နေရာ' },
+  postAnnouncementPlaceholder: {
+    en: 'Write conditions for your luggage space (e.g. accepting parcels, snacks, clothes, document envelopes. Note any restrictions)...',
+    my: 'သင်၏ ပစ္စည်းကြုံအတွက် အသေးစိတ်စည်းကမ်းချက်များ ရေးသားပါ (ဥပမာ စာရွက်စာတမ်း၊ အဝတ်အထည်၊ မုန့်ပဲသရေစာ လက်ခံနိုင်သည်)...',
+  },
+  postSubmitBtn: { en: 'Post', my: 'တင်မည်' },
+  postCancelBtn: { en: 'Cancel', my: 'မလုပ်တော့ပါ' },
+
+  // Auth Modal
+  authSignInTitle: { en: 'Sign in to LuuKyone', my: 'လူကြုံ (LuuKyone) သို့ ဝင်ရန်' },
+  authRegisterTitle: { en: 'Create Traveler Profile', my: 'ခရီးသွား အကောင့်အသစ်ဖွင့်ရန်' },
+  authNameLabel: { en: 'Full Name *', my: 'အမည်အပြည့်အစုံ *' },
+  authEmailLabel: { en: 'Email Address *', my: 'အီးမေးလ်လိပ်စာ *' },
+  authWhatsAppLabel: { en: 'WhatsApp Number', my: 'WhatsApp ဖုန်းနံပါတ်' },
+  authViberLabel: { en: 'Viber Number', my: 'Viber ဖုန်းနံပါတ်' },
+  authTelegramLabel: { en: 'Telegram Username', my: 'Telegram ယူဆာနိမ်း' },
+  authBioLabel: { en: 'Short Bio (Optional)', my: 'မိမိအကြောင်း အကျဉ်း (မထည့်လည်းရပါသည်)' },
+  authSignInBtn: { en: 'Sign In', my: 'အကောင့်ဝင်ရန်' },
+  authRegisterBtn: { en: 'Create Account', my: 'အကောင့်သစ် ဖွင့်မည်' },
+  authSwitchToRegister: { en: "Don't have an account? Create Profile", my: 'အကောင့် မရှိသေးဘူးလား? အကောင့်သစ်ဖွင့်ရန်' },
+  authSwitchToSignIn: { en: 'Already have an account? Sign In', my: 'အကောင့် ရှိပြီးသားလား? ဝင်ရောက်ရန်' },
+  authSignOut: { en: 'Sign Out', my: 'အကောင့်မှ ထွက်မည်' },
+
+  // My Trips
+  myTripsHeading: { en: 'My Posted Trips', my: 'ကျွန်ုပ်၏ ခရီးစဉ်များ' },
+  myTripsSubheading: {
+    en: 'Manage your active flights, schedules, and traveler announcements.',
+    my: 'သင်တင်ထားသော လေယာဉ်ခရီးစဉ်များနှင့် ကြေညာချက်များကို စီမံခန့်ခွဲပါ။',
+  },
+  postAnotherTrip: { en: 'Post Another Trip', my: 'ခရီးစဉ်အသစ် ထပ်တင်မည်' },
+  noMyTripsTitle: { en: 'No Trips Posted Yet', my: 'ခရီးစဉ် မတင်ရသေးပါ' },
+  noMyTripsDesc: {
+    en: "You haven't listed any trips yet. Have extra baggage on an upcoming flight?",
+    my: 'သင်သည် ခရီးစဉ် မတင်ရသေးပါ။ လာမည့်ခရီးစဉ်တွင် ပစ္စည်းကြုံနေရာ ပိုနေပါသလား?',
+  },
+  statusActive: { en: 'Status: Active', my: 'အခြေအနေ: ဖွင့်လှစ်ထားသည်' },
+  statusBooked: { en: 'Status: Fully Booked', my: 'အခြေအနေ: ပြည့်သွားပါပြီ' },
+};
+
+interface LanguageContextType {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  toggleLanguage: () => void;
+  t: (key: keyof typeof translations) => string;
+}
+
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [language, setLanguageState] = useState<Language>(() => {
+    try {
+      const saved = localStorage.getItem('luukyone_lang');
+      if (saved === 'en' || saved === 'my') return saved;
+    } catch {
+      // ignore
+    }
+    return 'en';
+  });
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+    try {
+      localStorage.setItem('luukyone_lang', lang);
+    } catch {
+      // ignore
+    }
+  };
+
+  const toggleLanguage = () => {
+    const nextLang = language === 'en' ? 'my' : 'en';
+    setLanguage(nextLang);
+  };
+
+  const t = (key: keyof typeof translations): string => {
+    const item = translations[key];
+    if (!item) return key as string;
+    return item[language] || item.en;
+  };
+
+  return (
+    <LanguageContext.Provider value={{ language, setLanguage, toggleLanguage, t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+};
+
+export const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (!context) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
+};

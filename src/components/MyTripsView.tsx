@@ -1,30 +1,32 @@
 import React from 'react';
 import { useTrips } from '../context/TripContext';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { TripCard } from './TripCard';
 import { Luggage, Plus, LogIn, CheckCircle2, AlertCircle, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 
 export const MyTripsView: React.FC = () => {
   const { trips, openPostModal, openAuthModal, deleteTrip, toggleTripStatus } = useTrips();
   const { user, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
 
   if (!isAuthenticated || !user) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
-        <div className="w-16 h-16 rounded-3xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto">
+        <div className="w-16 h-16 rounded-3xl bg-blue-100 text-blue-800 flex items-center justify-center mx-auto">
           <LogIn className="w-8 h-8" />
         </div>
         <h2 className="text-xl font-bold text-slate-900">
-          Sign In to View Your Trips
+          {t('authSignInTitle')}
         </h2>
         <p className="text-xs text-slate-600 leading-relaxed">
-          Log in with your traveler account to view, manage, and track all your posted luggage classifieds.
+          {t('authSwitchToSignIn')}
         </p>
         <button
           onClick={openAuthModal}
-          className="px-6 py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-sm cursor-pointer"
+          className="px-6 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold text-xs rounded-xl transition-all shadow-sm cursor-pointer"
         >
-          Sign In / Register
+          {t('navLogin')}
         </button>
       </div>
     );
@@ -41,23 +43,23 @@ export const MyTripsView: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-2xl font-extrabold text-slate-950">
-              My Posted Trips
+              {t('myTripsHeading')}
             </h2>
             <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full">
               {userTrips.length} {userTrips.length === 1 ? 'Trip' : 'Trips'}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Manage your active flights, spare weight availability, and traveler announcements.
+            {t('myTripsSubheading')}
           </p>
         </div>
 
         <button
           onClick={openPostModal}
-          className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-sm cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
+          className="px-4.5 py-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold text-xs sm:text-sm rounded-xl transition-all shadow-md shadow-blue-600/25 cursor-pointer flex items-center gap-1.5 self-start sm:self-auto border border-blue-400/30"
         >
-          <Plus className="w-4 h-4 stroke-[2.5]" />
-          <span>Post Another Trip</span>
+          <Plus className="w-4 h-4 stroke-[3]" />
+          <span>{t('postAnotherTrip')}</span>
         </button>
       </div>
 
@@ -67,16 +69,16 @@ export const MyTripsView: React.FC = () => {
             <Luggage className="w-6 h-6" />
           </div>
           <h3 className="text-base font-bold text-slate-900">
-            No Trips Posted Yet
+            {t('noMyTripsTitle')}
           </h3>
           <p className="text-xs text-slate-500">
-            You haven't listed any trips yet. Have extra baggage on an upcoming flight?
+            {t('noMyTripsDesc')}
           </p>
           <button
             onClick={openPostModal}
-            className="mt-2 px-5 py-2.5 bg-slate-950 text-amber-400 font-bold text-xs rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            className="mt-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shadow-sm"
           >
-            Post Your First Trip
+            {t('postFirstTripBtn')}
           </button>
         </div>
       ) : (
@@ -95,12 +97,12 @@ export const MyTripsView: React.FC = () => {
                   {trip.status === 'active' ? (
                     <>
                       <ToggleRight className="w-5 h-5 text-emerald-600" />
-                      <span>Status: Active</span>
+                      <span>{t('statusActive')}</span>
                     </>
                   ) : (
                     <>
                       <ToggleLeft className="w-5 h-5 text-slate-400" />
-                      <span>Status: Fully Booked</span>
+                      <span>{t('statusBooked')}</span>
                     </>
                   )}
                 </button>

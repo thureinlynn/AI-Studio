@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useTrips } from '../context/TripContext';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { COMMON_ITEM_CATEGORIES } from '../data/mockTrips';
 import {
   X,
   MapPin,
   Calendar,
-  Weight,
   Clock,
   MessageCircle,
   Send,
@@ -16,11 +16,14 @@ import {
   LogIn,
   AlertCircle,
   CheckCircle2,
+  User,
+  Plus,
 } from 'lucide-react';
 
 export const PostTripModal: React.FC = () => {
   const { isPostModalOpen, closePostModal, addNewTrip, openTripDetail, openAuthModal } = useTrips();
   const { user, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
 
   // Form states initialized with user contacts if available
   const [departureCity, setDepartureCity] = useState('');
@@ -51,7 +54,6 @@ export const PostTripModal: React.FC = () => {
     return d.toISOString().split('T')[0];
   });
 
-  const [weightCapacityKg, setWeightCapacityKg] = useState('10');
   const [announcement, setAnnouncement] = useState('');
   const [dropOffLocationNote, setDropOffLocationNote] = useState('');
   const [pickUpLocationNote, setPickUpLocationNote] = useState('');
@@ -117,12 +119,6 @@ export const PostTripModal: React.FC = () => {
       return;
     }
 
-    const weightNum = parseFloat(weightCapacityKg);
-    if (isNaN(weightNum) || weightNum <= 0) {
-      setFormError('Please enter a valid weight capacity greater than 0 kg.');
-      return;
-    }
-
     if (!whatsapp.trim() && !viber.trim() && !telegram.trim()) {
       setFormError('Please enter your contact information (WhatsApp, Viber, or Telegram).');
       return;
@@ -145,8 +141,8 @@ export const PostTripModal: React.FC = () => {
       arrivalDate,
       lastDropOffDate,
       checkOutDate,
-      weightCapacityKg: weightNum,
-      weightAvailableKg: weightNum,
+      weightCapacityKg: 0,
+      weightAvailableKg: 0,
       serviceFeeType: 'free',
       feeDescription: 'Free peer-to-peer baggage carrier',
       announcement: announcement.trim(),
@@ -242,11 +238,9 @@ export const PostTripModal: React.FC = () => {
             {/* Logged in traveler banner */}
             <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
               <div className="flex items-center gap-2.5">
-                <img
-                  src={user.avatarUrl}
-                  alt={user.name}
-                  className="w-9 h-9 rounded-xl object-cover ring-1 ring-slate-200"
-                />
+                <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 ring-1 ring-slate-200">
+                  <User className="w-5 h-5 stroke-[2]" />
+                </div>
                 <div>
                   <div className="font-semibold text-xs text-slate-900 flex items-center gap-1.5">
                     <span>Posting as {user.name}</span>
@@ -430,55 +424,39 @@ export const PostTripModal: React.FC = () => {
               </div>
             </div>
 
-            {/* Section 3: Weight Capacity & Handover Locations */}
+            {/* Section 3: Handover & Pickup Locations */}
             <div className="space-y-3 pt-2 border-t border-slate-100">
               <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Weight className="w-3.5 h-3.5 text-amber-600" />
-                3. Weight Capacity & Locations
+                <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                {t('postSectionLocations')}
               </h4>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Spare Weight (kg) *
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="50"
-                    step="0.5"
-                    required
-                    value={weightCapacityKg}
-                    onChange={(e) => setWeightCapacityKg(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Departure Handover Spot
+                    {t('postDropOffLocationLabel')}
                   </label>
                   <input
                     type="text"
                     value={dropOffLocationNote}
                     onChange={(e) => setDropOffLocationNote(e.target.value)}
                     placeholder="e.g. BTS Asok or Suvarnabhumi Airport Gate 4"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Destination Pickup Spot
-                </label>
-                <input
-                  type="text"
-                  value={pickUpLocationNote}
-                  onChange={(e) => setPickUpLocationNote(e.target.value)}
-                  placeholder="e.g. Junction City Mall or Yangon Airport Arrival Hall"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                />
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    {t('postPickUpLocationLabel')}
+                  </label>
+                  <input
+                    type="text"
+                    value={pickUpLocationNote}
+                    onChange={(e) => setPickUpLocationNote(e.target.value)}
+                    placeholder="e.g. Junction City Mall or Yangon Airport Arrival Hall"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                </div>
               </div>
 
               {/* Accepted items checklist */}
@@ -635,14 +613,14 @@ export const PostTripModal: React.FC = () => {
                   onClick={closePostModal}
                   className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
                 >
-                  Cancel
+                  {t('postCancelBtn')}
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-slate-950 hover:bg-slate-800 text-amber-400 font-bold text-xs rounded-xl transition-all shadow-md active:scale-[0.98] cursor-pointer flex items-center gap-2"
+                  className="px-6 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold text-sm rounded-xl transition-all shadow-md shadow-blue-600/25 active:scale-[0.98] cursor-pointer flex items-center gap-2 border border-blue-400/30"
                 >
-                  <ShieldCheck className="w-4 h-4 text-amber-400" />
-                  <span>Publish Trip Classified</span>
+                  <Plus className="w-4 h-4 stroke-[3]" />
+                  <span>{t('postSubmitBtn')}</span>
                 </button>
               </div>
             </div>

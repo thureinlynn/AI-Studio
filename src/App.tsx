@@ -6,6 +6,7 @@
 import React from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { TripProvider, useTrips } from './context/TripContext';
+import { LanguageProvider } from './context/LanguageContext';
 import { Header } from './components/Header';
 import { SearchBar } from './components/SearchBar';
 import { TripList } from './components/TripList';
@@ -58,10 +59,12 @@ const AppContent: React.FC = () => {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <TripProvider>
-        <AppContent />
-      </TripProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <TripProvider>
+          <AppContent />
+        </TripProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
