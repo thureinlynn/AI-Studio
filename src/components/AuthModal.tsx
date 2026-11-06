@@ -205,11 +205,7 @@ export const AuthModal: React.FC = () => {
                           </button>
                           <button
                             type="button"
-                            onClick={() => {
-                              if (window.confirm('Delete this trip post?')) {
-                                deleteTrip(trip.id);
-                              }
-                            }}
+                            onClick={() => deleteTrip(trip.id)}
                             className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                             title="Delete trip post"
                             aria-label="Delete trip"

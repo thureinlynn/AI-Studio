@@ -31,11 +31,13 @@ export const translations: Translations = {
   navPost: { en: 'Post', my: 'တင်မည်' },
   navLogin: { en: 'Log In', my: 'အကောင့်ဝင်ရန်' },
   navAccount: { en: 'Account', my: 'အကောင့်' },
+  navSettings: { en: 'Settings', my: 'ဆက်တင်များ' },
 
   // Mobile Nav
   mobileHome: { en: 'Home', my: 'ပင်မ' },
   mobileMyTrips: { en: 'My Trips', my: 'ခရီးစဉ်များ' },
   mobileAccount: { en: 'Account', my: 'အကောင့်' },
+  mobileSettings: { en: 'Settings', my: 'ဆက်တင်' },
 
   // Search & Filter
   searchQueryPlaceholder: {
@@ -83,8 +85,8 @@ export const translations: Translations = {
   detailFlightDate: { en: 'Flight date', my: 'လေယာဉ်ပျံသန်းမည့်ရက်' },
   detailLands: { en: 'Lands at destination', my: 'ဆိုက်ရောက်မည့်အချိန်' },
   detailAnnouncementTitle: {
-    en: 'Information Announcement for This Trip',
-    my: 'ဤခရီးစဉ်အတွက် ခရီးသွား ကြေညာချက်',
+    en: 'Announcement for the service',
+    my: 'ဝန်ဆောင်မှုအတွက် ကြေညာချက်',
   },
   detailDropOffHandover: {
     en: 'Drop-Off Handover (Departure City)',
@@ -176,13 +178,189 @@ export const translations: Translations = {
   },
   statusActive: { en: 'Status: Active', my: 'အခြေအနေ: ဖွင့်လှစ်ထားသည်' },
   statusBooked: { en: 'Status: Fully Booked', my: 'အခြေအနေ: ပြည့်သွားပါပြီ' },
+
+  // How It Works
+  howBadge: { en: 'Peer-to-Peer Traveler Space', my: 'ခရီးသွားများအချင်းချင်း ပစ္စည်းကြုံနေရာ မျှဝေခြင်း' },
+  howTitle: { en: 'How LuuKyone Works', my: 'လူကြုံ (LuuKyone) လုပ်ဆောင်ပုံ' },
+  howSubtitle: {
+    en: 'A completely free classified bulletin for travelers flying with empty luggage allowance to assist people sending packages worldwide.',
+    my: 'ခရီးသည်များ မိမိတို့၏ လေယာဉ်ခရီးစဉ်တွင် ပိုနေသော ပစ္စည်းတင်ဆောင်ခွင့်ဖြင့် ပစ္စည်းပို့လိုသူများကို အခမဲ့ ကူညီပေးနိုင်သော ကြော်ငြာသင်ပုန်း ဖြစ်ပါသည်။',
+  },
+  howForSenders: { en: 'For Senders', my: 'ပစ္စည်းပို့လိုသူများအတွက်' },
+  howForSendersDesc: { en: 'Need to transport documents or goods abroad', my: 'ပြည်ပသို့ စာရွက်စာတမ်း သို့မဟုတ် ပစ္စည်းများ ပို့ဆောင်လိုသူများ' },
+  howSenderStep1Title: { en: '1. Search Your Destination Route', my: '၁။ သင်သွားလိုသော ခရီးစဉ်ကို ရှာဖွေပါ' },
+  howSenderStep1Desc: {
+    en: 'Browse trips matching your departure city and arrival location. Filter by available weight capacity and dates.',
+    my: 'သင်ထွက်ခွာမည့်မြို့နှင့် ဆိုက်ရောက်မည့်မြို့နှင့် ကိုက်ညီသော ခရီးစဉ်များကို ရှာဖွေပြီး ထွက်ခွာရက်နှင့် ပစ္စည်းပေးရက်များကို စစ်ဆေးပါ။',
+  },
+  howSenderStep2Title: { en: '2. Direct One-Click Messaging', my: '၂။ ခရီးသွားထံ တိုက်ရိုက် မက်ဆေ့ခ်ျပို့ပါ' },
+  howSenderStep2Desc: {
+    en: 'Tap the WhatsApp, Telegram, or Viber button to message the traveler directly. No sign-up wall to reach travelers.',
+    my: 'WhatsApp, Viber သို့မဟုတ် Telegram ခလုတ်ကို နှိပ်ပြီး ခရီးသွားနှင့် တိုက်ရိုက် မက်ဆေ့ခ်ျပို့ ဆက်သွယ်နိုင်ပါသည်။',
+  },
+  howSenderStep3Title: { en: '3. Meet Before Last Drop-off Date', my: '၃။ နောက်ဆုံး ပစ္စည်းပေးရက်မတိုင်မီ လူချင်းတွေ့ဆုံပါ' },
+  howSenderStep3Desc: {
+    en: 'Bring the package open for physical inspection. Meet the traveler at the agreed spot before their departure deadline.',
+    my: 'ပစ္စည်းကို မပိတ်ထားဘဲ အတူတကွ စစ်ဆေးနိုင်ရန် ယူဆောင်လာပြီး သတ်မှတ်ထားသော နေရာတွင် ခရီးသွားနှင့် လူချင်းတွေ့ဆုံပေးအပ်ပါ။',
+  },
+  howForTravelers: { en: 'For Travelers', my: 'ခရီးသွားများအတွက်' },
+  howForTravelersDesc: { en: 'Have extra baggage allowance on your flight', my: 'မိမိ၏ လေယာဉ်ခရီးစဉ်တွင် ပစ္စည်းကြုံတင်ဆောင်နိုင်သော နေရာရှိသူများ' },
+  howTravelerStep1Title: { en: '1. Post Your Trip Classified', my: '၁။ ခရီးစဉ်ကြော်ငြာ တင်လိုက်ပါ' },
+  howTravelerStep1Desc: {
+    en: 'Sign in and enter your flight cities, departure & arrival dates, drop-off deadline, check-out date, and spare kg.',
+    my: 'လေယာဉ်ထွက်ခွာမည့်မြို့၊ ဆိုက်ရောက်မည့်မြို့၊ ပစ္စည်းပေးရက်နှင့် ထုတ်ယူရက်များကို ထည့်သွင်းပြီး အခမဲ့ တင်ပါ။',
+  },
+  howTravelerStep2Title: { en: '2. Set Clear Item Conditions', my: '၂။ လက်ခံနိုင်သော ပစ္စည်းအမျိုးအစား သတ်မှတ်ပါ' },
+  howTravelerStep2Desc: {
+    en: 'Specify what you can carry (clothes, documents, snacks) and your preferred contact method (WhatsApp, Viber, Telegram).',
+    my: 'မိမိတင်ဆောင်ပေးနိုင်သော ပစ္စည်းများ (စာရွက်စာတမ်း၊ အဝတ်အထည်၊ မုန့်ပဲသရေစာ) နှင့် ဆက်သွယ်ရန် နည်းလမ်းများကို ဖော်ပြပါ။',
+  },
+  howTravelerStep3Title: { en: '3. Hand Over at Destination', my: '၃။ ဆိုက်ရောက်မြို့တွင် ပစ္စည်းပြန်လည်လွှဲပြောင်းပေးပါ' },
+  howTravelerStep3Desc: {
+    en: 'Deliver the parcel to the recipient on the agreed check-out date at your destination city.',
+    my: 'ဆိုက်ရောက်မည့်မြို့တွင် သဘောတူထားသော ပစ္စည်းထုတ်ယူရက်၌ လက်ခံသူထံသို့ ပစ္စည်း လွှဲပြောင်းပေးအပ်ပါ။',
+  },
+  howCtaTitle: { en: 'Flying with spare luggage space?', my: 'လေယာဉ်ခရီးစဉ်တွင် ပစ္စည်းတင်ဆောင်ရန် နေရာပိုနေပါသလား?' },
+  howCtaDesc: {
+    en: 'Post your trip information in 2 minutes and connect directly with senders.',
+    my: '၂ မိနစ်အတွင်း ခရီးစဉ်ကြော်ငြာတင်ပြီး ပစ္စည်းပို့လိုသူများနှင့် တိုက်ရိုက်ချိတ်ဆက်ပါ။',
+  },
+  howPostTripBtn: { en: '+ Post a Trip', my: '+ ခရီးစဉ် တင်မည်' },
+  howBrowseBtn: { en: 'Browse Listings', my: 'ခရီးစဉ်များ ကြည့်မည်' },
+
+  // Safety Rules
+  safetyModalTitle: { en: 'Community Courier Safety & Rules', my: 'အသိုက်အဝန်း လုံခြုံရေးနှင့် စည်းကမ်းချက်များ' },
+  safetyGoldenRuleTitle: { en: 'Golden Rule of Air Travel:', my: 'လေကြောင်းခရီးသွားများ လိုက်နာရမည့် ရွှေစည်းကမ်း:' },
+  safetyGoldenRuleDesc: {
+    en: 'As the passenger checking in luggage, you are legally responsible for all items in your baggage under international aviation regulations.',
+    my: 'မိမိအမည်ဖြင့် တင်ဆောင်သော အိတ်အတွင်းရှိ ပစ္စည်းအားလုံးအတွက် နိုင်ငံတကာ လေကြောင်းဥပဒေအရ ခရီးသည်ကိုယ်တိုင် တာဝန်ရှိပါသည်။',
+  },
+  safetyRule1Title: { en: '1. Always Inspect In-Person Before Handover', my: '၁။ ပစ္စည်းပေးအပ်ချိန်တွင် လူချင်းတွေ့ဆုံ၍ အမြဲတမ်း စစ်ဆေးပါ' },
+  safetyRule1Desc: {
+    en: 'Never accept closed, gift-wrapped, or pre-taped boxes without examining the contents together. Senders must keep items visible until the traveler verifies them.',
+    my: 'အထဲတွင် မည်သည့်ပစ္စည်းပါသည်ကို အတူတကွ မစစ်ဆေးရသေးဘဲ တိပ်ပိတ်ထားသော သို့မဟုတ် လက်ဆောင်ထုပ်ပိုးထားသော ပါဆယ်များကို လုံးဝ လက်မခံပါနှင့်။',
+  },
+  safetyRule2Title: { en: '2. Zero Tolerance Prohibited Items', my: '၂။ လုံးဝ တားမြစ်ထားသော ပစ္စည်းများ' },
+  safetyRule2Desc: {
+    en: 'No prescription drugs without verified medical paperwork, no hazardous materials, lithium batteries in checked bags, flammable liquids, weapons, or unlicensed food.',
+    my: 'တရားဝင် ဆရာဝန်ဆေးစာမပါသော ဆေးဝါးများ၊ လီသီယမ်ဘက်ထရီများ၊ မီးလောင်လွယ်သော အရည်များ၊ လက်နက်များနှင့် တရားမဝင် ပစ္စည်းများကို လုံးဝ သယ်ဆောင်ခွင့်မပြုပါ။',
+  },
+  safetyRule3Title: { en: '3. Weigh Accurately at Drop-off', my: '၃။ ပစ္စည်းပေးအပ်ချိန်တွင် တိကျစွာ အလေးချိန်ချိန်ပါ' },
+  safetyRule3Desc: {
+    en: 'Bring luggage scales or weigh packages during handover to avoid airline excess weight charges at the airport counter.',
+    my: 'လေဆိပ်တွင် အလေးချိန်ပိုကြေး ပေးဆောင်ရခြင်းမှ ကင်းဝေးစေရန် ပစ္စည်းလွှဲပြောင်းချိန်တွင် အလေးချိန် တိကျစွာ ချိန်တွယ်ပါ။',
+  },
+  safetyRule4Title: { en: '4. Clear Photo Records & Direct Messaging', my: '၄။ ဓာတ်ပုံမှတ်တမ်းယူပြီး တိုက်ရိုက် မက်ဆေ့ခ်ျဖြင့် အတည်ပြုပါ' },
+  safetyRule4Desc: {
+    en: 'Take photos of the item and receipt during handover and share on WhatsApp / Telegram / Viber as mutual proof of condition and custody.',
+    my: 'ပစ္စည်းလွှဲပြောင်းချိန်တွင် ပစ္စည်း၏ အခြေအနေကို ဓာတ်ပုံရိုက်ပြီး WhatsApp/Viber/Telegram တွင် အပြန်အလှန် ပေးပို့မှတ်တမ်းတင်ထားပါ။',
+  },
+  safetyAgreeBtn: { en: 'I Understand & Agree', my: 'နားလည်သဘောတူပါသည်' },
+
+  // Item guidelines
+  detailNeverAcceptNotice: {
+    en: 'Never accept uninspected sealed packages or illegal goods',
+    my: 'မစစ်ဆေးရသေးသော အလုံပိတ် ပါဆယ်များနှင့် တရားမဝင်ပစ္စည်းများကို လုံးဝ လက်မခံပါနှင့်',
+  },
+
+  // Settings
+  settingsTitle: { en: 'Settings', my: 'ဆက်တင်များ' },
+  settingsSubtitle: {
+    en: 'Manage application preferences, language, appearance, and units.',
+    my: 'ဘာသာစကား၊ အလင်း/အမှောင်၊ အတိုင်းအတာ ယူနစ်များနှင့် အထွေထွေ ဆက်တင်များကို ပြင်ဆင်ပါ။',
+  },
+  settingsAppearance: { en: 'Appearance & Theme', my: 'မြင်ကွင်းနှင့် အလင်း/အမှောင်' },
+  settingsThemeLabel: { en: 'Display Theme', my: 'အလင်း/အမှောင် ရွေးချယ်မှု' },
+  settingsThemeDesc: {
+    en: 'Switch between clean light theme and eye-friendly dark mode.',
+    my: 'အလင်းရောင် သို့မဟုတ် ညဘက်သုံး အမှောင်မုဒ်သို့ ပြောင်းလဲပါ။',
+  },
+  themeLight: { en: 'Light Mode', my: 'အလင်းမုဒ်' },
+  themeDark: { en: 'Dark Mode', my: 'အမှောင်မုဒ်' },
+  themeSystem: { en: 'System Default', my: 'စက်သတ်မှတ်ချက်' },
+  settingsLanguage: { en: 'Language & Region', my: 'ဘာသာစကားနှင့် ဒေသ' },
+  settingsLangDesc: {
+    en: 'Choose your preferred language for navigation, listings, and forms.',
+    my: 'အက်ပ်အသုံးပြုမည့် ဘာသာစကားကို ရွေးချယ်ပါ။',
+  },
+  settingsLangEnglish: { en: 'English', my: 'အင်္ဂလိပ် (English)' },
+  settingsLangMyanmar: { en: 'မြန်မာ (Burmese)', my: 'မြန်မာ (Burmese)' },
+  settingsUnits: { en: 'Units & Measurements', my: 'အတိုင်းအတာ ယူနစ်များ' },
+  settingsWeightUnit: { en: 'Luggage Weight Unit', my: 'အလေးချိန် ယူနစ်' },
+  settingsWeightDesc: { en: 'Standard unit for spare baggage capacity display', my: 'ခရီးဆောင်အိတ် အလေးချိန်ပြသရန် စံယူနစ်' },
+  unitKg: { en: 'Kilograms (kg)', my: 'ကီလိုဂရမ် (kg)' },
+  unitLb: { en: 'Pounds (lbs)', my: 'ပေါင် (lbs)' },
+  settingsCurrency: { en: 'Preferred Currency Reference', my: 'ငွေကြေး ပြသမှု' },
+  settingsCurrencyDesc: { en: 'Display format for service tips & shared cost estimates', my: 'အခကြေးငွေနှင့် ကုန်ကျစရိတ် ပြသမည့် ငွေကြေး' },
+  settingsNotifications: { en: 'Direct Inquiries & Alerts', my: 'မက်ဆေ့ခ်ျနှင့် အသိပေးချက်များ' },
+  settingsDirectChatNotification: { en: 'Instant Direct Chat Link Redirection', my: 'တိုက်ရိုက် ချိတ်ဆက်မှု အတည်ပြုချက်' },
+  settingsDirectChatDesc: {
+    en: 'Opens WhatsApp, Telegram, or Viber immediately when contacting travelers.',
+    my: 'ခရီးသွားထံ ဆက်သွယ်သည့်အခါ WhatsApp, Telegram သို့မဟုတ် Viber အက်ပ်သို့ တိုက်ရိုက်သွားရောက်ရန်။',
+  },
+  settingsDataPrivacy: { en: 'Data & Privacy', my: 'ဒေတာနှင့် လုံခြုံရေး' },
+  settingsClearCache: { en: 'Reset Search & Filter Cache', my: 'ရှာဖွေမှု မှတ်တမ်းများ ရှင်းလင်းရန်' },
+  settingsClearCacheDesc: {
+    en: 'Reset your saved destination routes, city filters, and temporary queries.',
+    my: 'ရှာဖွေထားသော မြို့များနှင့် စစ်ထုတ်မှုများကို မူလအတိုင်း ပြန်ထားမည်။',
+  },
+  settingsClearSuccess: { en: 'Search filters reset successfully!', my: 'စစ်ထုတ်မှုများကို ရှင်းလင်းပြီးပါပြီ!' },
+  settingsAbout: { en: 'About LuuKyone', my: 'လူကြုံ (LuuKyone) အကြောင်း' },
+  settingsVersion: { en: 'Version 1.2.0 (Community Release)', my: 'ဗားရှင်း ၁.၂.၀ (အခမဲ့ ပလက်ဖောင်း)' },
+  settingsAboutDesc: {
+    en: 'A completely free community bulletin connecting travelers with spare baggage space to people needing parcels transported safely.',
+    my: 'ခရီးသွားများနှင့် ပစ္စည်းကြုံပို့သူများကို တိုက်ရိုက် ချိတ်ဆက်ပေးသော အခမဲ့ ကြော်ငြာသင်ပုန်း ဖြစ်ပါသည်။',
+  },
+
+  // Public Traveler Profile
+  publicProfileTitle: { en: 'Traveler Profile', my: 'ခရီးသွား ပရိုဖိုင်' },
+  publicProfileSubtitle: { en: 'Verified community carrier on LuuKyone classifieds', my: 'လူကြုံ ကြော်ငြာသင်ပုန်းမှ အတည်ပြုပြီး ခရီးသွား' },
+  publicTripHistoryTitle: { en: 'Trip History', my: 'ခရီးစဉ် မှတ်တမ်းများ' },
+  publicTripHistoryDesc: {
+    en: 'Active and completed trips remain visible until their drop-off deadline passes.',
+    my: 'ပစ္စည်းပေးအပ်ရမည့်ရက် မကျော်လွန်သေးသည့် ခရီးစဉ်များကို ပြသထားပါသည်။',
+  },
+  publicActiveTripsTab: { en: 'Active Trips', my: 'ဖွင့်လှစ်ထားသော ခရီးစဉ်များ' },
+  publicCompletedTripsTab: { en: 'Completed Trips', my: 'ပြီးမြောက်ပြီးသော ခရီးစဉ်များ' },
+  publicNoTrips: { en: 'No trips listed currently.', my: 'လက်ရှိတွင် ခရီးစဉ် မရှိသေးပါ။' },
+  viewTripDetails: { en: 'View Trip Details', my: 'ခရီးစဉ် အသေးစိတ် ကြည့်မည်' },
+  viewProfile: { en: 'View Profile', my: 'ပရိုဖိုင် ကြည့်မည်' },
 };
+
+const ITEM_TRANSLATIONS: Record<string, string> = {
+  'Urgent Documents & Letters': 'အရေးကြီး စာရွက်စာတမ်းများနှင့် စာများ',
+  'Documents, business contracts & certificates': 'စာရွက်စာတမ်း၊ စာချုပ်များနှင့် လက်မှတ်များ',
+  'Clothing & Fashion Goods': 'အဝတ်အထည်နှင့် ဖက်ရှင်သုံးပစ္စည်းများ',
+  'Personal clothes, shoes & dry fabric items': 'ကိုယ်ပိုင် အဝတ်အထည်၊ ဖိနပ်နှင့် အသုံးအဆောင်များ',
+  'Sealed Packaged Food & Snacks': 'အလုံပိတ် မုန့်ပဲသရေစာနှင့် အစားအသောက်များ',
+  'Packaged dry snacks, tea & non-perishable food': 'မုန့်ပဲသရေစာ၊ လက်ဖက်ခြောက်နှင့် မပုပ်သိုးနိုင်သော အစားအစာများ',
+  'Small electronics & personal chargers': 'အီလက်ထရောနစ် ပစ္စည်းငယ်များနှင့် အားသွင်းကြိုးများ',
+  'Standard cosmetics, sealed lotions & toiletries': 'အလုံပိတ် အလှကုန်များနှင့် အိမ်သုံးပစ္စည်းများ',
+  'Prescription drugs without original doctor certificate': 'တရားဝင် ဆရာဝန်ဆေးစာ မပါသော ဆေးဝါးများ',
+  'Lithium power banks or e-batteries in checked luggage': 'လေယာဉ်တင်အိတ်အတွင်း ထည့်သွင်းသော Power Bank နှင့် ဘက်ထရီများ',
+  'Aerosol sprays, perfumes >100ml, flammable fluids': 'မီးလောင်လွယ်သော အရည်များ၊ ဓာတ်ငွေ့ဖြန်းဘူးများ',
+  'Meat products, fresh vegetables, fresh dairy': 'အသားငါး၊ လတ်ဆတ်သော ဟင်းသီးဟင်းရွက်နှင့် နို့ထွက်ပစ္စည်းများ',
+  'Weapons, narcotics, and restricted contraband': 'လက်နက်၊ မူးယစ်ဆေးဝါးနှင့် တရားမဝင် တားမြစ်ပစ္စည်းများ',
+  'Illegal items or narcotics': 'တရားမဝင် ပစ္စည်းများနှင့် မူးယစ်ဆေးဝါးများ',
+  'Batteries & hazardous chemicals': 'ဘက်ထရီများနှင့် အန္တရာယ်ရှိသော ဓာတုပစ္စည်းများ',
+  'Uninspected sealed packages': 'မစစ်ဆေးရသေးသော အလုံပိတ် အထုပ်များ',
+  'Restricted commercial goods': 'အကောက်ခွန် ကန့်သတ်ထားသော ကုန်သွယ်ပစ္စည်းများ',
+  'General Personal Goods': 'အထွေထွေ ကိုယ်ပိုင် အသုံးအဆောင်များ',
+};
+
+export function translateItemText(item: string, language: Language): string {
+  if (language === 'my') {
+    return ITEM_TRANSLATIONS[item] || item;
+  }
+  return item;
+}
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   toggleLanguage: () => void;
   t: (key: keyof typeof translations) => string;
+  translateItem: (item: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -218,8 +396,12 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return item[language] || item.en;
   };
 
+  const translateItem = (item: string): string => {
+    return translateItemText(item, language);
+  };
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, toggleLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, toggleLanguage, t, translateItem }}>
       {children}
     </LanguageContext.Provider>
   );

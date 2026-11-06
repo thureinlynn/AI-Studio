@@ -1,0 +1,17 @@
+[
+  {
+    "id": "user-1793976159399-z9qe",
+    "email": "alex.thant@travelmail.com",
+    "name": "alex.thant",
+    "isVerified": true,
+    "rating": 5,
+    "tripsCompleted": 0,
+    "memberSince": "Nov 2026",
+    "bio": "Community luggage traveler",
+    "languages": [
+      "English",
+      "Myanmar"
+    ],
+    "createdAt": "2026-11-06T14:42:39.531Z"
+  }
+]

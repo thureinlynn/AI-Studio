@@ -105,23 +105,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginWithEmail = (email: string, name?: string) => {
-    const newUser: User = {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = name?.trim() || cleanEmail.split('@')[0];
+    const localUser: User = {
       id: `user-${Date.now()}`,
-      name: name || email.split('@')[0],
-      email,
+      name: cleanName,
+      email: cleanEmail,
       avatarUrl: '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
       bio: 'Traveler on LuuKyone classified community.',
       isVerified: true,
       contacts: {
         whatsapp: '+15551234567',
         viber: '+15551234567',
-        telegram: name ? name.toLowerCase().replace(/\s+/g, '_') : 'traveler_user',
+        telegram: cleanName.toLowerCase().replace(/\s+/g, '_'),
         preferred: 'whatsapp',
       },
       tripsCount: 1,
       languages: ['English'],
     };
-    setUser(newUser);
+
+    setUser(localUser);
+
+    // Call server login endpoint to retrieve existing or persist new user account
+    fetch('/api/users/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: cleanEmail, name: cleanName }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((serverUser) => {
+        if (serverUser && serverUser.id) {
+          setUser((current) => ({
+            ...current,
+            ...serverUser,
+            contacts: serverUser.contacts || current?.contacts || localUser.contacts,
+          }));
+        }
+      })
+      .catch((err) => console.error('Failed to sync login with server:', err));
   };
 
   const registerUser = (data: {
@@ -132,23 +153,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     telegram: string;
     bio?: string;
   }) => {
+    const cleanEmail = data.email.trim().toLowerCase();
     const newUser: User = {
       id: `user-${Date.now()}`,
-      name: data.name,
-      email: data.email,
+      name: data.name.trim(),
+      email: cleanEmail,
       avatarUrl: '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
-      bio: data.bio || 'Verified traveler providing extra luggage space.',
+      bio: data.bio?.trim() || 'Verified traveler providing extra luggage space.',
       isVerified: true,
       contacts: {
-        whatsapp: data.whatsapp,
-        viber: data.viber,
-        telegram: data.telegram.replace(/^@/, ''),
+        whatsapp: data.whatsapp.trim(),
+        viber: data.viber.trim(),
+        telegram: data.telegram.trim().replace(/^@/, ''),
         preferred: 'whatsapp',
       },
       tripsCount: 0,
-      languages: ['English'],
+      languages: ['English', 'Myanmar'],
     };
+
     setUser(newUser);
+
+    // Persist registered user account to server
+    fetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newUser),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((saved) => {
+        if (saved && saved.id) {
+          setUser((current) => ({ ...current, ...saved }));
+        }
+      })
+      .catch((err) => console.error('Failed to register user to server:', err));
   };
 
   const logout = () => {

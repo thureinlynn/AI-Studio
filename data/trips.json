@@ -1,0 +1,54 @@
+[
+  {
+    "userId": "user-1793976159399-z9qe",
+    "departureCity": "Bangkok",
+    "departureCountry": "Global",
+    "arrivalCity": "Yangon",
+    "arrivalCountry": "Global",
+    "departureDate": "2026-11-11",
+    "arrivalDate": "2026-11-11",
+    "lastDropOffDate": "2026-11-10",
+    "checkOutDate": "2026-11-12",
+    "weightCapacityKg": 0,
+    "weightAvailableKg": 0,
+    "serviceFeeType": "free",
+    "feeDescription": "Free peer-to-peer baggage carrier",
+    "announcement": "Flying Bangkok to Yangon direct. Can carry clothes, snacks and documents.",
+    "dropOffLocationNote": "Bangkok Central Area / Airport",
+    "pickUpLocationNote": "Yangon Central Area / Airport",
+    "acceptedItems": [
+      "Urgent Documents & Letters",
+      "Clothing & Fashion Goods",
+      "Sealed Packaged Food & Snacks"
+    ],
+    "prohibitedItems": [
+      "Illegal items or narcotics",
+      "Batteries & hazardous chemicals",
+      "Uninspected sealed packages",
+      "Restricted commercial goods"
+    ],
+    "contacts": {
+      "whatsapp": "+15551234567",
+      "viber": "+15551234567",
+      "telegram": "alex.thant",
+      "preferred": "whatsapp"
+    },
+    "traveler": {
+      "name": "alex.thant",
+      "avatarUrl": "/src/assets/images/traveler_profile_avatar_1793803079186.jpg",
+      "rating": 5,
+      "reviewCount": 1,
+      "tripsCompleted": 1,
+      "isVerified": true,
+      "memberSince": "Today",
+      "bio": "Community luggage traveler",
+      "languages": [
+        "English",
+        "Myanmar"
+      ]
+    },
+    "id": "trip-1793976197172-ufk82",
+    "createdAt": "2026-11-06T14:43:17.172Z",
+    "status": "active"
+  }
+]

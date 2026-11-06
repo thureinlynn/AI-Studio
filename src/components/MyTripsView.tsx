@@ -108,11 +108,7 @@ export const MyTripsView: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => {
-                    if (window.confirm('Are you sure you want to delete this trip post?')) {
-                      deleteTrip(trip.id);
-                    }
-                  }}
+                  onClick={() => deleteTrip(trip.id)}
                   className="p-1 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
                   title="Delete post"
                   aria-label="Delete trip"

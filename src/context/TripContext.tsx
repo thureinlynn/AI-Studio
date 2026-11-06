@@ -2,6 +2,18 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { TripPost, TripFilters } from '../types/trip';
 import { INITIAL_TRIPS } from '../data/mockTrips';
 
+export interface PublicTravelerInfo {
+  name: string;
+  userId?: string;
+  avatarUrl?: string;
+  bio?: string;
+  isVerified?: boolean;
+  contacts?: any;
+  memberSince?: string;
+  tripsCompleted?: number;
+  languages?: string[];
+}
+
 interface TripContextType {
   trips: TripPost[];
   selectedTripId: string | null;
@@ -11,7 +23,10 @@ interface TripContextType {
   isAuthModalOpen: boolean;
   isSafetyModalOpen: boolean;
   isMyTripsModalOpen: boolean;
-  activeTab: 'browse' | 'how_it_works' | 'safety' | 'my_trips';
+  activeTab: 'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings';
+  publicProfileTraveler: PublicTravelerInfo | null;
+  weightUnit: 'kg' | 'lb';
+  currency: 'USD' | 'MMK' | 'THB';
   setFilters: React.Dispatch<React.SetStateAction<TripFilters>>;
   updateFilterField: <K extends keyof TripFilters>(field: K, value: TripFilters[K]) => void;
   resetFilters: () => void;
@@ -25,7 +40,11 @@ interface TripContextType {
   closeSafetyModal: () => void;
   openMyTripsModal: () => void;
   closeMyTripsModal: () => void;
-  setActiveTab: (tab: 'browse' | 'how_it_works' | 'safety' | 'my_trips') => void;
+  openPublicProfile: (traveler: any, userId?: string, contacts?: any) => void;
+  closePublicProfile: () => void;
+  setActiveTab: (tab: 'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings') => void;
+  setWeightUnit: (unit: 'kg' | 'lb') => void;
+  setCurrency: (currency: 'USD' | 'MMK' | 'THB') => void;
   addNewTrip: (tripData: Omit<TripPost, 'id' | 'createdAt' | 'status'>) => TripPost;
   deleteTrip: (id: string) => void;
   toggleTripStatus: (id: string) => void;
@@ -86,7 +105,60 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSafetyModalOpen, setIsSafetyModalOpen] = useState(false);
   const [isMyTripsModalOpen, setIsMyTripsModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'browse' | 'how_it_works' | 'safety' | 'my_trips'>('browse');
+  const [activeTab, setActiveTab] = useState<'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings'>('browse');
+  const [publicProfileTraveler, setPublicProfileTraveler] = useState<PublicTravelerInfo | null>(null);
+
+  const [weightUnit, setWeightUnitState] = useState<'kg' | 'lb'>(() => {
+    try {
+      return (localStorage.getItem('luukyone_weight_unit') as 'kg' | 'lb') || 'kg';
+    } catch {
+      return 'kg';
+    }
+  });
+
+  const [currency, setCurrencyState] = useState<'USD' | 'MMK' | 'THB'>(() => {
+    try {
+      return (localStorage.getItem('luukyone_currency') as 'USD' | 'MMK' | 'THB') || 'USD';
+    } catch {
+      return 'USD';
+    }
+  });
+
+  const setWeightUnit = (unit: 'kg' | 'lb') => {
+    setWeightUnitState(unit);
+    try {
+      localStorage.setItem('luukyone_weight_unit', unit);
+    } catch {
+      // ignore
+    }
+  };
+
+  const setCurrency = (curr: 'USD' | 'MMK' | 'THB') => {
+    setCurrencyState(curr);
+    try {
+      localStorage.setItem('luukyone_currency', curr);
+    } catch {
+      // ignore
+    }
+  };
+
+  const openPublicProfile = (traveler: any, userId?: string, contacts?: any) => {
+    setPublicProfileTraveler({
+      name: traveler.name || 'Traveler',
+      userId: userId || traveler.userId || '',
+      avatarUrl: traveler.avatarUrl || '',
+      bio: traveler.bio || 'Community traveler on LuuKyone',
+      isVerified: traveler.isVerified ?? true,
+      contacts: contacts || traveler.contacts || {},
+      memberSince: traveler.memberSince || '2026',
+      tripsCompleted: traveler.tripsCompleted || 1,
+      languages: traveler.languages || ['English', 'Myanmar'],
+    });
+  };
+
+  const closePublicProfile = () => {
+    setPublicProfileTraveler(null);
+  };
 
   useEffect(() => {
     try {
@@ -95,6 +167,33 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Failed to persist trips', e);
     }
   }, [trips]);
+
+  // Sync trips with server on mount and continuously every 4 seconds for multi-device sync
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchServerTrips = async () => {
+      try {
+        const res = await fetch('/api/trips');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && isMounted) {
+            setTrips(data);
+          }
+        }
+      } catch {
+        // Fallback to local storage state if server unavailable
+      }
+    };
+
+    fetchServerTrips();
+    const interval = setInterval(fetchServerTrips, 4000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   // Sync selected trip with URL query param
   const openTripDetail = (id: string) => {
@@ -148,7 +247,15 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       status: 'active',
     };
 
-    setTrips((prev) => [newTrip, ...prev]);
+    setTrips((prev) => [newTrip, ...prev.filter((t) => t.id !== newTrip.id)]);
+
+    // Persist to server for cross-device visibility
+    fetch('/api/trips', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newTrip),
+    }).catch((err) => console.error('Failed to persist trip to server:', err));
+
     return newTrip;
   };
 
@@ -157,18 +264,28 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (selectedTripId === id) {
       closeTripDetail();
     }
+    fetch(`/api/trips/${id}`, {
+      method: 'DELETE',
+    }).catch((err) => console.error('Failed to delete trip from server:', err));
   };
 
   const toggleTripStatus = (id: string) => {
+    let nextStatus: 'active' | 'fully_booked' = 'fully_booked';
     setTrips((prev) =>
       prev.map((t) => {
         if (t.id === id) {
-          const nextStatus = t.status === 'active' ? 'fully_booked' : 'active';
+          nextStatus = t.status === 'active' ? 'fully_booked' : 'active';
           return { ...t, status: nextStatus };
         }
         return t;
       })
     );
+
+    fetch(`/api/trips/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: nextStatus }),
+    }).catch((err) => console.error('Failed to update trip status on server:', err));
   };
 
   const resetAllDataToDemoBeginning = () => {
@@ -206,6 +323,9 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isSafetyModalOpen,
         isMyTripsModalOpen,
         activeTab,
+        publicProfileTraveler,
+        weightUnit,
+        currency,
         setFilters,
         updateFilterField,
         resetFilters,
@@ -219,7 +339,11 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         closeSafetyModal,
         openMyTripsModal,
         closeMyTripsModal,
+        openPublicProfile,
+        closePublicProfile,
         setActiveTab,
+        setWeightUnit,
+        setCurrency,
         addNewTrip,
         deleteTrip,
         toggleTripStatus,

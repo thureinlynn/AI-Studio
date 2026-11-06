@@ -128,14 +128,84 @@ export function getDropOffStatus(lastDropOffDateStr: string, referenceDateStr?: 
 }
 
 /**
- * Filters and sorts trip posts according to search parameters.
+ * Checks if a trip has expired based on its delivery date (checkOutDate or arrivalDate).
+ * If delivery date is strictly earlier than today, returns true.
  */
-export function filterAndSortTrips(trips: TripPost[], filters: TripFilters): TripPost[] {
+export function isTripExpired(
+  trip: { checkOutDate?: string; arrivalDate?: string; departureDate?: string },
+  referenceDate?: Date
+): boolean {
+  const deliveryDateStr = trip.checkOutDate || trip.arrivalDate || trip.departureDate;
+  if (!deliveryDateStr) return false;
+
+  const today = referenceDate ? new Date(referenceDate) : new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const parts = deliveryDateStr.split('-').map(Number);
+  if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+    const deliveryDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    deliveryDate.setHours(0, 0, 0, 0);
+    return deliveryDate.getTime() < today.getTime();
+  }
+
+  const d = new Date(deliveryDateStr);
+  if (isNaN(d.getTime())) return false;
+  d.setHours(0, 0, 0, 0);
+  return d.getTime() < today.getTime();
+}
+
+/**
+ * Checks if a trip's last drop-off date has passed (strictly earlier than today).
+ * Used for traveler profile trip history to auto-expire trips once drop-off passes.
+ */
+export function isDropOffDatePassed(dropOffDateStr: string, referenceDate?: Date): boolean {
+  if (!dropOffDateStr) return false;
+  const today = referenceDate ? new Date(referenceDate) : new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const parts = dropOffDateStr.split('-').map(Number);
+  if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+    const d = new Date(parts[0], parts[1] - 1, parts[2]);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime() < today.getTime();
+  }
+  const d = new Date(dropOffDateStr);
+  if (isNaN(d.getTime())) return false;
+  d.setHours(0, 0, 0, 0);
+  return d.getTime() < today.getTime();
+}
+
+export interface FilterOptions {
+  hideExpired?: boolean;
+  hideFullyBooked?: boolean;
+  referenceDate?: Date;
+}
+
+/**
+ * Filters and sorts trip posts according to search parameters.
+ * Automatically excludes expired trips and fully booked trips from the public list by default.
+ */
+export function filterAndSortTrips(
+  trips: TripPost[],
+  filters: TripFilters,
+  options: FilterOptions = { hideExpired: true, hideFullyBooked: true }
+): TripPost[] {
   const query = (filters.query || '').trim().toLowerCase();
   const dep = (filters.departureCity || '').trim().toLowerCase();
   const arr = (filters.arrivalCity || '').trim().toLowerCase();
+  const { hideExpired = true, hideFullyBooked = true, referenceDate } = options;
 
   const filtered = trips.filter((trip) => {
+    // 1. Fully Booked Status: hide from public home list
+    if (hideFullyBooked && trip.status === 'fully_booked') {
+      return false;
+    }
+
+    // 2. Auto-expire: hide once delivery date is over
+    if (hideExpired && isTripExpired(trip, referenceDate)) {
+      return false;
+    }
+
     // Text search query across cities, countries, traveler name, announcements, item tags
     if (query) {
       const matchDep = trip.departureCity.toLowerCase().includes(query) || trip.departureCountry.toLowerCase().includes(query);

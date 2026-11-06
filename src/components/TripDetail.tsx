@@ -33,8 +33,8 @@ interface TripDetailProps {
 }
 
 export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
-  const { closeTripDetail, openSafetyModal } = useTrips();
-  const { t } = useLanguage();
+  const { closeTripDetail, openSafetyModal, openPublicProfile } = useTrips();
+  const { t, translateItem } = useLanguage();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const dropOffStatus = getDropOffStatus(trip.lastDropOffDate);
@@ -198,13 +198,12 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
             </div>
           </section>
 
-          {/* Traveler's Information Announcement */}
-          <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs">
-            <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
+          {/* Traveler's Announcement for the service */}
+          <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">
               {t('detailAnnouncementTitle')}
             </h3>
-            <div className="p-4 bg-amber-50/60 border border-amber-200/80 rounded-2xl text-sm text-slate-800 leading-relaxed font-normal whitespace-pre-line">
+            <div className="p-4 bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 rounded-2xl text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-normal whitespace-pre-line">
               {trip.announcement}
             </div>
 
@@ -249,7 +248,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                   {trip.acceptedItems.map((item, idx) => (
                     <li key={idx} className="flex items-start gap-2 text-xs text-slate-700">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-                      <span>{item}</span>
+                      <span>{translateItem(item)}</span>
                     </li>
                   ))}
                 </ul>
@@ -265,12 +264,12 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                   {trip.prohibitedItems.map((item, idx) => (
                     <li key={idx} className="flex items-start gap-2 text-xs text-slate-700">
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
-                      <span>{item}</span>
+                      <span>{translateItem(item)}</span>
                     </li>
                   ))}
                   <li className="flex items-start gap-2 text-xs text-rose-800 font-semibold">
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
-                    <span>Never accept uninspected sealed packages or illegal goods</span>
+                    <span>{t('detailNeverAcceptNotice')}</span>
                   </li>
                 </ul>
               </div>
@@ -295,19 +294,28 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
         {/* Right Column: Traveler Profile & Direct Contact Buttons (4 cols) */}
         <div className="lg:col-span-4 space-y-6">
 
-          {/* Traveler Profile Card */}
-          <section className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-4">
-              {t('detailTravelerProfile')}
-            </span>
+          {/* Traveler Profile Card (Clickable to view public profile) */}
+          <section
+            onClick={() => openPublicProfile(trip.traveler, trip.userId, trip.contacts)}
+            className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs cursor-pointer hover:border-blue-400 dark:hover:border-blue-500/60 hover:shadow-md transition-all group"
+            title="Click to view public traveler profile & trip history"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                {t('detailTravelerProfile')}
+              </span>
+              <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 group-hover:underline flex items-center gap-1">
+                {t('viewProfile')} &rarr;
+              </span>
+            </div>
 
             <div className="flex items-center gap-4 mb-4">
               <div className="relative shrink-0">
-                <div className="w-16 h-16 rounded-2xl bg-blue-100 text-blue-800 flex items-center justify-center ring-2 ring-blue-300 shrink-0">
+                <div className="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 flex items-center justify-center ring-2 ring-blue-300 dark:ring-blue-700/60 shrink-0 group-hover:scale-105 transition-transform">
                   <User className="w-8 h-8 stroke-[2.2]" />
                 </div>
                 {trip.traveler.isVerified && (
-                  <span className="absolute -bottom-1 -right-1 bg-emerald-600 text-white p-1 rounded-full ring-2 ring-white" title="Verified Traveler Identity">
+                  <span className="absolute -bottom-1 -right-1 bg-emerald-600 text-white p-1 rounded-full ring-2 ring-white dark:ring-slate-900" title="Verified Traveler Identity">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                   </span>
                 )}
@@ -315,20 +323,25 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
 
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h4 className="text-base font-bold text-slate-900">{trip.traveler.name}</h4>
+                  <h4 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    {trip.traveler.name}
+                  </h4>
                 </div>
-                <div className="text-xs text-slate-500 mt-0.5">
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {t('detailMemberSince')} {trip.traveler.memberSince}
                 </div>
-                <div className="flex items-center gap-2 text-xs font-semibold mt-1 text-slate-700">
+                <div className="flex items-center gap-2 text-xs font-semibold mt-1 text-slate-700 dark:text-slate-300">
                   <span>{trip.traveler.tripsCompleted} {t('cardTripsCompleted')}</span>
                 </div>
               </div>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl mb-4 border border-slate-100">
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl mb-3 border border-slate-100 dark:border-slate-800">
               "{trip.traveler.bio}"
             </p>
+            <div className="text-[11px] text-blue-600 dark:text-blue-400 font-medium text-center">
+              Click to view verified history & other trips
+            </div>
           </section>
 
           {/* Direct Contact Buttons (WhatsApp, Telegram, Viber) */}

@@ -1,9 +1,11 @@
 import React from 'react';
 import { useTrips } from '../context/TripContext';
-import { X, ShieldAlert, CheckCircle2, AlertTriangle, Eye, Scale, FileText } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
+import { X, ShieldAlert, AlertTriangle, Eye, Scale, FileText } from 'lucide-react';
 
 export const SafetyModal: React.FC = () => {
   const { isSafetyModalOpen, closeSafetyModal } = useTrips();
+  const { t } = useLanguage();
 
   if (!isSafetyModalOpen) return null;
 
@@ -16,7 +18,7 @@ export const SafetyModal: React.FC = () => {
           <div className="flex items-center gap-2 text-rose-600">
             <ShieldAlert className="w-5 h-5" />
             <h3 className="text-base font-bold text-slate-900">
-              Community Courier Safety & Rules
+              {t('safetyModalTitle')}
             </h3>
           </div>
           <button
@@ -30,39 +32,39 @@ export const SafetyModal: React.FC = () => {
 
         <div className="p-6 space-y-5 text-xs text-slate-600 leading-relaxed">
           <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 text-amber-900">
-            <strong>Golden Rule of Air Travel:</strong> As the passenger checking in luggage, you are legally responsible for all items in your baggage under international aviation regulations.
+            <strong>{t('safetyGoldenRuleTitle')}</strong> {t('safetyGoldenRuleDesc')}
           </div>
 
           <div className="space-y-3">
             <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
               <Eye className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
               <div>
-                <strong className="text-slate-900 block mb-0.5">1. Always Inspect In-Person Before Handover</strong>
-                Never accept closed, gift-wrapped, or pre-taped boxes without examining the contents together. Senders must keep items visible until the traveler verifies them.
+                <strong className="text-slate-900 block mb-0.5">{t('safetyRule1Title')}</strong>
+                {t('safetyRule1Desc')}
               </div>
             </div>
 
             <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
               <AlertTriangle className="w-4 h-4 text-rose-600 mt-0.5 shrink-0" />
               <div>
-                <strong className="text-slate-900 block mb-0.5">2. Zero Tolerance Prohibited Items</strong>
-                No prescription drugs without verified medical paperwork, no hazardous materials, lithium batteries in checked bags, flammable liquids, weapons, or unlicensed food.
+                <strong className="text-slate-900 block mb-0.5">{t('safetyRule2Title')}</strong>
+                {t('safetyRule2Desc')}
               </div>
             </div>
 
             <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
               <Scale className="w-4 h-4 text-sky-600 mt-0.5 shrink-0" />
               <div>
-                <strong className="text-slate-900 block mb-0.5">3. Weigh Accurately at Drop-off</strong>
-                Bring luggage scales or weigh packages during handover to avoid airline excess weight charges at the airport counter.
+                <strong className="text-slate-900 block mb-0.5">{t('safetyRule3Title')}</strong>
+                {t('safetyRule3Desc')}
               </div>
             </div>
 
             <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
               <FileText className="w-4 h-4 text-purple-600 mt-0.5 shrink-0" />
               <div>
-                <strong className="text-slate-900 block mb-0.5">4. Clear Photo Records & Direct Messaging</strong>
-                Take photos of the item and receipt during handover and share on WhatsApp / Telegram / Viber as mutual proof of condition and custody.
+                <strong className="text-slate-900 block mb-0.5">{t('safetyRule4Title')}</strong>
+                {t('safetyRule4Desc')}
               </div>
             </div>
           </div>
@@ -72,7 +74,7 @@ export const SafetyModal: React.FC = () => {
               onClick={closeSafetyModal}
               className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-xs transition-colors cursor-pointer"
             >
-              I Understand & Agree
+              {t('safetyAgreeBtn')}
             </button>
           </div>
         </div>
