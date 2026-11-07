@@ -236,28 +236,20 @@ export const PostTripModal: React.FC = () => {
           <form onSubmit={handleSubmit} className="p-6 space-y-6 text-sm">
             
             {/* Logged in traveler banner */}
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <div className="flex items-center p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 ring-1 ring-slate-200">
+                <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 flex items-center justify-center shrink-0 ring-1 ring-slate-200 dark:ring-slate-700">
                   <User className="w-5 h-5 stroke-[2]" />
                 </div>
                 <div>
-                  <div className="font-semibold text-xs text-slate-900 flex items-center gap-1.5">
+                  <div className="font-semibold text-xs text-slate-900 dark:text-white">
                     <span>Posting as {user.name}</span>
-                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-bold">Verified</span>
                   </div>
-                  <div className="text-[11px] text-slate-500 font-mono">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                     {user.email}
                   </div>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={openAuthModal}
-                className="text-xs text-amber-700 font-semibold hover:underline cursor-pointer"
-              >
-                Switch Account
-              </button>
             </div>
 
             {formError && (

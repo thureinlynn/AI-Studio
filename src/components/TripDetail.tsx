@@ -69,7 +69,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={closeTripDetail}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-950 py-2 px-3 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white py-2 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-850 transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>{t('detailBack')}</span>
@@ -77,9 +77,9 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
 
         <button
           onClick={handleShare}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 py-1.5 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white py-1.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
         >
-          {copiedKey === 'share' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5" />}
+          {copiedKey === 'share' ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
           <span>{copiedKey === 'share' ? t('detailLinkCopied') : t('detailShare')}</span>
         </button>
       </div>
@@ -90,50 +90,50 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
         <div className="lg:col-span-8 space-y-6">
           
           {/* Main Route Card */}
-          <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-amber-100/40 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
+          <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden transition-colors">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-amber-100/40 dark:bg-amber-900/10 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
 
             <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-              <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-800 bg-blue-50 px-3 py-1 rounded-full border border-blue-200/60">
+              <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-3 py-1 rounded-full border border-blue-200/60 dark:border-blue-800/60">
                 <Plane className="w-3.5 h-3.5" />
                 <span>{t('brandSubtitle')}</span>
               </div>
             </div>
 
             {/* From -> To Headline */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 border-y border-slate-100">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 border-y border-slate-100 dark:border-slate-800">
               {/* Departure */}
               <div>
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">{t('detailDepartureCity')}</span>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950">
+                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">{t('detailDepartureCity')}</span>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950 dark:text-white">
                   {trip.departureCity}
                 </h2>
-                <div className="text-xs font-medium text-slate-500 mt-0.5">
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                   {trip.departureCountry}
-                  {trip.departureAirportCode && <span className="ml-1 font-mono text-slate-700 font-semibold">({trip.departureAirportCode})</span>}
+                  {trip.departureAirportCode && <span className="ml-1 font-mono text-slate-700 dark:text-slate-300 font-semibold">({trip.departureAirportCode})</span>}
                 </div>
               </div>
 
               <div className="hidden sm:flex flex-col items-center px-4">
-                <span className="text-[11px] font-mono font-medium text-slate-400 mb-1">
+                <span className="text-[11px] font-mono font-medium text-slate-400 dark:text-slate-500 mb-1">
                   {trip.flightNumber || 'Direct Flight'}
                 </span>
                 <div className="w-24 h-0.5 bg-gradient-to-r from-blue-400 via-indigo-500 to-blue-600 relative">
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full border border-blue-500 flex items-center justify-center">
-                    <Plane className="w-3.5 h-3.5 text-blue-600 rotate-45" />
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-slate-900 rounded-full border border-blue-500 flex items-center justify-center">
+                    <Plane className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 rotate-45" />
                   </div>
                 </div>
               </div>
 
               {/* Arrival */}
               <div className="sm:text-right">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">{t('detailArrivalCity')}</span>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950">
+                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">{t('detailArrivalCity')}</span>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950 dark:text-white">
                   {trip.arrivalCity}
                 </h2>
-                <div className="text-xs font-medium text-slate-500 mt-0.5">
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                   {trip.arrivalCountry}
-                  {trip.arrivalAirportCode && <span className="ml-1 font-mono text-slate-700 font-semibold">({trip.arrivalAirportCode})</span>}
+                  {trip.arrivalAirportCode && <span className="ml-1 font-mono text-slate-700 dark:text-slate-300 font-semibold">({trip.arrivalAirportCode})</span>}
                 </div>
               </div>
             </div>
@@ -141,57 +141,57 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
             {/* Four Critical Timing Milestones */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-2">
               {/* Last Drop Off Date */}
-              <div className="bg-rose-50/70 border border-rose-100 rounded-2xl p-3.5">
-                <div className="flex items-center gap-1.5 text-rose-700 text-xs font-bold mb-1">
-                  <Clock className="w-3.5 h-3.5 text-rose-600" />
+              <div className="bg-rose-50/70 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/40 rounded-2xl p-3.5">
+                <div className="flex items-center gap-1.5 text-rose-700 dark:text-rose-300 text-xs font-bold mb-1">
+                  <Clock className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
                   <span>{t('detailLastDropOff')}</span>
                 </div>
-                <div className="text-sm font-bold text-slate-900">
+                <div className="text-sm font-bold text-slate-900 dark:text-white">
                   {formatDateDisplay(trip.lastDropOffDate)}
                 </div>
-                <div className="text-[11px] font-semibold text-rose-600 mt-0.5">
+                <div className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 mt-0.5">
                   {dropOffStatus.label}
                 </div>
               </div>
 
               {/* Flight Date */}
-              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5">
-                <div className="flex items-center gap-1.5 text-slate-600 text-xs font-bold mb-1">
-                  <Plane className="w-3.5 h-3.5 text-slate-500" />
+              <div className="bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5">
+                <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 text-xs font-bold mb-1">
+                  <Plane className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                   <span>{t('detailDepartureDate')}</span>
                 </div>
-                <div className="text-sm font-bold text-slate-900">
+                <div className="text-sm font-bold text-slate-900 dark:text-white">
                   {formatDateDisplay(trip.departureDate)}
                 </div>
-                <div className="text-[11px] text-slate-500 mt-0.5">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                   {t('detailFlightDate')}
                 </div>
               </div>
 
               {/* Arrival Date */}
-              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5">
-                <div className="flex items-center gap-1.5 text-slate-600 text-xs font-bold mb-1">
-                  <Calendar className="w-3.5 h-3.5 text-slate-500" />
+              <div className="bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5">
+                <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 text-xs font-bold mb-1">
+                  <Calendar className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                   <span>{t('detailArrivalDate')}</span>
                 </div>
-                <div className="text-sm font-bold text-slate-900">
+                <div className="text-sm font-bold text-slate-900 dark:text-white">
                   {formatDateDisplay(trip.arrivalDate)}
                 </div>
-                <div className="text-[11px] text-slate-500 mt-0.5">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                   {t('detailLands')}
                 </div>
               </div>
 
               {/* Check-Out / Delivery Date */}
-              <div className="bg-emerald-50/70 border border-emerald-100 rounded-2xl p-3.5">
-                <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-bold mb-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <div className="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 rounded-2xl p-3.5">
+                <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 text-xs font-bold mb-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>{t('detailCheckOutDate')}</span>
                 </div>
-                <div className="text-sm font-bold text-slate-900">
+                <div className="text-sm font-bold text-slate-900 dark:text-white">
                   {formatDateDisplay(trip.checkOutDate)}
                 </div>
-                <div className="text-[11px] font-semibold text-emerald-700 mt-0.5">
+                <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 mt-0.5">
                   {t('detailReadyPickup')}
                 </div>
               </div>
@@ -199,32 +199,32 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
           </section>
 
           {/* Traveler's Announcement for the service */}
-          <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">
               {t('detailAnnouncementTitle')}
             </h3>
-            <div className="p-4 bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 rounded-2xl text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-normal whitespace-pre-line">
+            <div className="p-4 bg-amber-50/60 dark:bg-slate-800/90 border border-amber-200/80 dark:border-slate-700 rounded-2xl text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-normal whitespace-pre-line">
               {trip.announcement}
             </div>
 
             {/* Handover & Pickup Meeting Locations */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-              <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 mb-1">
-                  <MapPin className="w-4 h-4 text-emerald-600" />
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700 rounded-2xl transition-colors">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">
+                  <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span>{t('detailDropOffHandover')}</span>
                 </div>
-                <p className="text-xs text-slate-600 leading-normal">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-normal">
                   {trip.dropOffLocationNote}
                 </p>
               </div>
 
-              <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 mb-1">
-                  <MapPin className="w-4 h-4 text-rose-500" />
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700 rounded-2xl transition-colors">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 mb-1">
+                  <MapPin className="w-4 h-4 text-rose-500 dark:text-rose-400" />
                   <span>{t('detailPickupLocation')}</span>
                 </div>
-                <p className="text-xs text-slate-600 leading-normal">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-normal">
                   {trip.pickUpLocationNote}
                 </p>
               </div>
@@ -232,21 +232,22 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
           </section>
 
           {/* Items Accepted & Prohibited */}
-          <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">
+          {/* Items Accepted & Prohibited */}
+          <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
               {t('detailGuidelinesTitle')}
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Accepted items */}
               <div>
-                <span className="text-xs font-bold text-emerald-700 uppercase tracking-wide block mb-2.5 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide block mb-2.5 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   {t('detailAccepted')}
                 </span>
                 <ul className="space-y-2">
                   {trip.acceptedItems.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs text-slate-700">
+                    <li key={idx} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
                       <span>{translateItem(item)}</span>
                     </li>
@@ -256,18 +257,18 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
 
               {/* Prohibited items */}
               <div>
-                <span className="text-xs font-bold text-rose-700 uppercase tracking-wide block mb-2.5 flex items-center gap-1.5">
-                  <AlertTriangle className="w-4 h-4 text-rose-600" />
+                <span className="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wide block mb-2.5 flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                   {t('detailProhibited')}
                 </span>
                 <ul className="space-y-2">
                   {trip.prohibitedItems.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs text-slate-700">
+                    <li key={idx} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
                       <span>{translateItem(item)}</span>
                     </li>
                   ))}
-                  <li className="flex items-start gap-2 text-xs text-rose-800 font-semibold">
+                  <li className="flex items-start gap-2 text-xs text-rose-800 dark:text-rose-300 font-semibold">
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
                     <span>{t('detailNeverAcceptNotice')}</span>
                   </li>
@@ -275,14 +276,14 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
               </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 {t('detailSafetyNotice')}
               </span>
               <button
                 onClick={openSafetyModal}
-                className="text-blue-700 font-bold hover:underline cursor-pointer"
+                className="text-blue-700 dark:text-blue-400 font-bold hover:underline cursor-pointer"
               >
                 {t('detailReadSafetyGuide')}
               </button>
@@ -301,7 +302,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
             title="Click to view public traveler profile & trip history"
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                 {t('detailTravelerProfile')}
               </span>
               <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 group-hover:underline flex items-center gap-1">
@@ -314,11 +315,6 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                 <div className="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 flex items-center justify-center ring-2 ring-blue-300 dark:ring-blue-700/60 shrink-0 group-hover:scale-105 transition-transform">
                   <User className="w-8 h-8 stroke-[2.2]" />
                 </div>
-                {trip.traveler.isVerified && (
-                  <span className="absolute -bottom-1 -right-1 bg-emerald-600 text-white p-1 rounded-full ring-2 ring-white dark:ring-slate-900" title="Verified Traveler Identity">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                  </span>
-                )}
               </div>
 
               <div>
@@ -336,26 +332,23 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
               </div>
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl mb-3 border border-slate-100 dark:border-slate-800">
-              "{trip.traveler.bio}"
-            </p>
-            <div className="text-[11px] text-blue-600 dark:text-blue-400 font-medium text-center">
+            <div className="text-[11px] text-blue-600 dark:text-blue-400 font-medium text-center pt-1">
               Click to view verified history & other trips
             </div>
           </section>
 
           {/* Direct Contact Buttons (WhatsApp, Telegram, Viber) */}
-          <section className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm relative">
+          <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative transition-colors">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-slate-900">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 {t('detailDirectContactTitle')}
               </h3>
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60">
                 Direct Links
               </span>
             </div>
 
-            <p className="text-xs text-slate-500 mb-5 leading-normal">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-5 leading-normal">
               {t('detailDirectContactDesc')}
             </p>
 
@@ -372,11 +365,11 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                     <MessageCircle className="w-5 h-5" />
                     <span>{t('detailChatWhatsApp')}</span>
                   </a>
-                  <div className="flex items-center justify-between px-2 text-[11px] text-slate-500 font-mono">
+                  <div className="flex items-center justify-between px-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                     <span>{trip.contacts.whatsapp}</span>
                     <button
                       onClick={() => copyToClipboard(trip.contacts.whatsapp, 'wa')}
-                      className="text-emerald-700 hover:underline flex items-center gap-1 cursor-pointer font-sans"
+                      className="text-emerald-700 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer font-sans"
                     >
                       {copiedKey === 'wa' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                       <span>{copiedKey === 'wa' ? t('detailCopied') : t('detailCopy')}</span>
@@ -397,11 +390,11 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                     <Send className="w-5 h-5" />
                     <span>{t('detailMessageTelegram')}</span>
                   </a>
-                  <div className="flex items-center justify-between px-2 text-[11px] text-slate-500 font-mono">
+                  <div className="flex items-center justify-between px-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                     <span>@{trip.contacts.telegram.replace(/^@/, '')}</span>
                     <button
                       onClick={() => copyToClipboard(`@${trip.contacts.telegram.replace(/^@/, '')}`, 'tg')}
-                      className="text-sky-600 hover:underline flex items-center gap-1 cursor-pointer font-sans"
+                      className="text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1 cursor-pointer font-sans"
                     >
                       {copiedKey === 'tg' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                       <span>{copiedKey === 'tg' ? t('detailCopied') : t('detailCopy')}</span>
@@ -420,11 +413,11 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                     <PhoneCall className="w-5 h-5" />
                     <span>{t('detailCallViber')}</span>
                   </a>
-                  <div className="flex items-center justify-between px-2 text-[11px] text-slate-500 font-mono">
+                  <div className="flex items-center justify-between px-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                     <span>{trip.contacts.viber}</span>
                     <button
                       onClick={() => copyToClipboard(trip.contacts.viber, 'viber')}
-                      className="text-purple-700 hover:underline flex items-center gap-1 cursor-pointer font-sans"
+                      className="text-purple-700 dark:text-purple-400 hover:underline flex items-center gap-1 cursor-pointer font-sans"
                     >
                       {copiedKey === 'viber' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                       <span>{copiedKey === 'viber' ? t('detailCopied') : t('detailCopy')}</span>
@@ -435,8 +428,8 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
             </div>
 
             {/* Safety Reminder */}
-            <div className="mt-5 pt-4 border-t border-slate-100 bg-slate-50 -mx-6 -mb-6 p-4 rounded-b-3xl text-slate-600 text-[11px] leading-relaxed">
-              <span className="font-bold text-slate-900 block mb-0.5">Community Classified Notice:</span>
+            <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 -mx-6 -mb-6 p-4 rounded-b-3xl text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed transition-colors">
+              <span className="font-bold text-slate-900 dark:text-white block mb-0.5">Community Classified Notice:</span>
               LuuKyone is a free bulletin service. Please confirm parcel contents, legal customs allowances, and inspection procedures directly with the traveler before handing over items.
             </div>
           </section>
