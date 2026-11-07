@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { TripPost } from '../src/types/trip';
+import type { TripPost } from '../src/types/trip.ts';
 export interface UserAccount {
   id: string;
   name: string;

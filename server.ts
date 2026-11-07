@@ -9,7 +9,7 @@ import {
   findUserByEmail,
   saveUser,
   getAllUsers,
-} from './server/storage.js';
+} from './server/storage.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
