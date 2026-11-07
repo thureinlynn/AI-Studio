@@ -2,7 +2,7 @@ import {
   findUserByEmail,
   saveUser,
   getAllUsers,
-} from '../server/storage.js';
+} from '../server/storage.ts';
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -17,11 +17,11 @@ export default async function handler(req: any, res: any) {
     if (req.method === 'GET') {
       const { email } = req.query;
       if (typeof email === 'string' && email.trim()) {
-        const user = findUserByEmail(email);
+        const user = await findUserByEmail(email);
         if (!user) return res.status(404).json({ error: 'User not found' });
         return res.status(200).json(user);
       }
-      return res.status(200).json(getAllUsers());
+      return res.status(200).json(await getAllUsers());
     }
 
     if (req.method === 'POST') {
@@ -34,7 +34,7 @@ export default async function handler(req: any, res: any) {
           return res.status(400).json({ error: 'Email is required' });
         }
 
-        let user = findUserByEmail(email);
+        let user = await findUserByEmail(email);
         if (!user) {
           user = {
             id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -48,7 +48,7 @@ export default async function handler(req: any, res: any) {
             languages: ['English', 'Myanmar'],
             createdAt: new Date().toISOString(),
           };
-          saveUser(user);
+          await saveUser(user);
         }
         return res.status(200).json(user);
       }
@@ -65,7 +65,7 @@ export default async function handler(req: any, res: any) {
         isVerified: body.isVerified ?? true,
       };
 
-      const saved = saveUser(user);
+      const saved = await saveUser(user);
       return res.status(201).json(saved);
     }
 

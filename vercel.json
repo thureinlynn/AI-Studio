@@ -1,6 +1,19 @@
 {
   "framework": "vite",
+  "installCommand": "npm install --legacy-peer-deps",
   "rewrites": [
+    {
+      "source": "/api/trips/:id",
+      "destination": "/api/trips?id=:id"
+    },
+    {
+      "source": "/api/users/login",
+      "destination": "/api/users?action=login"
+    },
+    {
+      "source": "/api/users/:id",
+      "destination": "/api/users?id=:id"
+    },
     {
       "source": "/api/:path*",
       "destination": "/api/:path*"

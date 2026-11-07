@@ -4,7 +4,7 @@ import {
   saveTrip,
   updateTripStatus,
   deleteTripById,
-} from '../server/storage.js';
+} from '../server/storage.ts';
 
 export default async function handler(req: any, res: any) {
   // Set CORS headers for Vercel deployment
@@ -18,7 +18,7 @@ export default async function handler(req: any, res: any) {
 
   try {
     if (req.method === 'GET') {
-      const trips = getAllTrips();
+      const trips = await getAllTrips();
       return res.status(200).json(trips);
     }
 
@@ -35,7 +35,7 @@ export default async function handler(req: any, res: any) {
         status: tripData.status || 'active',
       };
 
-      const saved = saveTrip(newTrip);
+      const saved = await saveTrip(newTrip);
       return res.status(201).json(saved);
     }
 
@@ -48,7 +48,7 @@ export default async function handler(req: any, res: any) {
         return res.status(400).json({ error: 'Trip id and status are required' });
       }
 
-      const updated = updateTripStatus(id, status);
+      const updated = await updateTripStatus(id, status);
       if (!updated) {
         return res.status(404).json({ error: 'Trip not found' });
       }
@@ -61,7 +61,7 @@ export default async function handler(req: any, res: any) {
         return res.status(400).json({ error: 'Trip id is required' });
       }
 
-      const deleted = deleteTripById(id);
+      const deleted = await deleteTripById(id);
       if (!deleted) {
         return res.status(404).json({ error: 'Trip not found' });
       }

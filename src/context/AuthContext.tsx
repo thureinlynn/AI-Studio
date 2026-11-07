@@ -130,7 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetch('/api/users/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: cleanEmail, name: cleanName }),
+      body: JSON.stringify({ action: 'login', email: cleanEmail, name: cleanName }),
     })
       .then((res) => (res.ok ? res.json() : null))
       .then((serverUser) => {

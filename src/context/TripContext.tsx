@@ -264,8 +264,10 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (selectedTripId === id) {
       closeTripDetail();
     }
-    fetch(`/api/trips/${id}`, {
+    fetch(`/api/trips?id=${encodeURIComponent(id)}`, {
       method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
     }).catch((err) => console.error('Failed to delete trip from server:', err));
   };
 
@@ -281,10 +283,10 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
     );
 
-    fetch(`/api/trips/${id}`, {
+    fetch(`/api/trips?id=${encodeURIComponent(id)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: nextStatus }),
+      body: JSON.stringify({ id, status: nextStatus }),
     }).catch((err) => console.error('Failed to update trip status on server:', err));
   };
 

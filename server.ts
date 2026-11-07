@@ -22,9 +22,9 @@ async function startServer() {
   app.use(express.json());
 
   // API Routes: Trips
-  app.get('/api/trips', (req, res) => {
+  app.get('/api/trips', async (req, res) => {
     try {
-      const trips = getAllTrips();
+      const trips = await getAllTrips();
       res.json(trips);
     } catch (err) {
       console.error('Error fetching trips:', err);
@@ -32,7 +32,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/trips', (req, res) => {
+  app.post('/api/trips', async (req, res) => {
     try {
       const tripData = req.body;
       if (!tripData || !tripData.departureCity || !tripData.arrivalCity) {
@@ -46,7 +46,7 @@ async function startServer() {
         status: tripData.status || 'active',
       };
 
-      const saved = saveTrip(newTrip);
+      const saved = await saveTrip(newTrip);
       res.status(201).json(saved);
     } catch (err) {
       console.error('Error saving trip:', err);
@@ -54,14 +54,14 @@ async function startServer() {
     }
   });
 
-  app.patch('/api/trips/:id', (req, res) => {
+  const handlePatchTrip = async (req: any, res: any) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id || req.query.id || req.body?.id;
       const { status } = req.body;
-      if (!status) {
-        return res.status(400).json({ error: 'Status is required' });
+      if (!id || !status) {
+        return res.status(400).json({ error: 'ID and status are required' });
       }
-      const updated = updateTripStatus(id, status);
+      const updated = await updateTripStatus(id, status);
       if (!updated) {
         return res.status(404).json({ error: 'Trip not found' });
       }
@@ -70,12 +70,18 @@ async function startServer() {
       console.error('Error updating trip:', err);
       res.status(500).json({ error: 'Failed to update trip' });
     }
-  });
+  };
 
-  app.delete('/api/trips/:id', (req, res) => {
+  app.patch('/api/trips/:id', handlePatchTrip);
+  app.patch('/api/trips', handlePatchTrip);
+
+  const handleDeleteTrip = async (req: any, res: any) => {
     try {
-      const { id } = req.params;
-      const deleted = deleteTripById(id);
+      const id = req.params.id || req.query.id || req.body?.id;
+      if (!id) {
+        return res.status(400).json({ error: 'Trip id is required' });
+      }
+      const deleted = await deleteTripById(id);
       if (!deleted) {
         return res.status(404).json({ error: 'Trip not found' });
       }
@@ -84,25 +90,28 @@ async function startServer() {
       console.error('Error deleting trip:', err);
       res.status(500).json({ error: 'Failed to delete trip' });
     }
-  });
+  };
+
+  app.delete('/api/trips/:id', handleDeleteTrip);
+  app.delete('/api/trips', handleDeleteTrip);
 
   // API Routes: Users
-  app.get('/api/users', (req, res) => {
+  app.get('/api/users', async (req, res) => {
     try {
       const { email } = req.query;
       if (typeof email === 'string' && email.trim()) {
-        const user = findUserByEmail(email);
+        const user = await findUserByEmail(email);
         if (!user) return res.status(404).json({ error: 'User not found' });
         return res.json(user);
       }
-      res.json(getAllUsers());
+      res.json(await getAllUsers());
     } catch (err) {
       console.error('Error fetching users:', err);
       res.status(500).json({ error: 'Failed to fetch users' });
     }
   });
 
-  app.post('/api/users', (req, res) => {
+  app.post('/api/users', async (req, res) => {
     try {
       const userData = req.body;
       if (!userData || !userData.email || !userData.name) {
@@ -116,7 +125,7 @@ async function startServer() {
         isVerified: userData.isVerified ?? true,
       };
 
-      const saved = saveUser(user);
+      const saved = await saveUser(user);
       res.status(201).json(saved);
     } catch (err) {
       console.error('Error saving user:', err);
@@ -124,14 +133,14 @@ async function startServer() {
     }
   });
 
-  app.post('/api/users/login', (req, res) => {
+  app.post('/api/users/login', async (req, res) => {
     try {
       const { email, name } = req.body;
       if (!email || !email.trim()) {
         return res.status(400).json({ error: 'Email is required' });
       }
 
-      let user = findUserByEmail(email);
+      let user = await findUserByEmail(email);
       if (!user) {
         // Create new account if user doesn't exist
         user = {
@@ -146,7 +155,7 @@ async function startServer() {
           languages: ['English', 'Myanmar'],
           createdAt: new Date().toISOString(),
         };
-        saveUser(user);
+        await saveUser(user);
       }
 
       res.json(user);
