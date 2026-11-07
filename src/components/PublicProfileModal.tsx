@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Send,
   PhoneCall,
+  Facebook,
   ExternalLink,
   Luggage,
   ShieldCheck,
@@ -135,6 +136,17 @@ export const PublicProfileModal: React.FC = () => {
                     >
                       <Send className="w-3.5 h-3.5" />
                       <span>Telegram</span>
+                    </a>
+                  )}
+                  {contacts.facebook && (
+                    <a
+                      href={contacts.facebook.startsWith('http') ? contacts.facebook : `https://facebook.com/${contacts.facebook.replace(/^@/, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
+                    >
+                      <Facebook className="w-3.5 h-3.5 fill-current" />
+                      <span>Facebook</span>
                     </a>
                   )}
                   {contacts.viber && (

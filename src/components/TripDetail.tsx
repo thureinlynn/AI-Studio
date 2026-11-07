@@ -7,6 +7,8 @@ import {
   getDropOffStatus,
   formatWhatsAppUrl,
   formatTelegramUrl,
+  formatFacebookUrl,
+  getFacebookDisplay,
   formatViberUrl,
 } from '../utils/tripUtils';
 import {
@@ -17,6 +19,7 @@ import {
   MessageCircle,
   Send,
   PhoneCall,
+  Facebook,
   CheckCircle2,
   AlertTriangle,
   Plane,
@@ -43,6 +46,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
 
   const waUrl = formatWhatsAppUrl(trip.contacts.whatsapp, prefilledMsg);
   const tgUrl = formatTelegramUrl(trip.contacts.telegram);
+  const fbUrl = formatFacebookUrl(trip.contacts.facebook);
   const viberUrl = formatViberUrl(trip.contacts.viber);
 
   const copyToClipboard = (text: string, key: string) => {
@@ -398,6 +402,31 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                     >
                       {copiedKey === 'tg' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                       <span>{copiedKey === 'tg' ? t('detailCopied') : t('detailCopy')}</span>
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Facebook Button (Positioned below Telegram link as requested) */}
+              {trip.contacts.facebook ? (
+                <div className="space-y-1 pt-1">
+                  <a
+                    href={fbUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full h-12 bg-[#1877F2] hover:bg-[#166fe5] active:scale-[0.98] text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2.5 shadow-sm shadow-[#1877F2]/30 transition-all cursor-pointer"
+                  >
+                    <Facebook className="w-5 h-5 fill-current" />
+                    <span>{t('detailConnectFacebook')}</span>
+                  </a>
+                  <div className="flex items-center justify-between px-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                    <span className="truncate max-w-[200px]">{getFacebookDisplay(trip.contacts.facebook)}</span>
+                    <button
+                      onClick={() => copyToClipboard(fbUrl, 'fb')}
+                      className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer font-sans shrink-0"
+                    >
+                      {copiedKey === 'fb' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedKey === 'fb' ? t('detailCopied') : t('detailCopy')}</span>
                     </button>
                   </div>
                 </div>

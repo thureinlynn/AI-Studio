@@ -2,7 +2,8 @@ export interface TravelerContact {
   whatsapp: string; // e.g. +66812345678 or +95912345678
   viber: string;    // e.g. +66812345678
   telegram: string; // e.g. @traveler_alex or traveler_alex
-  preferred?: 'whatsapp' | 'viber' | 'telegram' | 'any';
+  facebook?: string; // e.g. https://facebook.com/alex or alex
+  preferred?: 'whatsapp' | 'viber' | 'telegram' | 'facebook' | 'any';
 }
 
 export interface TravelerProfile {

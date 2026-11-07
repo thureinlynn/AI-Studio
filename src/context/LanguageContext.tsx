@@ -116,6 +116,7 @@ export const translations: Translations = {
   },
   detailChatWhatsApp: { en: 'Chat on WhatsApp', my: 'WhatsApp ဖြင့် ဆက်သွယ်ရန်' },
   detailMessageTelegram: { en: 'Message on Telegram', my: 'Telegram ဖြင့် ဆက်သွယ်ရန်' },
+  detailConnectFacebook: { en: 'Connect on Facebook', my: 'Facebook ဖြင့် ဆက်သွယ်ရန်' },
   detailCallViber: { en: 'Connect on Viber', my: 'Viber ဖြင့် ဆက်သွယ်ရန်' },
   detailCopy: { en: 'Copy', my: 'ကူးမည်' },
   detailCopied: { en: 'Copied', my: 'ကူးပြီး' },

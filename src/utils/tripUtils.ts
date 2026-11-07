@@ -33,6 +33,46 @@ export function formatTelegramUrl(username: string): string {
 }
 
 /**
+ * Formats Facebook profile URL.
+ * Accepts full URL (https://facebook.com/user), username with/without @, or profile ID.
+ */
+export function formatFacebookUrl(input?: string): string {
+  if (!input) return '';
+  const clean = input.trim();
+  if (!clean) return '';
+  if (clean.startsWith('http://') || clean.startsWith('https://')) {
+    return clean;
+  }
+  const handle = clean
+    .replace(/^@+/, '')
+    .replace(/^https?:\/\/(www\.)?facebook\.com\//, '')
+    .replace(/^https?:\/\/(www\.)?fb\.com\//, '')
+    .replace(/^facebook\.com\//, '')
+    .replace(/^fb\.com\//, '');
+  return `https://facebook.com/${handle}`;
+}
+
+/**
+ * Extracts clean readable display label for a Facebook link or handle.
+ */
+export function getFacebookDisplay(input?: string): string {
+  if (!input) return '';
+  const clean = input.trim();
+  if (!clean) return '';
+  if (clean.startsWith('http://') || clean.startsWith('https://')) {
+    try {
+      const url = new URL(clean);
+      const path = url.pathname.replace(/^\//, '').replace(/\/$/, '');
+      if (path && !path.includes('profile.php')) return path;
+      return url.hostname + url.pathname;
+    } catch {
+      return clean;
+    }
+  }
+  return clean.replace(/^@+/, '');
+}
+
+/**
  * Formats Viber link.
  * Supports native app protocol viber://chat?number=%2B<digits>
  */

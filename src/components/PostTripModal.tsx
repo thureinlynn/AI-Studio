@@ -11,6 +11,7 @@ import {
   MessageCircle,
   Send,
   PhoneCall,
+  Facebook,
   Luggage,
   ShieldCheck,
   LogIn,
@@ -67,7 +68,8 @@ export const PostTripModal: React.FC = () => {
   const [whatsapp, setWhatsapp] = useState(user?.contacts?.whatsapp || '');
   const [viber, setViber] = useState(user?.contacts?.viber || '');
   const [telegram, setTelegram] = useState(user?.contacts?.telegram || '');
-  const [preferredContact, setPreferredContact] = useState<'whatsapp' | 'viber' | 'telegram'>('whatsapp');
+  const [facebook, setFacebook] = useState((user?.contacts as any)?.facebook || '');
+  const [preferredContact, setPreferredContact] = useState<'whatsapp' | 'viber' | 'telegram' | 'facebook'>('whatsapp');
 
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -77,6 +79,7 @@ export const PostTripModal: React.FC = () => {
       if (!whatsapp) setWhatsapp(user.contacts.whatsapp || '');
       if (!viber) setViber(user.contacts.viber || '');
       if (!telegram) setTelegram(user.contacts.telegram || '');
+      if (!facebook) setFacebook((user.contacts as any)?.facebook || '');
     }
   }, [user]);
 
@@ -119,8 +122,8 @@ export const PostTripModal: React.FC = () => {
       return;
     }
 
-    if (!whatsapp.trim() && !viber.trim() && !telegram.trim()) {
-      setFormError('Please enter your contact information (WhatsApp, Viber, or Telegram).');
+    if (!whatsapp.trim() && !viber.trim() && !telegram.trim() && !facebook.trim()) {
+      setFormError('Please enter at least one contact channel (WhatsApp, Telegram, Facebook, or Viber).');
       return;
     }
 
@@ -159,6 +162,7 @@ export const PostTripModal: React.FC = () => {
         whatsapp: whatsapp.trim(),
         viber: viber.trim(),
         telegram: telegram.trim(),
+        facebook: facebook.trim(),
         preferred: preferredContact,
       },
       traveler: {
@@ -500,27 +504,27 @@ export const PostTripModal: React.FC = () => {
               />
             </div>
 
-            {/* Section 5: Mandatory Contact Preferences (WhatsApp, Viber, Telegram) */}
-            <div className="space-y-3 pt-2 border-t border-slate-100 bg-slate-50/70 -mx-6 -mb-6 p-6 rounded-b-3xl">
+            {/* Section 5: Mandatory Contact Preferences (WhatsApp, Telegram, Facebook, Viber) */}
+            <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/80 -mx-6 -mb-6 p-6 rounded-b-3xl transition-colors">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                  <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                  5. Contact Channels (WhatsApp, Viber, Telegram) *
+                <h4 className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <MessageCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  5. Contact Channels (WhatsApp, Telegram, Facebook, Viber) *
                 </h4>
-                <span className="text-[10px] text-amber-800 font-bold bg-amber-100 px-2 py-0.5 rounded">
+                <span className="text-[10px] text-amber-800 dark:text-amber-300 font-bold bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-200/60 dark:border-amber-900/40">
                   Direct Contact Buttons
                 </span>
               </div>
 
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 These will generate direct clickable contact buttons on your trip post for senders to connect instantly.
               </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* WhatsApp */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                    <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                    <MessageCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     WhatsApp Number
                   </label>
                   <input
@@ -528,29 +532,14 @@ export const PostTripModal: React.FC = () => {
                     value={whatsapp}
                     onChange={(e) => setWhatsapp(e.target.value)}
                     placeholder="+66 81 234 5678"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                  />
-                </div>
-
-                {/* Viber */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                    <PhoneCall className="w-3.5 h-3.5 text-purple-600" />
-                    Viber Number
-                  </label>
-                  <input
-                    type="text"
-                    value={viber}
-                    onChange={(e) => setViber(e.target.value)}
-                    placeholder="+95 9 1234 5678"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                   />
                 </div>
 
                 {/* Telegram */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                    <Send className="w-3.5 h-3.5 text-sky-500" />
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                    <Send className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400" />
                     Telegram Handle
                   </label>
                   <input
@@ -558,15 +547,45 @@ export const PostTripModal: React.FC = () => {
                     value={telegram}
                     onChange={(e) => setTelegram(e.target.value)}
                     placeholder="@traveler_username"
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                  />
+                </div>
+
+                {/* Facebook Account Link */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                    <Facebook className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    Facebook Account Link / Username
+                  </label>
+                  <input
+                    type="text"
+                    value={facebook}
+                    onChange={(e) => setFacebook(e.target.value)}
+                    placeholder="https://facebook.com/username or @username"
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Viber */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                    <PhoneCall className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                    Viber Number
+                  </label>
+                  <input
+                    type="text"
+                    value={viber}
+                    onChange={(e) => setViber(e.target.value)}
+                    placeholder="+95 9 1234 5678"
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                   />
                 </div>
               </div>
 
               {/* Preferred Contact Radio */}
-              <div className="pt-2 flex items-center gap-4 text-xs">
-                <span className="font-semibold text-slate-700">Preferred channel:</span>
-                <label className="inline-flex items-center gap-1.5 cursor-pointer">
+              <div className="pt-2 flex flex-wrap items-center gap-4 text-xs">
+                <span className="font-semibold text-slate-700 dark:text-slate-300">Preferred channel:</span>
+                <label className="inline-flex items-center gap-1.5 cursor-pointer text-slate-700 dark:text-slate-300">
                   <input
                     type="radio"
                     name="preferred_contact"
@@ -576,7 +595,7 @@ export const PostTripModal: React.FC = () => {
                   />
                   <span>WhatsApp</span>
                 </label>
-                <label className="inline-flex items-center gap-1.5 cursor-pointer">
+                <label className="inline-flex items-center gap-1.5 cursor-pointer text-slate-700 dark:text-slate-300">
                   <input
                     type="radio"
                     name="preferred_contact"
@@ -586,7 +605,17 @@ export const PostTripModal: React.FC = () => {
                   />
                   <span>Telegram</span>
                 </label>
-                <label className="inline-flex items-center gap-1.5 cursor-pointer">
+                <label className="inline-flex items-center gap-1.5 cursor-pointer text-slate-700 dark:text-slate-300">
+                  <input
+                    type="radio"
+                    name="preferred_contact"
+                    checked={preferredContact === 'facebook'}
+                    onChange={() => setPreferredContact('facebook')}
+                    className="text-amber-500"
+                  />
+                  <span>Facebook</span>
+                </label>
+                <label className="inline-flex items-center gap-1.5 cursor-pointer text-slate-700 dark:text-slate-300">
                   <input
                     type="radio"
                     name="preferred_contact"
@@ -603,7 +632,7 @@ export const PostTripModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={closePostModal}
-                  className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+                  className="px-4 py-2.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors cursor-pointer"
                 >
                   {t('postCancelBtn')}
                 </button>
