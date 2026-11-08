@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { TripPost, TripFilters } from '../types/trip';
 import { INITIAL_TRIPS } from '../data/mockTrips';
+import { db } from '../firebase';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 
 export interface PublicTravelerInfo {
   name: string;
@@ -168,17 +170,48 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [trips]);
 
-  // Sync trips with server on mount and continuously every 4 seconds for multi-device sync
+  // Sync trips with Firestore real-time listener and server API fallback
   useEffect(() => {
     let isMounted = true;
 
+    // 1. Listen to Firestore collection 'trips' for real-time multi-client updates
+    let unsubscribeFirestore: (() => void) | null = null;
+    try {
+      unsubscribeFirestore = onSnapshot(
+        collection(db, 'trips'),
+        (snapshot) => {
+          if (!isMounted) return;
+          if (!snapshot.empty) {
+            const firestoreTrips: TripPost[] = [];
+            snapshot.forEach((docSnap) => {
+              const data = docSnap.data() as TripPost;
+              firestoreTrips.push({ ...data, id: docSnap.id });
+            });
+            firestoreTrips.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+            setTrips(firestoreTrips);
+          }
+        },
+        (error) => {
+          console.warn('[Firestore] Sync warning (using server API fallback):', error.message);
+        }
+      );
+    } catch (e) {
+      console.warn('[Firestore] Initialization error:', e);
+    }
+
+    // 2. Continuous fallback to server API / Vercel KV
     const fetchServerTrips = async () => {
       try {
         const res = await fetch('/api/trips');
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data) && isMounted) {
-            setTrips(data);
+          if (Array.isArray(data) && data.length > 0 && isMounted) {
+            setTrips((prev) => {
+              // Merge preserving latest
+              const existingIds = new Set(data.map((d: TripPost) => d.id));
+              const localUnsynced = prev.filter((p) => !existingIds.has(p.id));
+              return [...localUnsynced, ...data];
+            });
           }
         }
       } catch {
@@ -187,10 +220,11 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     fetchServerTrips();
-    const interval = setInterval(fetchServerTrips, 4000);
+    const interval = setInterval(fetchServerTrips, 5000);
 
     return () => {
       isMounted = false;
+      if (unsubscribeFirestore) unsubscribeFirestore();
       clearInterval(interval);
     };
   }, []);
@@ -249,7 +283,16 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setTrips((prev) => [newTrip, ...prev.filter((t) => t.id !== newTrip.id)]);
 
-    // Persist to server for cross-device visibility
+    // 1. Store in Firestore database
+    try {
+      setDoc(doc(db, 'trips', newTrip.id), newTrip).catch((err) => {
+        console.warn('[Firestore] Failed to store trip in db:', err);
+      });
+    } catch (err) {
+      console.warn('[Firestore] setDoc error:', err);
+    }
+
+    // 2. Persist to server API / Vercel KV for multi-environment durability
     fetch('/api/trips', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -264,6 +307,17 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (selectedTripId === id) {
       closeTripDetail();
     }
+
+    // 1. Delete from Firestore
+    try {
+      deleteDoc(doc(db, 'trips', id)).catch((err) => {
+        console.warn('[Firestore] Failed to delete trip from db:', err);
+      });
+    } catch (err) {
+      console.warn('[Firestore] deleteDoc error:', err);
+    }
+
+    // 2. Delete from server API
     fetch(`/api/trips?id=${encodeURIComponent(id)}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -283,6 +337,16 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
     );
 
+    // 1. Update in Firestore
+    try {
+      updateDoc(doc(db, 'trips', id), { status: nextStatus }).catch((err) => {
+        console.warn('[Firestore] Failed to update trip status in db:', err);
+      });
+    } catch (err) {
+      console.warn('[Firestore] updateDoc error:', err);
+    }
+
+    // 2. Update in server API
     fetch(`/api/trips?id=${encodeURIComponent(id)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },

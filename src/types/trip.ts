@@ -31,11 +31,11 @@ export interface TripPost {
   arrivalCountry: string;
   arrivalAirportCode?: string;
   
-  // Dates
-  departureDate: string; // e.g. '2026-11-15'
-  arrivalDate: string;   // e.g. '2026-11-15'
-  lastDropOffDate: string; // e.g. '2026-11-14' (deadline to hand over item to traveler)
-  checkOutDate: string;    // e.g. '2026-11-16' (when receiver can pick up item at destination)
+  // Dates (Flight departure and arrival removed per requirements)
+  departureDate?: string;
+  arrivalDate?: string;
+  lastDropOffDate: string; // deadline to hand over item to traveler
+  checkOutDate: string;    // delivery / when receiver can pick up item at destination
   
   // Capacity & specs
   weightCapacityKg: number;   // total space offered

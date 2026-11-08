@@ -178,7 +178,7 @@ export const AuthModal: React.FC = () => {
                             <span className="truncate">{trip.arrivalCity}</span>
                           </div>
                           <div className="text-[11px] text-slate-500 mt-1 flex flex-wrap items-center gap-1.5">
-                            <span>{formatDateDisplay(trip.departureDate)}</span>
+                            <span>{formatDateDisplay(trip.departureDate || trip.lastDropOffDate)}</span>
                             <span>·</span>
                             <span
                               className={`font-semibold ${

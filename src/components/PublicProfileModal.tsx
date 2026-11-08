@@ -34,13 +34,9 @@ export const PublicProfileModal: React.FC = () => {
     return matchUserId || matchName;
   });
 
-  // Filter to trips that remain visible until their drop-off date passes and they automatically expire
-  const visibleTrips = travelerTrips.filter((trip) => {
-    return !isDropOffDatePassed(trip.lastDropOffDate);
-  });
-
-  const activeTrips = visibleTrips.filter((t) => t.status === 'active');
-  const bookedOrCompletedTrips = visibleTrips.filter((t) => t.status !== 'active');
+  // Profile Trip History: All trips posted by this traveler stay in their history
+  const activeTrips = travelerTrips.filter((t) => t.status === 'active' && !isDropOffDatePassed(t.lastDropOffDate));
+  const pastOrBookedTrips = travelerTrips.filter((t) => t.status !== 'active' || isDropOffDatePassed(t.lastDropOffDate));
 
   const contacts = publicProfileTraveler.contacts || {};
 
@@ -98,7 +94,7 @@ export const PublicProfileModal: React.FC = () => {
                 </div>
                 <div className="text-[11px] font-semibold text-blue-700 dark:text-blue-400 mt-1 flex items-center gap-1.5">
                   <Plane className="w-3.5 h-3.5" />
-                  <span>{publicProfileTraveler.tripsCompleted || visibleTrips.length || 1} {t('cardTripsCompleted')}</span>
+                  <span>{publicProfileTraveler.tripsCompleted || travelerTrips.length || 1} {t('cardTripsCompleted')}</span>
                 </div>
               </div>
             </div>
@@ -176,11 +172,11 @@ export const PublicProfileModal: React.FC = () => {
                 </p>
               </div>
               <span className="text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-0.5 rounded-full">
-                {visibleTrips.length} {visibleTrips.length === 1 ? 'Trip' : 'Trips'}
+                {travelerTrips.length} {travelerTrips.length === 1 ? 'Trip' : 'Trips'}
               </span>
             </div>
 
-            {visibleTrips.length === 0 ? (
+            {travelerTrips.length === 0 ? (
               <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 text-center text-slate-500">
                 {t('publicNoTrips')}
               </div>
@@ -204,13 +200,13 @@ export const PublicProfileModal: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-slate-400" />
-                          {formatDateDisplay(trip.departureDate)}
+                          <Clock className="w-3 h-3 text-sky-500" />
+                          Drop-off: {formatDateDisplay(trip.lastDropOffDate)}
                         </span>
                         <span>·</span>
                         <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-sky-500" />
-                          Drop-off: {formatDateDisplay(trip.lastDropOffDate)}
+                          <Calendar className="w-3 h-3 text-slate-400" />
+                          Delivery: {formatDateDisplay(trip.checkOutDate)}
                         </span>
                       </div>
                     </div>
@@ -224,8 +220,8 @@ export const PublicProfileModal: React.FC = () => {
                   </div>
                 ))}
 
-                {/* Completed or Booked Trips */}
-                {bookedOrCompletedTrips.map((trip) => (
+                {/* Completed, Expired, or Booked Trips */}
+                {pastOrBookedTrips.map((trip) => (
                   <div
                     key={trip.id}
                     onClick={() => {
@@ -241,15 +237,15 @@ export const PublicProfileModal: React.FC = () => {
                         <span className="truncate">{trip.arrivalCity}</span>
                       </div>
                       <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                        <span>{formatDateDisplay(trip.departureDate)}</span>
-                        <span>·</span>
                         <span>Drop-off: {formatDateDisplay(trip.lastDropOffDate)}</span>
+                        <span>·</span>
+                        <span>Delivery: {formatDateDisplay(trip.checkOutDate)}</span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300">
-                        {t('statusBooked')}
+                        {trip.status === 'fully_booked' ? t('statusBooked') : isDropOffDatePassed(trip.lastDropOffDate) ? 'Drop-off Closed' : t('statusCompleted')}
                       </span>
                       <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition-colors" />
                     </div>

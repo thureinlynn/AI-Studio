@@ -33,27 +33,25 @@ export const PostTripModal: React.FC = () => {
   const [arrivalCountry, setArrivalCountry] = useState('');
   const [flightNumber, setFlightNumber] = useState('');
   
-  // Dates
-  const [departureDate, setDepartureDate] = useState(() => {
+  // Date helpers
+  const getTomorrowStr = () => {
     const d = new Date();
-    d.setDate(d.getDate() + 5);
+    d.setDate(d.getDate() + 1);
     return d.toISOString().split('T')[0];
-  });
-  const [arrivalDate, setArrivalDate] = useState(() => {
+  };
+
+  const getFutureDateStr = (daysAhead: number) => {
     const d = new Date();
-    d.setDate(d.getDate() + 5);
+    d.setDate(d.getDate() + daysAhead);
     return d.toISOString().split('T')[0];
-  });
-  const [lastDropOffDate, setLastDropOffDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 4);
-    return d.toISOString().split('T')[0];
-  });
-  const [checkOutDate, setCheckOutDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 6);
-    return d.toISOString().split('T')[0];
-  });
+  };
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const tomorrowStr = getTomorrowStr();
+
+  // Key Dates: Drop-off (deadline) and Delivery / Check-out
+  const [lastDropOffDate, setLastDropOffDate] = useState(() => getFutureDateStr(3));
+  const [checkOutDate, setCheckOutDate] = useState(() => getFutureDateStr(5));
 
   const [announcement, setAnnouncement] = useState('');
   const [dropOffLocationNote, setDropOffLocationNote] = useState('');
@@ -107,18 +105,21 @@ export const PostTripModal: React.FC = () => {
       return;
     }
 
-    if (!departureDate || !arrivalDate || !lastDropOffDate || !checkOutDate) {
-      setFormError('Please fill out all 4 date fields.');
+    if (!lastDropOffDate || !checkOutDate) {
+      setFormError('Please select both Drop-off and Delivery dates.');
       return;
     }
 
-    if (lastDropOffDate > departureDate) {
-      setFormError('Last drop-off date must be on or before the departure date.');
+    // Drop off date must be not current date and cannot be added earlier than current date
+    const today = new Date().toISOString().split('T')[0];
+    if (lastDropOffDate <= today) {
+      setFormError('Drop-off date cannot be today or in the past. It must be a future date.');
       return;
     }
 
-    if (checkOutDate < arrivalDate) {
-      setFormError('Check-out date must be on or after the flight arrival date.');
+    // Delivery date can't be earlier than drop-off date
+    if (checkOutDate < lastDropOffDate) {
+      setFormError('Delivery date cannot be earlier than the drop-off date.');
       return;
     }
 
@@ -140,10 +141,10 @@ export const PostTripModal: React.FC = () => {
       arrivalCity: arrivalCity.trim(),
       arrivalCountry: arrivalCountry.trim() || 'Global',
       flightNumber: flightNumber.trim() || undefined,
-      departureDate,
-      arrivalDate,
       lastDropOffDate,
       checkOutDate,
+      departureDate: lastDropOffDate,
+      arrivalDate: checkOutDate,
       weightCapacityKg: 0,
       weightAvailableKg: 0,
       serviceFeeType: 'free',
@@ -340,81 +341,55 @@ export const PostTripModal: React.FC = () => {
               </div>
             </div>
 
-            {/* Section 2: Four Mandatory Dates */}
-            <div className="space-y-3 pt-2 border-t border-slate-100">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-amber-600" />
-                2. Key Dates (Handover & Delivery Milestones)
+            {/* Section 2: Key Dates (Drop-Off and Delivery) */}
+            <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                2. Key Dates (Drop-Off & Delivery)
               </h4>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Last Drop Off Date */}
-                <div className="p-3 bg-rose-50/50 border border-rose-200/60 rounded-xl">
-                  <label className="block text-xs font-bold text-rose-900 mb-1 flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-rose-600" />
+                <div className="p-3 bg-rose-50/50 dark:bg-rose-950/30 border border-rose-200/60 dark:border-rose-900/40 rounded-xl transition-colors">
+                  <label className="block text-xs font-bold text-rose-900 dark:text-rose-300 mb-1 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
                     Last Drop-Off Date *
                   </label>
                   <input
                     type="date"
                     required
+                    min={tomorrowStr}
                     value={lastDropOffDate}
-                    onChange={(e) => setLastDropOffDate(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-white border border-rose-200 rounded-lg text-xs font-semibold text-slate-900"
+                    onChange={(e) => {
+                      const newDropOff = e.target.value;
+                      setLastDropOffDate(newDropOff);
+                      if (checkOutDate < newDropOff) {
+                        setCheckOutDate(newDropOff);
+                      }
+                    }}
+                    className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-rose-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
                   />
-                  <span className="text-[10px] text-slate-500 mt-1 block">
-                    Deadline for senders to give you parcels
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block">
+                    Must be after today (deadline for senders)
                   </span>
                 </div>
 
-                {/* Departure Date */}
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                  <label className="block text-xs font-bold text-slate-800 mb-1">
-                    Flight Departure Date *
+                {/* Check Out / Delivery Date */}
+                <div className="p-3 bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 rounded-xl transition-colors">
+                  <label className="block text-xs font-bold text-emerald-900 dark:text-emerald-300 mb-1 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    Check-Out / Delivery Date *
                   </label>
                   <input
                     type="date"
                     required
-                    value={departureDate}
-                    onChange={(e) => setDepartureDate(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-900"
-                  />
-                  <span className="text-[10px] text-slate-500 mt-1 block">
-                    Day your flight leaves
-                  </span>
-                </div>
-
-                {/* Arrival Date */}
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                  <label className="block text-xs font-bold text-slate-800 mb-1">
-                    Flight Arrival Date *
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={arrivalDate}
-                    onChange={(e) => setArrivalDate(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-900"
-                  />
-                  <span className="text-[10px] text-slate-500 mt-1 block">
-                    Day you land at destination
-                  </span>
-                </div>
-
-                {/* Check Out Date */}
-                <div className="p-3 bg-emerald-50/50 border border-emerald-200/60 rounded-xl">
-                  <label className="block text-xs font-bold text-emerald-900 mb-1 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    Check-Out / Pickup Date *
-                  </label>
-                  <input
-                    type="date"
-                    required
+                    min={lastDropOffDate || tomorrowStr}
                     value={checkOutDate}
                     onChange={(e) => setCheckOutDate(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-white border border-emerald-200 rounded-lg text-xs font-semibold text-slate-900"
+                    className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-emerald-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                   />
-                  <span className="text-[10px] text-slate-500 mt-1 block">
-                    When receiver can collect the item
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block">
+                    When receiver can collect the item (on or after drop-off)
                   </span>
                 </div>
               </div>

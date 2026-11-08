@@ -142,15 +142,15 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
               </div>
             </div>
 
-            {/* Four Critical Timing Milestones */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-2">
+            {/* Key Handover & Delivery Milestones */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 pt-2">
               {/* Last Drop Off Date */}
-              <div className="bg-rose-50/70 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/40 rounded-2xl p-3.5">
+              <div className="bg-rose-50/70 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/40 rounded-2xl p-4">
                 <div className="flex items-center gap-1.5 text-rose-700 dark:text-rose-300 text-xs font-bold mb-1">
-                  <Clock className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                  <Clock className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                   <span>{t('detailLastDropOff')}</span>
                 </div>
-                <div className="text-sm font-bold text-slate-900 dark:text-white">
+                <div className="text-base font-bold text-slate-900 dark:text-white">
                   {formatDateDisplay(trip.lastDropOffDate)}
                 </div>
                 <div className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 mt-0.5">
@@ -158,41 +158,13 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                 </div>
               </div>
 
-              {/* Flight Date */}
-              <div className="bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5">
-                <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 text-xs font-bold mb-1">
-                  <Plane className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-                  <span>{t('detailDepartureDate')}</span>
-                </div>
-                <div className="text-sm font-bold text-slate-900 dark:text-white">
-                  {formatDateDisplay(trip.departureDate)}
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {t('detailFlightDate')}
-                </div>
-              </div>
-
-              {/* Arrival Date */}
-              <div className="bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5">
-                <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 text-xs font-bold mb-1">
-                  <Calendar className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-                  <span>{t('detailArrivalDate')}</span>
-                </div>
-                <div className="text-sm font-bold text-slate-900 dark:text-white">
-                  {formatDateDisplay(trip.arrivalDate)}
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {t('detailLands')}
-                </div>
-              </div>
-
               {/* Check-Out / Delivery Date */}
-              <div className="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 rounded-2xl p-3.5">
+              <div className="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 rounded-2xl p-4">
                 <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 text-xs font-bold mb-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span>{t('detailCheckOutDate')}</span>
                 </div>
-                <div className="text-sm font-bold text-slate-900 dark:text-white">
+                <div className="text-base font-bold text-slate-900 dark:text-white">
                   {formatDateDisplay(trip.checkOutDate)}
                 </div>
                 <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 mt-0.5">

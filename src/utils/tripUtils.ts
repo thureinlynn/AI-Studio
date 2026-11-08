@@ -241,8 +241,8 @@ export function filterAndSortTrips(
       return false;
     }
 
-    // 2. Auto-expire: hide once delivery date is over
-    if (hideExpired && isTripExpired(trip, referenceDate)) {
+    // 2. Auto-expire: hide from public home list once Drop-off date is over
+    if (hideExpired && (isDropOffDatePassed(trip.lastDropOffDate, referenceDate) || isTripExpired(trip, referenceDate))) {
       return false;
     }
 
@@ -281,7 +281,8 @@ export function filterAndSortTrips(
 
     // Date from
     if (filters.dateFrom) {
-      if (trip.departureDate < filters.dateFrom) {
+      const tripDate = trip.departureDate || trip.lastDropOffDate || '';
+      if (tripDate < filters.dateFrom) {
         return false;
       }
     }
@@ -292,7 +293,9 @@ export function filterAndSortTrips(
   // Sort
   return filtered.sort((a, b) => {
     if (filters.sortBy === 'date_asc') {
-      return a.departureDate.localeCompare(b.departureDate);
+      const dateA = a.departureDate || a.lastDropOffDate || '';
+      const dateB = b.departureDate || b.lastDropOffDate || '';
+      return dateA.localeCompare(dateB);
     }
     if (filters.sortBy === 'weight_desc') {
       return b.weightAvailableKg - a.weightAvailableKg;
