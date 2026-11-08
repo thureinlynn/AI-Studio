@@ -53,7 +53,7 @@ interface TripContextType {
   resetAllDataToDemoBeginning: () => void;
 }
 
-const STORAGE_KEY = 'luukyone_trips_v1';
+const STORAGE_KEY = 'luukyone_trips_v2';
 
 const defaultFilters: TripFilters = {
   query: '',
@@ -67,23 +67,15 @@ const TripContext = createContext<TripContextType | undefined>(undefined);
 export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [trips, setTrips] = useState<TripPost[]>(() => {
     try {
-      // Clean up legacy key
+      // Purge all legacy test data keys on launch
+      localStorage.removeItem('luukyone_trips_v1');
       localStorage.removeItem('luggage_share_trips_v1');
+      localStorage.removeItem('luggage_share_trips');
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          // Discard any previous mock trips
-          const realTrips = parsed.filter(
-            (t) =>
-              !t.id.startsWith('trip-bkk-') &&
-              !t.id.startsWith('trip-sin-') &&
-              !t.id.startsWith('trip-dub-') &&
-              !t.id.startsWith('trip-syd-') &&
-              !t.id.startsWith('trip-lon-') &&
-              !t.id.startsWith('trip-cdg-')
-          );
-          return realTrips;
+          return parsed;
         }
       }
     } catch (e) {

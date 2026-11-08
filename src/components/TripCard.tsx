@@ -27,18 +27,25 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
               <ArrowRight className="w-4 h-4 text-sky-400 group-hover:translate-x-0.5 transition-transform" />
               <span>{trip.arrivalCity}</span>
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex flex-wrap items-center gap-1.5">
               <span>{trip.departureCountry}</span>
-              <span className="mx-1.5" aria-hidden="true">·</span>
+              <span aria-hidden="true">·</span>
               <span>{trip.arrivalCountry}</span>
-              {trip.flightNumber && (
+              {trip.weightAvailableKg > 0 ? (
                 <>
-                  <span className="mx-1.5" aria-hidden="true">·</span>
+                  <span aria-hidden="true">·</span>
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 text-[11px]">
+                    {trip.weightAvailableKg} kg space
+                  </span>
+                </>
+              ) : trip.flightNumber ? (
+                <>
+                  <span aria-hidden="true">·</span>
                   <span className="font-mono text-slate-600 dark:text-slate-300 bg-white/80 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-sky-100 dark:border-slate-700">
                     {trip.flightNumber}
                   </span>
                 </>
-              )}
+              ) : null}
             </div>
           </div>
         </div>

@@ -29,16 +29,24 @@ import {
   Check,
   ShieldCheck,
   User,
+  Luggage,
+  Trash2,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface TripDetailProps {
   trip: TripPost;
 }
 
 export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
-  const { closeTripDetail, openSafetyModal, openPublicProfile } = useTrips();
+  const { closeTripDetail, openSafetyModal, openPublicProfile, deleteTrip, toggleTripStatus } = useTrips();
+  const { user } = useAuth();
   const { t, translateItem } = useLanguage();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const isOwner = Boolean(
+    user && (user.id === trip.userId || (trip.traveler && trip.traveler.name.trim().toLowerCase() === user.name.trim().toLowerCase()))
+  );
 
   const dropOffStatus = getDropOffStatus(trip.lastDropOffDate);
 
@@ -102,6 +110,12 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                 <Plane className="w-3.5 h-3.5" />
                 <span>{t('brandSubtitle')}</span>
               </div>
+              {trip.weightAvailableKg > 0 && (
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
+                  <Luggage className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>{trip.weightAvailableKg} kg Baggage Space</span>
+                </div>
+              )}
             </div>
 
             {/* From -> To Headline */}
@@ -119,8 +133,8 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
               </div>
 
               <div className="hidden sm:flex flex-col items-center px-4">
-                <span className="text-[11px] font-mono font-medium text-slate-400 dark:text-slate-500 mb-1">
-                  {trip.flightNumber || 'Direct Flight'}
+                <span className="text-[11px] font-mono font-medium text-slate-500 dark:text-slate-400 mb-1">
+                  {trip.weightAvailableKg > 0 ? `${trip.weightAvailableKg} kg Luggage Space` : (trip.flightNumber || 'Direct Flight')}
                 </span>
                 <div className="w-24 h-0.5 bg-gradient-to-r from-blue-400 via-indigo-500 to-blue-600 relative">
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-slate-900 rounded-full border border-blue-500 flex items-center justify-center">
@@ -270,6 +284,49 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
 
         {/* Right Column: Traveler Profile & Direct Contact Buttons (4 cols) */}
         <div className="lg:col-span-4 space-y-6">
+
+          {/* Owner Trip Controls (Visible only to the authenticated traveler who posted this trip) */}
+          {isOwner && (
+            <section className="bg-gradient-to-br from-blue-50/90 to-indigo-50/70 dark:from-slate-800 dark:to-slate-800/90 rounded-3xl p-5 border border-blue-200/80 dark:border-slate-700 shadow-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  Your Listing Management
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-600 text-white">
+                  Owner
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => toggleTripStatus(trip.id)}
+                  className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    trip.status === 'active'
+                      ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300'
+                      : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300'
+                  }`}
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>{trip.status === 'active' ? 'Mark as Fully Booked' : 'Reactivate Listing'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    deleteTrip(trip.id);
+                    closeTripDetail();
+                  }}
+                  className="py-2 px-3 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 rounded-xl text-xs font-bold border border-rose-200/60 dark:border-rose-900/60 transition-colors cursor-pointer flex items-center gap-1.5"
+                  title="Delete this listing"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete</span>
+                </button>
+              </div>
+            </section>
+          )}
 
           {/* Traveler Profile Card (Clickable to view public profile) */}
           <section

@@ -39,17 +39,17 @@ export const MyTripsView: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       
       {/* Header bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-extrabold text-slate-950">
+            <h2 className="text-2xl font-extrabold text-slate-950 dark:text-white">
               {t('myTripsHeading')}
             </h2>
-            <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full">
+            <span className="text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">
               {userTrips.length} {userTrips.length === 1 ? 'Trip' : 'Trips'}
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             {t('myTripsSubheading')}
           </p>
         </div>
@@ -64,14 +64,14 @@ export const MyTripsView: React.FC = () => {
       </div>
 
       {userTrips.length === 0 ? (
-        <div className="bg-white rounded-3xl p-10 text-center border border-dashed border-slate-300 max-w-lg mx-auto space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-10 text-center border border-dashed border-slate-300 dark:border-slate-700 max-w-lg mx-auto space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
             <Luggage className="w-6 h-6" />
           </div>
-          <h3 className="text-base font-bold text-slate-900">
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">
             {t('noMyTripsTitle')}
           </h3>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             {t('noMyTripsDesc')}
           </p>
           <button
@@ -88,10 +88,10 @@ export const MyTripsView: React.FC = () => {
               <TripCard trip={trip} />
               
               {/* Manage controls bar */}
-              <div className="mt-2 p-2.5 bg-white rounded-xl border border-slate-200 flex items-center justify-between text-xs text-slate-600">
+              <div className="mt-2 p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
                 <button
                   onClick={() => toggleTripStatus(trip.id)}
-                  className="flex items-center gap-1.5 font-semibold text-slate-700 hover:text-slate-900 cursor-pointer"
+                  className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white cursor-pointer"
                   title="Toggle booking status"
                 >
                   {trip.status === 'active' ? (
@@ -109,7 +109,7 @@ export const MyTripsView: React.FC = () => {
 
                 <button
                   onClick={() => deleteTrip(trip.id)}
-                  className="p-1 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                  className="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                   title="Delete post"
                   aria-label="Delete trip"
                 >

@@ -26,12 +26,12 @@ export const PostTripModal: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
 
-  // Form states initialized with user contacts if available
+  // Form states initialized blank and clean for production launch
   const [departureCity, setDepartureCity] = useState('');
   const [departureCountry, setDepartureCountry] = useState('');
   const [arrivalCity, setArrivalCity] = useState('');
   const [arrivalCountry, setArrivalCountry] = useState('');
-  const [flightNumber, setFlightNumber] = useState('');
+  const [weightAvailable, setWeightAvailable] = useState<string>('');
   
   // Date helpers
   const getTomorrowStr = () => {
@@ -40,29 +40,19 @@ export const PostTripModal: React.FC = () => {
     return d.toISOString().split('T')[0];
   };
 
-  const getFutureDateStr = (daysAhead: number) => {
-    const d = new Date();
-    d.setDate(d.getDate() + daysAhead);
-    return d.toISOString().split('T')[0];
-  };
-
   const todayStr = new Date().toISOString().split('T')[0];
   const tomorrowStr = getTomorrowStr();
 
-  // Key Dates: Drop-off (deadline) and Delivery / Check-out
-  const [lastDropOffDate, setLastDropOffDate] = useState(() => getFutureDateStr(3));
-  const [checkOutDate, setCheckOutDate] = useState(() => getFutureDateStr(5));
+  // Key Dates: Drop-off (deadline) and Delivery / Check-out - completely blank
+  const [lastDropOffDate, setLastDropOffDate] = useState('');
+  const [checkOutDate, setCheckOutDate] = useState('');
 
   const [announcement, setAnnouncement] = useState('');
   const [dropOffLocationNote, setDropOffLocationNote] = useState('');
   const [pickUpLocationNote, setPickUpLocationNote] = useState('');
-  const [selectedAcceptedItems, setSelectedAcceptedItems] = useState<string[]>([
-    'Urgent Documents & Letters',
-    'Clothing & Fashion Goods',
-    'Sealed Packaged Food & Snacks',
-  ]);
+  const [selectedAcceptedItems, setSelectedAcceptedItems] = useState<string[]>([]);
 
-  // Mandatory Contacts
+  // Contacts
   const [whatsapp, setWhatsapp] = useState(user?.contacts?.whatsapp || '');
   const [viber, setViber] = useState(user?.contacts?.viber || '');
   const [telegram, setTelegram] = useState(user?.contacts?.telegram || '');
@@ -70,6 +60,25 @@ export const PostTripModal: React.FC = () => {
   const [preferredContact, setPreferredContact] = useState<'whatsapp' | 'viber' | 'telegram' | 'facebook'>('whatsapp');
 
   const [formError, setFormError] = useState<string | null>(null);
+
+  const resetForm = () => {
+    setDepartureCity('');
+    setDepartureCountry('');
+    setArrivalCity('');
+    setArrivalCountry('');
+    setWeightAvailable('');
+    setLastDropOffDate('');
+    setCheckOutDate('');
+    setAnnouncement('');
+    setDropOffLocationNote('');
+    setPickUpLocationNote('');
+    setSelectedAcceptedItems([]);
+    setWhatsapp(user?.contacts?.whatsapp || '');
+    setViber(user?.contacts?.viber || '');
+    setTelegram(user?.contacts?.telegram || '');
+    setFacebook((user?.contacts as any)?.facebook || '');
+    setFormError(null);
+  };
 
   // Sync contacts if user logs in while modal is open
   React.useEffect(() => {
@@ -123,6 +132,12 @@ export const PostTripModal: React.FC = () => {
       return;
     }
 
+    const weightVal = Number(weightAvailable);
+    if (!weightVal || weightVal <= 0) {
+      setFormError('Please enter available luggage weight (minimum 0.5 kg).');
+      return;
+    }
+
     if (!whatsapp.trim() && !viber.trim() && !telegram.trim() && !facebook.trim()) {
       setFormError('Please enter at least one contact channel (WhatsApp, Telegram, Facebook, or Viber).');
       return;
@@ -140,19 +155,18 @@ export const PostTripModal: React.FC = () => {
       departureCountry: departureCountry.trim() || 'Global',
       arrivalCity: arrivalCity.trim(),
       arrivalCountry: arrivalCountry.trim() || 'Global',
-      flightNumber: flightNumber.trim() || undefined,
       lastDropOffDate,
       checkOutDate,
       departureDate: lastDropOffDate,
       arrivalDate: checkOutDate,
-      weightCapacityKg: 0,
-      weightAvailableKg: 0,
+      weightCapacityKg: weightVal,
+      weightAvailableKg: weightVal,
       serviceFeeType: 'free',
       feeDescription: 'Free peer-to-peer baggage carrier',
       announcement: announcement.trim(),
-      dropOffLocationNote: dropOffLocationNote.trim() || `${departureCity} Central Area / Airport`,
-      pickUpLocationNote: pickUpLocationNote.trim() || `${arrivalCity} Central Area / Airport`,
-      acceptedItems: selectedAcceptedItems.length > 0 ? selectedAcceptedItems : ['General Personal Goods'],
+      dropOffLocationNote: dropOffLocationNote.trim(),
+      pickUpLocationNote: pickUpLocationNote.trim(),
+      acceptedItems: selectedAcceptedItems,
       prohibitedItems: [
         'Illegal items or narcotics',
         'Batteries & hazardous chemicals',
@@ -179,6 +193,7 @@ export const PostTripModal: React.FC = () => {
       },
     });
 
+    resetForm();
     closePostModal();
     openTripDetail(createdTrip.id);
   };
@@ -203,7 +218,10 @@ export const PostTripModal: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={closePostModal}
+            onClick={() => {
+              resetForm();
+              closePostModal();
+            }}
             className="w-8 h-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
             aria-label="Close modal"
           >
@@ -268,12 +286,12 @@ export const PostTripModal: React.FC = () => {
             <div className="space-y-3">
               <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5 text-amber-600" />
-                1. Travel Route & Flight
+                1. Travel Route & Baggage Space
               </h4>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Departure City *
                   </label>
                   <input
@@ -282,11 +300,11 @@ export const PostTripModal: React.FC = () => {
                     value={departureCity}
                     onChange={(e) => setDepartureCity(e.target.value)}
                     placeholder="e.g. Bangkok"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Departure Country
                   </label>
                   <input
@@ -294,14 +312,14 @@ export const PostTripModal: React.FC = () => {
                     value={departureCountry}
                     onChange={(e) => setDepartureCountry(e.target.value)}
                     placeholder="e.g. Thailand"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Arrival City *
                   </label>
                   <input
@@ -310,11 +328,11 @@ export const PostTripModal: React.FC = () => {
                     value={arrivalCity}
                     onChange={(e) => setArrivalCity(e.target.value)}
                     placeholder="e.g. Yangon"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Arrival Country
                   </label>
                   <input
@@ -322,22 +340,37 @@ export const PostTripModal: React.FC = () => {
                     value={arrivalCountry}
                     onChange={(e) => setArrivalCountry(e.target.value)}
                     placeholder="e.g. Myanmar"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Flight Number / Airline (Optional)
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Luggage className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    Available Luggage Weight (kg) *
+                  </span>
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 font-normal">
+                    Spare baggage capacity
+                  </span>
                 </label>
-                <input
-                  type="text"
-                  value={flightNumber}
-                  onChange={(e) => setFlightNumber(e.target.value)}
-                  placeholder="e.g. TG 304, SQ 638, or British Airways"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                />
+                <div className="relative">
+                  <input
+                    type="number"
+                    required
+                    min="0.5"
+                    max="100"
+                    step="0.5"
+                    value={weightAvailable}
+                    onChange={(e) => setWeightAvailable(e.target.value)}
+                    placeholder="e.g. 5, 10, or 23"
+                    className="w-full pl-3.5 pr-14 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-xs font-bold text-slate-500 dark:text-slate-400">
+                    kg
+                  </div>
+                </div>
               </div>
             </div>
 
