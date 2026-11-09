@@ -3,6 +3,7 @@ import { useTrips } from '../context/TripContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { COMMON_ITEM_CATEGORIES } from '../data/mockTrips';
+import { formatMemberSince } from '../utils/tripUtils';
 import {
   X,
   MapPin,
@@ -185,10 +186,11 @@ export const PostTripModal: React.FC = () => {
         avatarUrl: user.avatarUrl,
         rating: 5.0,
         reviewCount: 1,
-        tripsCompleted: user.tripsCount || 1,
-        isVerified: user.isVerified,
-        memberSince: 'Today',
-        bio: user.bio || 'Verified traveler sharing extra luggage allowance.',
+        tripsCompleted: 0,
+        isVerified: false,
+        createdAt: user.createdAt || new Date().toISOString(),
+        memberSince: formatMemberSince(user.createdAt || user.memberSince),
+        bio: user.bio || 'Community traveler sharing extra luggage allowance.',
         languages: user.languages || ['English'],
       },
     });

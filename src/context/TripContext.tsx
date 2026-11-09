@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { TripPost, TripFilters } from '../types/trip';
 import { INITIAL_TRIPS } from '../data/mockTrips';
-import { db } from '../firebase';
+import { db, trackPageView, trackConversion, trackEvent } from '../firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { formatMemberSince } from '../utils/tripUtils';
 
 export interface PublicTravelerInfo {
   name: string;
@@ -12,6 +13,7 @@ export interface PublicTravelerInfo {
   isVerified?: boolean;
   contacts?: any;
   memberSince?: string;
+  createdAt?: string;
   tripsCompleted?: number;
   languages?: string[];
 }
@@ -42,7 +44,7 @@ interface TripContextType {
   closeSafetyModal: () => void;
   openMyTripsModal: () => void;
   closeMyTripsModal: () => void;
-  openPublicProfile: (traveler: any, userId?: string, contacts?: any) => void;
+  openPublicProfile: (traveler: any, userId?: string, contacts?: any, createdAt?: string) => void;
   closePublicProfile: () => void;
   setActiveTab: (tab: 'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings') => void;
   setWeightUnit: (unit: 'kg' | 'lb') => void;
@@ -99,7 +101,16 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSafetyModalOpen, setIsSafetyModalOpen] = useState(false);
   const [isMyTripsModalOpen, setIsMyTripsModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings'>('browse');
+  const [activeTab, setActiveTabState] = useState<'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings'>('browse');
+
+  const setActiveTab = (tab: 'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings') => {
+    setActiveTabState(tab);
+    trackPageView(`LuuKyone - ${tab.replace(/_/g, ' ')}`, `/${tab}`);
+  };
+
+  useEffect(() => {
+    trackPageView('LuuKyone - Peer Baggage Sharing', '/browse');
+  }, []);
   const [publicProfileTraveler, setPublicProfileTraveler] = useState<PublicTravelerInfo | null>(null);
 
   const [weightUnit, setWeightUnitState] = useState<'kg' | 'lb'>(() => {
@@ -136,16 +147,17 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const openPublicProfile = (traveler: any, userId?: string, contacts?: any) => {
+  const openPublicProfile = (traveler: any, userId?: string, contacts?: any, createdAt?: string) => {
     setPublicProfileTraveler({
       name: traveler.name || 'Traveler',
       userId: userId || traveler.userId || '',
       avatarUrl: traveler.avatarUrl || '',
       bio: traveler.bio || 'Community traveler on LuuKyone',
-      isVerified: traveler.isVerified ?? true,
+      isVerified: false,
       contacts: contacts || traveler.contacts || {},
-      memberSince: traveler.memberSince || '2026',
-      tripsCompleted: traveler.tripsCompleted || 1,
+      memberSince: formatMemberSince(traveler.createdAt || traveler.memberSince || createdAt),
+      createdAt: traveler.createdAt || createdAt,
+      tripsCompleted: traveler.tripsCompleted || 0,
       languages: traveler.languages || ['English', 'Myanmar'],
     });
   };
@@ -224,6 +236,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Sync selected trip with URL query param
   const openTripDetail = (id: string) => {
     setSelectedTripId(id);
+    trackEvent('view_trip', { tripId: id });
     try {
       const url = new URL(window.location.href);
       url.searchParams.set('trip', id);
@@ -274,6 +287,14 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     setTrips((prev) => [newTrip, ...prev.filter((t) => t.id !== newTrip.id)]);
+
+    // Track conversion event in Google Analytics
+    trackConversion('create_trip', {
+      from: newTrip.departureCity,
+      to: newTrip.arrivalCity,
+      weightKg: newTrip.weightAvailableKg,
+      serviceFeeType: newTrip.serviceFeeType,
+    });
 
     // 1. Store in Firestore database
     try {

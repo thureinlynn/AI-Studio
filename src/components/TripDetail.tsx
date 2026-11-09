@@ -10,6 +10,8 @@ import {
   formatFacebookUrl,
   getFacebookDisplay,
   formatViberUrl,
+  countCompletedTripsForTraveler,
+  formatMemberSince,
 } from '../utils/tripUtils';
 import {
   ArrowLeft,
@@ -33,13 +35,14 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { trackConversion } from '../firebase';
 
 interface TripDetailProps {
   trip: TripPost;
 }
 
 export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
-  const { closeTripDetail, openSafetyModal, openPublicProfile, deleteTrip, toggleTripStatus } = useTrips();
+  const { closeTripDetail, openSafetyModal, openPublicProfile, deleteTrip, toggleTripStatus, trips } = useTrips();
   const { user } = useAuth();
   const { t, translateItem } = useLanguage();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -64,6 +67,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
   };
 
   const handleShare = () => {
+    trackConversion('share_trip', { tripId: trip.id, route: `${trip.departureCity}-${trip.arrivalCity}` });
     if (navigator.share) {
       navigator.share({
         title: `LuuKyone: ${trip.departureCity} to ${trip.arrivalCity}`,
@@ -330,7 +334,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
 
           {/* Traveler Profile Card (Clickable to view public profile) */}
           <section
-            onClick={() => openPublicProfile(trip.traveler, trip.userId, trip.contacts)}
+            onClick={() => openPublicProfile(trip.traveler, trip.userId, trip.contacts, trip.traveler.createdAt)}
             className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs cursor-pointer hover:border-blue-400 dark:hover:border-blue-500/60 hover:shadow-md transition-all group"
             title="Click to view public traveler profile & trip history"
           >
@@ -357,16 +361,16 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                   </h4>
                 </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {t('detailMemberSince')} {trip.traveler.memberSince}
+                  {t('detailMemberSince')} {formatMemberSince(trip.traveler.createdAt || trip.traveler.memberSince)}
                 </div>
                 <div className="flex items-center gap-2 text-xs font-semibold mt-1 text-slate-700 dark:text-slate-300">
-                  <span>{trip.traveler.tripsCompleted} {t('cardTripsCompleted')}</span>
+                  <span>{countCompletedTripsForTraveler(trips, { name: trip.traveler.name, userId: trip.userId })} {t('cardTripsCompleted')}</span>
                 </div>
               </div>
             </div>
 
             <div className="text-[11px] text-blue-600 dark:text-blue-400 font-medium text-center pt-1">
-              Click to view verified history & other trips
+              Click to view traveler profile & trip history
             </div>
           </section>
 
@@ -393,6 +397,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                     href={waUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => trackConversion('contact_traveler', { channel: 'whatsapp', tripId: trip.id, route: `${trip.departureCity}-${trip.arrivalCity}` })}
                     className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2.5 shadow-sm shadow-emerald-600/30 transition-all cursor-pointer"
                   >
                     <MessageCircle className="w-5 h-5" />
@@ -418,6 +423,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                     href={tgUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => trackConversion('contact_traveler', { channel: 'telegram', tripId: trip.id, route: `${trip.departureCity}-${trip.arrivalCity}` })}
                     className="w-full h-12 bg-sky-500 hover:bg-sky-400 active:scale-[0.98] text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2.5 shadow-sm shadow-sky-500/30 transition-all cursor-pointer"
                   >
                     <Send className="w-5 h-5" />
@@ -443,6 +449,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                     href={fbUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => trackConversion('contact_traveler', { channel: 'facebook', tripId: trip.id, route: `${trip.departureCity}-${trip.arrivalCity}` })}
                     className="w-full h-12 bg-[#1877F2] hover:bg-[#166fe5] active:scale-[0.98] text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2.5 shadow-sm shadow-[#1877F2]/30 transition-all cursor-pointer"
                   >
                     <Facebook className="w-5 h-5 fill-current" />
@@ -466,6 +473,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                 <div className="space-y-1 pt-1">
                   <a
                     href={viberUrl}
+                    onClick={() => trackConversion('contact_traveler', { channel: 'viber', tripId: trip.id, route: `${trip.departureCity}-${trip.arrivalCity}` })}
                     className="w-full h-12 bg-purple-600 hover:bg-purple-500 active:scale-[0.98] text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2.5 shadow-sm shadow-purple-600/30 transition-all cursor-pointer"
                   >
                     <PhoneCall className="w-5 h-5" />

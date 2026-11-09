@@ -306,3 +306,52 @@ export function filterAndSortTrips(
     return 0;
   });
 }
+
+/**
+ * Formats account creation date for "Member since" display (e.g. "Nov 9, 2026").
+ * Formats clean human dates from ISO dates, creation timestamps, or date strings.
+ */
+export function formatMemberSince(dateInput?: string): string {
+  if (!dateInput || dateInput === 'Today' || dateInput === '2026') {
+    const now = new Date();
+    return now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // Already formatted like "Nov 9, 2026" or "Nov 2026"
+  if (/^[A-Za-z]{3}\s+(\d{1,2},\s+)?\d{4}$/.test(dateInput.trim())) {
+    return dateInput.trim();
+  }
+
+  try {
+    const d = new Date(dateInput);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+  } catch {
+    // fallback
+  }
+
+  return dateInput;
+}
+
+/**
+ * Calculates completed trips count for a given traveler.
+ * A trip is counted as completed when its drop-off date has passed (it disappears from active board)
+ * or its status is marked completed.
+ */
+export function countCompletedTripsForTraveler(
+  trips: TripPost[],
+  traveler: { name?: string; userId?: string }
+): number {
+  if (!traveler || !Array.isArray(trips)) return 0;
+  const name = traveler.name?.trim().toLowerCase();
+  const uid = traveler.userId;
+
+  return trips.filter((trip) => {
+    const matchUser = Boolean(uid && trip.userId && trip.userId === uid);
+    const matchName = Boolean(name && trip.traveler?.name && trip.traveler.name.trim().toLowerCase() === name);
+    if (!matchUser && !matchName) return false;
+    return isDropOffDatePassed(trip.lastDropOffDate) || trip.status === 'completed';
+  }).length;
+}
+

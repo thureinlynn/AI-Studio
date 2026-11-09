@@ -315,7 +315,7 @@ export const translations: Translations = {
 
   // Public Traveler Profile
   publicProfileTitle: { en: 'Traveler Profile', my: 'ခရီးသွား ပရိုဖိုင်' },
-  publicProfileSubtitle: { en: 'Verified community carrier on LuuKyone classifieds', my: 'လူကြုံ ကြော်ငြာသင်ပုန်းမှ အတည်ပြုပြီး ခရီးသွား' },
+  publicProfileSubtitle: { en: 'Community carrier on LuuKyone classifieds', my: 'လူကြုံ ကြော်ငြာသင်ပုန်းမှ ခရီးသွား' },
   publicTripHistoryTitle: { en: 'Trip History', my: 'ခရီးစဉ် မှတ်တမ်းများ' },
   publicTripHistoryDesc: {
     en: 'Active and completed trips remain visible until their drop-off deadline passes.',

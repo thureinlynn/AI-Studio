@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTrips } from '../context/TripContext';
 import { useLanguage } from '../context/LanguageContext';
-import { formatDateDisplay } from '../utils/tripUtils';
+import { formatDateDisplay, formatMemberSince, countCompletedTripsForTraveler } from '../utils/tripUtils';
 import {
   X,
   User,
@@ -13,7 +13,6 @@ import {
   Send,
   PhoneCall,
   Facebook,
-  CheckCircle2,
   Luggage,
   Plus,
   ArrowRight,
@@ -36,6 +35,7 @@ export const AuthModal: React.FC = () => {
     signUpWithFirebase,
     sendPasswordReset,
     logout,
+    instantSignIn,
     loginAsDemoUser,
   } = useAuth();
   const { isAuthModalOpen, closeAuthModal, trips, openTripDetail, openPostModal, deleteTrip } = useTrips();
@@ -137,6 +137,7 @@ export const AuthModal: React.FC = () => {
   };
 
   const userTrips = user ? trips.filter((t) => t.userId === user.id) : [];
+  const completedUserTrips = user ? countCompletedTripsForTraveler(trips, { name: user.name, userId: user.id }) : 0;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
@@ -174,13 +175,13 @@ export const AuthModal: React.FC = () => {
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <h4 className="font-bold text-slate-900 dark:text-white truncate text-base">{user.name}</h4>
-                    {user.isVerified && (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    )}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 font-mono truncate">{user.email}</div>
-                  <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
-                    {userTrips.length} {userTrips.length === 1 ? 'trip listed' : 'trips listed'}
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    {t('detailMemberSince')} {formatMemberSince(user.createdAt || user.memberSince)}
+                  </div>
+                  <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
+                    {userTrips.length} {userTrips.length === 1 ? 'trip listed' : 'trips listed'} · {completedUserTrips} {t('cardTripsCompleted')}
                   </div>
                 </div>
               </div>
@@ -377,9 +378,29 @@ export const AuthModal: React.FC = () => {
 
               {/* Error Banner */}
               {authError && (
-                <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-xl text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{authError}</span>
+                <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-2xl text-rose-800 dark:text-rose-200 text-xs space-y-2.5">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
+                    <span className="leading-relaxed">{authError}</span>
+                  </div>
+                  {authError.includes('Firebase Email/Password provider is not yet enabled') && (
+                    <div className="pt-2 border-t border-rose-200/70 dark:border-rose-900/60 flex flex-col gap-2">
+                      <p className="text-[11px] text-rose-700 dark:text-rose-300">
+                        Tip: You can use Instant Sign-In to test all listing and community features immediately without waiting:
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          instantSignIn(email || 'traveler@luukyone.com', name || 'Traveler');
+                          closeAuthModal();
+                        }}
+                        className="w-full py-2 bg-gradient-to-r from-amber-600 via-amber-700 to-amber-600 hover:from-amber-700 hover:to-amber-800 text-white font-bold text-xs rounded-xl transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <LogIn className="w-3.5 h-3.5" />
+                        <span>Instant Sign-In (Continue with local session)</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 

@@ -14,6 +14,7 @@ export interface TravelerProfile {
   tripsCompleted: number;
   isVerified: boolean;
   memberSince: string;
+  createdAt?: string;
   bio: string;
   languages: string[];
 }

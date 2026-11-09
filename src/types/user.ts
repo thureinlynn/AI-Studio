@@ -10,4 +10,6 @@ export interface User {
   contacts: TravelerContact;
   tripsCount: number;
   languages: string[];
+  createdAt?: string;
+  memberSince?: string;
 }

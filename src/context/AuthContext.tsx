@@ -11,6 +11,7 @@ import {
   User as FirebaseUser,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { formatMemberSince } from '../utils/tripUtils';
 
 export interface AuthContextType {
   user: User | null;
@@ -34,6 +35,7 @@ export interface AuthContextType {
   logout: () => Promise<void>;
   updateUserContacts: (contacts: { whatsapp: string; viber: string; telegram: string; facebook?: string }) => Promise<void>;
   resetAuth: () => void;
+  instantSignIn: (email: string, name?: string) => { success: boolean };
   loginAsDemoUser: (userPreset?: 'alex' | 'elena' | 'kenji') => void;
   loginWithEmail: (email: string, name?: string) => void;
   registerUser: (data: any) => void;
@@ -48,7 +50,9 @@ export const DEMO_USERS: Record<string, User> = {
     email: 'alex.thant@travelmail.com',
     avatarUrl: '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
     bio: 'Frequent flyer between Bangkok & Yangon. Reliable community carrier.',
-    isVerified: true,
+    isVerified: false,
+    createdAt: '2026-01-15T00:00:00.000Z',
+    memberSince: 'Jan 15, 2026',
     contacts: {
       whatsapp: '+66829143821',
       viber: '+959450029311',
@@ -65,7 +69,9 @@ export const DEMO_USERS: Record<string, User> = {
     email: 'elena.rostova@globetrot.com',
     avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
     bio: 'Digital nomad and international event producer.',
-    isVerified: true,
+    isVerified: false,
+    createdAt: '2026-02-01T00:00:00.000Z',
+    memberSince: 'Feb 1, 2026',
     contacts: {
       whatsapp: '+33682194552',
       viber: '+33682194552',
@@ -82,7 +88,9 @@ export const DEMO_USERS: Record<string, User> = {
     email: 'kenji.sato@tokyo-design.jp',
     avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
     bio: 'Tech consultant flying Tokyo <-> Singapore weekly.',
-    isVerified: true,
+    isVerified: false,
+    createdAt: '2026-02-10T00:00:00.000Z',
+    memberSince: 'Feb 10, 2026',
     contacts: {
       whatsapp: '+819012345678',
       viber: '+819012345678',
@@ -124,6 +132,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
           const userDocRef = doc(db, 'users', fbUser.uid);
           const snap = await getDoc(userDocRef);
+          const accountCreatedAt =
+            (snap.exists() && snap.data().createdAt) ||
+            fbUser.metadata.creationTime ||
+            new Date().toISOString();
+          const accountMemberSince = formatMemberSince(accountCreatedAt);
+
           if (snap.exists()) {
             const data = snap.data();
             const profile: User = {
@@ -131,8 +145,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               name: data.name || fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
               email: fbUser.email || '',
               avatarUrl: data.avatarUrl || '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
-              bio: data.bio || 'Verified community traveler.',
-              isVerified: data.isVerified ?? true,
+              bio: data.bio || 'Community traveler on LuuKyone.',
+              isVerified: false,
+              createdAt: accountCreatedAt,
+              memberSince: accountMemberSince,
               contacts: {
                 whatsapp: data.contacts?.whatsapp || '',
                 viber: data.contacts?.viber || '',
@@ -140,7 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 facebook: data.contacts?.facebook || '',
                 preferred: data.contacts?.preferred || 'whatsapp',
               },
-              tripsCount: data.tripsCount || 1,
+              tripsCount: data.tripsCount || 0,
               languages: data.languages || ['English', 'Myanmar'],
             };
             setUser(profile);
@@ -152,8 +168,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
               email: fbUser.email || '',
               avatarUrl: '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
-              bio: 'Verified community traveler sharing extra baggage allowance.',
-              isVerified: true,
+              bio: 'Community traveler sharing extra baggage allowance.',
+              isVerified: false,
+              createdAt: accountCreatedAt,
+              memberSince: accountMemberSince,
               contacts: {
                 whatsapp: '',
                 viber: '',
@@ -161,7 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 facebook: '',
                 preferred: 'whatsapp',
               },
-              tripsCount: 1,
+              tripsCount: 0,
               languages: ['English', 'Myanmar'],
             };
             await setDoc(userDocRef, initialProfile, { merge: true });
@@ -170,13 +188,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } catch (err) {
           console.warn('[Firestore] Error loading user profile document:', err);
+          const fallbackCreatedAt = fbUser.metadata.creationTime || new Date().toISOString();
           const fallbackProfile: User = {
             id: fbUser.uid,
             name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
             email: fbUser.email || '',
             avatarUrl: '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
-            bio: 'Verified traveler.',
-            isVerified: true,
+            bio: 'Traveler on LuuKyone.',
+            isVerified: false,
+            createdAt: fallbackCreatedAt,
+            memberSince: formatMemberSince(fallbackCreatedAt),
             contacts: {
               whatsapp: '',
               viber: '',
@@ -184,7 +205,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               facebook: '',
               preferred: 'whatsapp',
             },
-            tripsCount: 1,
+            tripsCount: 0,
             languages: ['English'],
           };
           setUser(fallbackProfile);
@@ -208,6 +229,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err: any) {
       let message = 'Failed to sign in. Please check your credentials.';
       if (
+        err.code === 'auth/configuration-not-found' ||
+        err.code === 'auth/operation-not-allowed'
+      ) {
+        message = 'Firebase Email/Password provider is not yet enabled in your Firebase Console (project luukyone-b17b7). Please open Firebase Console > Authentication > Sign-in method and enable "Email/Password". You can also click "Instant Sign-In" below to proceed immediately.';
+      } else if (
         err.code === 'auth/invalid-credential' ||
         err.code === 'auth/wrong-password' ||
         err.code === 'auth/user-not-found'
@@ -217,6 +243,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         message = 'Please provide a valid email address.';
       } else if (err.code === 'auth/too-many-requests') {
         message = 'Access temporarily disabled due to many failed attempts. Try again later or reset password.';
+      } else if (err.code === 'auth/network-request-failed') {
+        message = 'Network error connecting to Firebase Authentication. Check your internet connection.';
       } else if (err.message) {
         message = err.message;
       }
@@ -248,13 +276,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await updateProfile(cred.user, { displayName: cleanName });
       } catch {}
 
+      const creationTime = cred.user.metadata.creationTime || new Date().toISOString();
+      const memberSince = formatMemberSince(creationTime);
+
       const newProfile: User = {
         id: uid,
         name: cleanName,
         email: email.trim().toLowerCase(),
         avatarUrl: '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
-        bio: profileData.bio?.trim() || 'Verified community traveler sharing extra baggage allowance.',
-        isVerified: true,
+        bio: profileData.bio?.trim() || 'Community traveler sharing extra baggage allowance.',
+        isVerified: false,
+        createdAt: creationTime,
+        memberSince: memberSince,
         contacts: {
           whatsapp: profileData.whatsapp?.trim() || '',
           viber: profileData.viber?.trim() || '',
@@ -262,7 +295,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           facebook: profileData.facebook?.trim() || '',
           preferred: 'whatsapp',
         },
-        tripsCount: 1,
+        tripsCount: 0,
         languages: ['English', 'Myanmar'],
       };
 
@@ -277,12 +310,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true };
     } catch (err: any) {
       let message = 'Failed to create account. Please try again.';
-      if (err.code === 'auth/email-already-in-use') {
+      if (
+        err.code === 'auth/configuration-not-found' ||
+        err.code === 'auth/operation-not-allowed'
+      ) {
+        message = 'Firebase Email/Password provider is not yet enabled in your Firebase Console (project luukyone-b17b7). Please open Firebase Console > Authentication > Sign-in method and enable "Email/Password". You can also click "Instant Sign-In" below to proceed immediately.';
+      } else if (err.code === 'auth/email-already-in-use') {
         message = 'An account with this email address already exists. Try signing in.';
       } else if (err.code === 'auth/weak-password') {
         message = 'Password must be at least 6 characters long.';
       } else if (err.code === 'auth/invalid-email') {
         message = 'Please provide a valid email address.';
+      } else if (err.code === 'auth/network-request-failed') {
+        message = 'Network error connecting to Firebase Authentication. Check your connection.';
       } else if (err.message) {
         message = err.message;
       }
@@ -290,6 +330,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoadingAuth(false);
     }
+  };
+
+  const instantSignIn = (email: string, name?: string) => {
+    const cleanEmail = email.trim().toLowerCase() || 'traveler@luukyone.com';
+    const cleanName = name?.trim() || cleanEmail.split('@')[0];
+    const creationTime = new Date().toISOString();
+    const localUser: User = {
+      id: `user-${Date.now()}`,
+      name: cleanName,
+      email: cleanEmail,
+      avatarUrl: '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
+      bio: 'Community traveler sharing extra baggage allowance.',
+      isVerified: false,
+      createdAt: creationTime,
+      memberSince: formatMemberSince(creationTime),
+      contacts: {
+        whatsapp: '',
+        viber: '',
+        telegram: cleanName.toLowerCase().replace(/\s+/g, '_'),
+        facebook: '',
+        preferred: 'whatsapp',
+      },
+      tripsCount: 0,
+      languages: ['English', 'Myanmar'],
+    };
+    setUser(localUser);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(localUser));
+    return { success: true };
   };
 
   const sendPasswordReset = async (email: string) => {
@@ -347,13 +415,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithEmail = (email: string, name?: string) => {
     const cleanEmail = email.trim().toLowerCase();
     const cleanName = name?.trim() || cleanEmail.split('@')[0];
+    const creationTime = new Date().toISOString();
     const localUser: User = {
       id: `user-${Date.now()}`,
       name: cleanName,
       email: cleanEmail,
       avatarUrl: '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
       bio: 'Traveler on LuuKyone classified community.',
-      isVerified: true,
+      isVerified: false,
+      createdAt: creationTime,
+      memberSince: formatMemberSince(creationTime),
       contacts: {
         whatsapp: '+15551234567',
         viber: '+15551234567',
@@ -361,7 +432,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         facebook: '',
         preferred: 'whatsapp',
       },
-      tripsCount: 1,
+      tripsCount: 0,
       languages: ['English'],
     };
     setUser(localUser);
@@ -370,13 +441,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const registerUser = (data: any) => {
     const cleanEmail = data.email?.trim().toLowerCase() || 'traveler@mail.com';
+    const creationTime = new Date().toISOString();
     const newUser: User = {
       id: `user-${Date.now()}`,
       name: data.name?.trim() || 'Traveler',
       email: cleanEmail,
       avatarUrl: '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
-      bio: data.bio?.trim() || 'Verified traveler providing extra luggage space.',
-      isVerified: true,
+      bio: data.bio?.trim() || 'Traveler providing extra luggage space.',
+      isVerified: false,
+      createdAt: creationTime,
+      memberSince: formatMemberSince(creationTime),
       contacts: {
         whatsapp: data.whatsapp?.trim() || '',
         viber: data.viber?.trim() || '',
@@ -408,6 +482,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         updateUserContacts,
         resetAuth,
+        instantSignIn,
         loginAsDemoUser,
         loginWithEmail,
         registerUser,

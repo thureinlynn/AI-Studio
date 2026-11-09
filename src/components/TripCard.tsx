@@ -2,15 +2,15 @@ import React from 'react';
 import { TripPost } from '../types/trip';
 import { useTrips } from '../context/TripContext';
 import { useLanguage } from '../context/LanguageContext';
-import { formatDateDisplay } from '../utils/tripUtils';
-import { ArrowRight, Calendar, Clock, ChevronRight, CheckCircle2, User } from 'lucide-react';
+import { formatDateDisplay, countCompletedTripsForTraveler } from '../utils/tripUtils';
+import { ArrowRight, Calendar, Clock, ChevronRight, User } from 'lucide-react';
 
 interface TripCardProps {
   trip: TripPost;
 }
 
 export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
-  const { openTripDetail, openPublicProfile } = useTrips();
+  const { openTripDetail, openPublicProfile, trips } = useTrips();
   const { t } = useLanguage();
 
   return (
@@ -81,7 +81,7 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            openPublicProfile(trip.traveler, trip.userId, trip.contacts);
+            openPublicProfile(trip.traveler, trip.userId, trip.contacts, trip.traveler.createdAt);
           }}
           className="flex items-center gap-2.5 min-w-0 text-left hover:opacity-85 transition-opacity focus:outline-hidden group/author"
           title={`View ${trip.traveler.name}'s profile and trip history`}
@@ -90,18 +90,13 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
             <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 text-slate-600 flex items-center justify-center ring-1 ring-sky-200 dark:ring-slate-700 shrink-0 group-hover/author:ring-blue-400">
               <User className="w-4 h-4 text-sky-700 dark:text-sky-300" />
             </div>
-            {trip.traveler.isVerified && (
-              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 text-white rounded-full flex items-center justify-center ring-1 ring-white dark:ring-slate-900">
-                <CheckCircle2 className="w-2.5 h-2.5" />
-              </span>
-            )}
           </div>
           <div className="truncate text-xs">
             <div className="font-semibold text-slate-900 dark:text-slate-100 truncate group-hover/author:text-blue-600 dark:group-hover/author:text-blue-400">
               {trip.traveler.name}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400">
-              <span>{trip.traveler.tripsCompleted} {t('cardTripsCompleted')}</span>
+              <span>{countCompletedTripsForTraveler(trips, { name: trip.traveler.name, userId: trip.userId })} {t('cardTripsCompleted')}</span>
             </div>
           </div>
         </button>
