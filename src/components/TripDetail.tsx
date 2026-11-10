@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { TripPost } from '../types/trip';
 import { useTrips } from '../context/TripContext';
 import { useLanguage } from '../context/LanguageContext';
+import { SEO } from './SEO';
+import { generateTripJsonLd, formatCanonicalUrl } from '../utils/seoUtils';
 import {
   formatDateDisplay,
   getDropOffStatus,
@@ -13,6 +15,7 @@ import {
   countCompletedTripsForTraveler,
   formatMemberSince,
 } from '../utils/tripUtils';
+import { useTravelerAccountDate } from '../utils/userUtils';
 import {
   ArrowLeft,
   ArrowRight,
@@ -47,9 +50,18 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
   const { t, translateItem } = useLanguage();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
+  // Resolve authentic account creation date for traveler profile
+  const travelerAccount = useTravelerAccountDate(
+    trip.userId,
+    trip.traveler.name,
+    trip.traveler.createdAt || trip.traveler.memberSince
+  );
+
   const isOwner = Boolean(
     user && (user.id === trip.userId || (trip.traveler && trip.traveler.name.trim().toLowerCase() === user.name.trim().toLowerCase()))
   );
+
+
 
   const dropOffStatus = getDropOffStatus(trip.lastDropOffDate);
 
@@ -79,8 +91,22 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
     }
   };
 
+  const tripTitle = `${trip.departureCity} to ${trip.arrivalCity} (${trip.weightAvailableKg}kg Luggage Space)`;
+  const tripDescription =
+    trip.announcement ||
+    `Traveler ${trip.traveler.name} is offering ${trip.weightAvailableKg}kg extra luggage capacity from ${trip.departureCity} to ${trip.arrivalCity}. Handover deadline: ${trip.lastDropOffDate}. Delivery: ${trip.checkOutDate}.`;
+  const canonicalUrl = formatCanonicalUrl(trip.id);
+  const tripJsonLd = generateTripJsonLd(trip);
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
+      <SEO
+        title={tripTitle}
+        description={tripDescription}
+        canonicalUrl={canonicalUrl}
+        ogType="article"
+        jsonLd={tripJsonLd}
+      />
       {/* Top back button & share */}
       <div className="flex items-center justify-between mb-6">
         <button
@@ -334,7 +360,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
 
           {/* Traveler Profile Card (Clickable to view public profile) */}
           <section
-            onClick={() => openPublicProfile(trip.traveler, trip.userId, trip.contacts, trip.traveler.createdAt)}
+            onClick={() => openPublicProfile(trip.traveler, trip.userId, trip.contacts, travelerAccount.accountDate || trip.traveler.createdAt)}
             className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs cursor-pointer hover:border-blue-400 dark:hover:border-blue-500/60 hover:shadow-md transition-all group"
             title="Click to view public traveler profile & trip history"
           >
@@ -360,8 +386,8 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                     {trip.traveler.name}
                   </h4>
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {t('detailMemberSince')} {formatMemberSince(trip.traveler.createdAt || trip.traveler.memberSince)}
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  {t('detailMemberSince')} {travelerAccount.formattedMemberSince}
                 </div>
                 <div className="flex items-center gap-2 text-xs font-semibold mt-1 text-slate-700 dark:text-slate-300">
                   <span>{countCompletedTripsForTraveler(trips, { name: trip.traveler.name, userId: trip.userId })} {t('cardTripsCompleted')}</span>

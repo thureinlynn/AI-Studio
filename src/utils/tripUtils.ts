@@ -312,18 +312,27 @@ export function filterAndSortTrips(
  * Formats clean human dates from ISO dates, creation timestamps, or date strings.
  */
 export function formatMemberSince(dateInput?: string): string {
-  if (!dateInput || dateInput === 'Today' || dateInput === '2026') {
-    const now = new Date();
-    return now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  if (!dateInput) {
+    return '2026';
   }
 
-  // Already formatted like "Nov 9, 2026" or "Nov 2026"
-  if (/^[A-Za-z]{3}\s+(\d{1,2},\s+)?\d{4}$/.test(dateInput.trim())) {
-    return dateInput.trim();
+  const trimmed = dateInput.trim();
+  if (!trimmed || trimmed.toLowerCase() === 'today') {
+    return '2026';
+  }
+
+  // Preserve 4-digit year like "2026" or "2025"
+  if (/^\d{4}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  // Already formatted like "Nov 9, 2026", "Nov 2026", or "Jan 2025"
+  if (/^[A-Za-z]{3,9}\s+(\d{1,2},\s+)?\d{4}$/.test(trimmed)) {
+    return trimmed;
   }
 
   try {
-    const d = new Date(dateInput);
+    const d = new Date(trimmed);
     if (!isNaN(d.getTime())) {
       return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
@@ -331,7 +340,7 @@ export function formatMemberSince(dateInput?: string): string {
     // fallback
   }
 
-  return dateInput;
+  return trimmed;
 }
 
 /**

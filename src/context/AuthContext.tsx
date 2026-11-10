@@ -42,6 +42,24 @@ export interface AuthContextType {
 }
 
 const STORAGE_KEY = 'luukyone_auth_user_v2';
+const ACCOUNT_CREATION_KEY = 'luukyone_account_creation_dates';
+
+export const getOrSetLocalAccountCreationTime = (email: string): string => {
+  try {
+    const raw = localStorage.getItem(ACCOUNT_CREATION_KEY);
+    const map = raw ? JSON.parse(raw) : {};
+    const key = email.trim().toLowerCase();
+    if (map[key]) {
+      return map[key];
+    }
+    const nowIso = new Date().toISOString();
+    map[key] = nowIso;
+    localStorage.setItem(ACCOUNT_CREATION_KEY, JSON.stringify(map));
+    return nowIso;
+  } catch {
+    return new Date().toISOString();
+  }
+};
 
 export const DEMO_USERS: Record<string, User> = {
   alex: {
@@ -133,13 +151,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const userDocRef = doc(db, 'users', fbUser.uid);
           const snap = await getDoc(userDocRef);
           const accountCreatedAt =
+            (fbUser.metadata?.creationTime ? new Date(fbUser.metadata.creationTime).toISOString() : null) ||
             (snap.exists() && snap.data().createdAt) ||
-            fbUser.metadata.creationTime ||
             new Date().toISOString();
           const accountMemberSince = formatMemberSince(accountCreatedAt);
 
           if (snap.exists()) {
             const data = snap.data();
+            // Ensure Firestore user document has the true account creation date from Firebase Auth
+            if (accountCreatedAt && data.createdAt !== accountCreatedAt) {
+              setDoc(userDocRef, { createdAt: accountCreatedAt, memberSince: accountMemberSince }, { merge: true }).catch(() => {});
+            }
             const profile: User = {
               id: fbUser.uid,
               name: data.name || fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
@@ -335,7 +357,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const instantSignIn = (email: string, name?: string) => {
     const cleanEmail = email.trim().toLowerCase() || 'traveler@luukyone.com';
     const cleanName = name?.trim() || cleanEmail.split('@')[0];
-    const creationTime = new Date().toISOString();
+    const creationTime = getOrSetLocalAccountCreationTime(cleanEmail);
     const localUser: User = {
       id: `user-${Date.now()}`,
       name: cleanName,
@@ -415,7 +437,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithEmail = (email: string, name?: string) => {
     const cleanEmail = email.trim().toLowerCase();
     const cleanName = name?.trim() || cleanEmail.split('@')[0];
-    const creationTime = new Date().toISOString();
+    const creationTime = getOrSetLocalAccountCreationTime(cleanEmail);
     const localUser: User = {
       id: `user-${Date.now()}`,
       name: cleanName,
@@ -441,7 +463,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const registerUser = (data: any) => {
     const cleanEmail = data.email?.trim().toLowerCase() || 'traveler@mail.com';
-    const creationTime = new Date().toISOString();
+    const creationTime = getOrSetLocalAccountCreationTime(cleanEmail);
     const newUser: User = {
       id: `user-${Date.now()}`,
       name: data.name?.trim() || 'Traveler',

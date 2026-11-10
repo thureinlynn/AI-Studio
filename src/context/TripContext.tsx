@@ -4,6 +4,7 @@ import { INITIAL_TRIPS } from '../data/mockTrips';
 import { db, trackPageView, trackConversion, trackEvent } from '../firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { formatMemberSince } from '../utils/tripUtils';
+import { getCachedAccountDate } from '../utils/userUtils';
 
 export interface PublicTravelerInfo {
   name: string;
@@ -148,15 +149,17 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const openPublicProfile = (traveler: any, userId?: string, contacts?: any, createdAt?: string) => {
+    const targetUserId = userId || traveler.userId || '';
+    const resolvedAccountDate = getCachedAccountDate(targetUserId, traveler.name) || createdAt || traveler.createdAt;
     setPublicProfileTraveler({
       name: traveler.name || 'Traveler',
-      userId: userId || traveler.userId || '',
+      userId: targetUserId,
       avatarUrl: traveler.avatarUrl || '',
       bio: traveler.bio || 'Community traveler on LuuKyone',
       isVerified: false,
       contacts: contacts || traveler.contacts || {},
-      memberSince: formatMemberSince(traveler.createdAt || traveler.memberSince || createdAt),
-      createdAt: traveler.createdAt || createdAt,
+      memberSince: formatMemberSince(resolvedAccountDate || traveler.memberSince),
+      createdAt: resolvedAccountDate,
       tripsCompleted: traveler.tripsCompleted || 0,
       languages: traveler.languages || ['English', 'Myanmar'],
     });

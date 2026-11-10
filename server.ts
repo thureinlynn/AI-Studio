@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import {
   getAllTrips,
@@ -10,6 +11,7 @@ import {
   saveUser,
   getAllUsers,
 } from './server/storage.ts';
+import { generateSitemapXml, SITE_URL } from './src/utils/seoUtils.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,6 +22,32 @@ async function startServer() {
   const isProduction = process.env.NODE_ENV === 'production';
 
   app.use(express.json());
+
+  // SEO Routes: Robots.txt & Dynamic Sitemap.xml
+  app.get('/robots.txt', (req, res) => {
+    const robotsPath = path.resolve(__dirname, 'public/robots.txt');
+    if (fs.existsSync(robotsPath)) {
+      res.type('text/plain').sendFile(robotsPath);
+    } else {
+      res.type('text/plain').send(`User-agent: *\nAllow: /\nDisallow: /api/\nHost: ${SITE_URL}\nSitemap: ${SITE_URL}/sitemap.xml\n`);
+    }
+  });
+
+  app.get('/sitemap.xml', async (req, res) => {
+    try {
+      const trips = await getAllTrips();
+      const xml = generateSitemapXml(trips, SITE_URL);
+      res.type('application/xml').send(xml);
+    } catch (err) {
+      console.error('Error generating live sitemap:', err);
+      const fallbackPath = path.resolve(__dirname, 'public/sitemap.xml');
+      if (fs.existsSync(fallbackPath)) {
+        res.type('application/xml').sendFile(fallbackPath);
+      } else {
+        res.status(500).send('Error generating sitemap');
+      }
+    }
+  });
 
   // API Routes: Trips
   app.get('/api/trips', async (req, res) => {

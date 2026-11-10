@@ -316,14 +316,14 @@ export const translations: Translations = {
   // Public Traveler Profile
   publicProfileTitle: { en: 'Traveler Profile', my: 'ခရီးသွား ပရိုဖိုင်' },
   publicProfileSubtitle: { en: 'Community carrier on LuuKyone classifieds', my: 'လူကြုံ ကြော်ငြာသင်ပုန်းမှ ခရီးသွား' },
-  publicTripHistoryTitle: { en: 'Trip History', my: 'ခရီးစဉ် မှတ်တမ်းများ' },
+  publicTripHistoryTitle: { en: 'Other active trips', my: 'အခြားသော ခရီးစဉ်များ' },
   publicTripHistoryDesc: {
-    en: 'Active and completed trips remain visible until their drop-off deadline passes.',
-    my: 'ပစ္စည်းပေးအပ်ရမည့်ရက် မကျော်လွန်သေးသည့် ခရီးစဉ်များကို ပြသထားပါသည်။',
+    en: 'Currently active and available trips by this traveler.',
+    my: 'ဤခရီးသွား၏ လတ်တလော ဖွင့်လှစ်ထားသော ခရီးစဉ်များ။',
   },
   publicActiveTripsTab: { en: 'Active Trips', my: 'ဖွင့်လှစ်ထားသော ခရီးစဉ်များ' },
   publicCompletedTripsTab: { en: 'Completed Trips', my: 'ပြီးမြောက်ပြီးသော ခရီးစဉ်များ' },
-  publicNoTrips: { en: 'No trips listed currently.', my: 'လက်ရှိတွင် ခရီးစဉ် မရှိသေးပါ။' },
+  publicNoTrips: { en: 'No other active trips currently available.', my: 'လတ်တလော အခြားဖွင့်လှစ်ထားသော ခရီးစဉ် မရှိသေးပါ။' },
   viewTripDetails: { en: 'View Trip Details', my: 'ခရီးစဉ် အသေးစိတ် ကြည့်မည်' },
   viewProfile: { en: 'View Profile', my: 'ပရိုဖိုင် ကြည့်မည်' },
 };

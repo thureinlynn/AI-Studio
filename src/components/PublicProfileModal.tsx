@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useTrips } from '../context/TripContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatDateDisplay, isDropOffDatePassed, countCompletedTripsForTraveler, formatMemberSince } from '../utils/tripUtils';
+import { useTravelerAccountDate } from '../utils/userUtils';
 import {
   X,
   User,
@@ -24,27 +25,14 @@ export const PublicProfileModal: React.FC = () => {
   const { publicProfileTraveler, closePublicProfile, trips, openTripDetail } = useTrips();
   const { t } = useLanguage();
 
-  if (!publicProfileTraveler) return null;
+  // Resolve authentic account creation date for traveler profile
+  const travelerAccount = useTravelerAccountDate(
+    publicProfileTraveler?.userId,
+    publicProfileTraveler?.name,
+    publicProfileTraveler?.createdAt || publicProfileTraveler?.memberSince
+  );
 
-  const todayStr = new Date().toISOString().split('T')[0];
-
-  // Find all trips by this traveler (matching by userId or by name)
-  const travelerTrips = trips.filter((trip) => {
-    const matchUserId = publicProfileTraveler.userId && trip.userId === publicProfileTraveler.userId;
-    const matchName = trip.traveler.name.trim().toLowerCase() === publicProfileTraveler.name.trim().toLowerCase();
-    return matchUserId || matchName;
-  });
-
-  // Profile Trip History: All trips posted by this traveler stay in their history
-  const activeTrips = travelerTrips.filter((t) => t.status === 'active' && !isDropOffDatePassed(t.lastDropOffDate));
-  const pastOrBookedTrips = travelerTrips.filter((t) => t.status !== 'active' || isDropOffDatePassed(t.lastDropOffDate));
-
-  // Unified list: Active upcoming trips first, then past/completed trips
-  const unifiedTrips = useMemo(() => {
-    return [...activeTrips, ...pastOrBookedTrips];
-  }, [activeTrips, pastOrBookedTrips]);
-
-  // Pagination: 10 trips per page
+  // Pagination state: declared at top level to obey React Rules of Hooks
   const ITEMS_PER_PAGE = 10;
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -53,9 +41,30 @@ export const PublicProfileModal: React.FC = () => {
     setCurrentPage(1);
   }, [publicProfileTraveler?.userId, publicProfileTraveler?.name]);
 
-  const totalPages = Math.max(1, Math.ceil(unifiedTrips.length / ITEMS_PER_PAGE));
+  // Find all trips by this traveler (matching by userId or by name)
+  const travelerTrips = useMemo(() => {
+    if (!publicProfileTraveler) return [];
+    return trips.filter((trip) => {
+      const matchUserId = publicProfileTraveler.userId && trip.userId === publicProfileTraveler.userId;
+      const matchName = trip.traveler.name.trim().toLowerCase() === publicProfileTraveler.name.trim().toLowerCase();
+      return matchUserId || matchName;
+    });
+  }, [trips, publicProfileTraveler]);
+
+  // Other active trips: Another user cannot view disappeared/finished trips in the history, only active trips.
+  const activeTrips = useMemo(() => {
+    return travelerTrips.filter((trip) => trip.status === 'active' && !isDropOffDatePassed(trip.lastDropOffDate));
+  }, [travelerTrips]);
+
+  // Displayed trips for public traveler profile: only active trips
+  const displayedTrips = activeTrips;
+
+  // If no traveler is selected, return null AFTER all hooks have executed
+  if (!publicProfileTraveler) return null;
+
+  const totalPages = Math.max(1, Math.ceil(displayedTrips.length / ITEMS_PER_PAGE));
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedTrips = unifiedTrips.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedTrips = displayedTrips.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   // Count trips that completed (disappeared from active board after drop-off date or marked completed)
   const completedCount = countCompletedTripsForTraveler(trips, {
@@ -105,7 +114,7 @@ export const PublicProfileModal: React.FC = () => {
                   </h4>
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  {t('detailMemberSince')} {formatMemberSince(publicProfileTraveler.createdAt || publicProfileTraveler.memberSince)}
+                  {t('detailMemberSince')} {travelerAccount.formattedMemberSince}
                 </div>
                 <div className="text-[11px] font-semibold text-blue-700 dark:text-blue-400 mt-1 flex items-center gap-1.5">
                   <Plane className="w-3.5 h-3.5" />
@@ -174,25 +183,25 @@ export const PublicProfileModal: React.FC = () => {
             )}
           </div>
 
-          {/* Trip History Section */}
+          {/* Other Active Trips Section */}
           <div className="space-y-3.5">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
                   <Luggage className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  <span>{t('publicTripHistoryTitle')}</span>
+                  <span>Other active trips</span>
                 </h4>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   {t('publicTripHistoryDesc')}
                 </p>
               </div>
               <span className="text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-0.5 rounded-full tabular-nums">
-                {travelerTrips.length} {travelerTrips.length === 1 ? 'Trip' : 'Trips'}
+                {displayedTrips.length} {displayedTrips.length === 1 ? 'Trip' : 'Trips'}
                 {totalPages > 1 ? ` · Page ${currentPage} of ${totalPages}` : ''}
               </span>
             </div>
 
-            {travelerTrips.length === 0 ? (
+            {displayedTrips.length === 0 ? (
               <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 text-center text-slate-500">
                 {t('publicNoTrips')}
               </div>
@@ -261,7 +270,7 @@ export const PublicProfileModal: React.FC = () => {
                 {totalPages > 1 && (
                   <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
                     <span className="text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">
-                      Showing {startIndex + 1}–{Math.min(startIndex + ITEMS_PER_PAGE, unifiedTrips.length)} of {unifiedTrips.length} trips
+                      Showing {startIndex + 1}–{Math.min(startIndex + ITEMS_PER_PAGE, displayedTrips.length)} of {displayedTrips.length} trips
                     </span>
 
                     <div className="flex items-center gap-1.5">

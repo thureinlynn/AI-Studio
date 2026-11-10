@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isTripExpired, isDropOffDatePassed, filterAndSortTrips } from './tripUtils';
+import { isTripExpired, isDropOffDatePassed, filterAndSortTrips, formatMemberSince } from './tripUtils';
 import { TripPost, TripFilters } from '../types/trip';
 
 const dummyTraveler = {
@@ -104,4 +104,14 @@ test('filterAndSortTrips excludes fully booked and expired trips from public lis
   });
 
   assert.equal(profileList.length, 3);
+});
+
+test('formatMemberSince formats account creation dates and avoids today date fallback', () => {
+  assert.equal(formatMemberSince('2026-01-15T00:00:00.000Z'), 'Jan 15, 2026');
+  assert.equal(formatMemberSince('Sun, 08 Nov 2026 12:00:00 GMT'), 'Nov 8, 2026');
+  assert.equal(formatMemberSince('Nov 8, 2026'), 'Nov 8, 2026');
+  assert.equal(formatMemberSince('2026'), '2026');
+  assert.equal(formatMemberSince('Today'), '2026');
+  assert.equal(formatMemberSince(''), '2026');
+  assert.equal(formatMemberSince(undefined), '2026');
 });
