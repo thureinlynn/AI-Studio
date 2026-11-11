@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { COMMON_ITEM_CATEGORIES } from '../data/mockTrips';
 import { formatMemberSince } from '../utils/tripUtils';
+import { getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
 import {
   X,
   MapPin,
@@ -183,7 +184,7 @@ export const PostTripModal: React.FC = () => {
       },
       traveler: {
         name: user.name,
-        avatarUrl: user.avatarUrl,
+        avatarUrl: normalizeAvatarUrl(user.avatarUrl, user.id),
         rating: 5.0,
         reviewCount: 1,
         tripsCompleted: 0,
@@ -263,8 +264,15 @@ export const PostTripModal: React.FC = () => {
             {/* Logged in traveler banner */}
             <div className="flex items-center p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 flex items-center justify-center shrink-0 ring-1 ring-slate-200 dark:ring-slate-700">
-                  <User className="w-5 h-5 stroke-[2]" />
+                <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-slate-200 dark:ring-slate-700">
+                  <img
+                    src={normalizeAvatarUrl(user.avatarUrl, user.id)}
+                    alt={user.name}
+                    className="w-full h-full object-cover p-0.5"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                    }}
+                  />
                 </div>
                 <div>
                   <div className="font-semibold text-xs text-slate-900 dark:text-white">

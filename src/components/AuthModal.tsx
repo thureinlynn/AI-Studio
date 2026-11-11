@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTrips } from '../context/TripContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatDateDisplay, formatMemberSince, countCompletedTripsForTraveler, isDropOffDatePassed } from '../utils/tripUtils';
+import { getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
 import {
   X,
   User,
@@ -192,8 +193,15 @@ export const AuthModal: React.FC = () => {
             <div className="space-y-5 text-sm">
               {/* Profile Card */}
               <div className="flex items-center gap-3.5 p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700">
-                <div className="w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 flex items-center justify-center ring-2 ring-amber-400/60 dark:ring-amber-500/40 shrink-0">
-                  <User className="w-7 h-7 stroke-[2.2]" />
+                <div className="w-14 h-14 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center ring-2 ring-blue-300 dark:ring-blue-700/60 shrink-0 overflow-hidden shadow-xs">
+                  <img
+                    src={normalizeAvatarUrl(user.avatarUrl, user.id)}
+                    alt={user.name}
+                    className="w-full h-full object-cover p-1 bg-white dark:bg-slate-800"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                    }}
+                  />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">

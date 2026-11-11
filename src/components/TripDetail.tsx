@@ -15,7 +15,7 @@ import {
   countCompletedTripsForTraveler,
   formatMemberSince,
 } from '../utils/tripUtils';
-import { useTravelerAccountDate } from '../utils/userUtils';
+import { useTravelerAccountDate, getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
 import {
   ArrowLeft,
   ArrowRight,
@@ -375,8 +375,15 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
 
             <div className="flex items-center gap-4 mb-4">
               <div className="relative shrink-0">
-                <div className="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 flex items-center justify-center ring-2 ring-blue-300 dark:ring-blue-700/60 shrink-0 group-hover:scale-105 transition-transform">
-                  <User className="w-8 h-8 stroke-[2.2]" />
+                <div className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center ring-2 ring-blue-300 dark:ring-blue-700/60 shrink-0 overflow-hidden shadow-xs group-hover:scale-105 transition-transform">
+                  <img
+                    src={normalizeAvatarUrl(trip.traveler.avatarUrl, trip.userId || trip.traveler.name)}
+                    alt={trip.traveler.name}
+                    className="w-full h-full object-cover p-1 bg-white dark:bg-slate-800"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                    }}
+                  />
                 </div>
               </div>
 

@@ -12,6 +12,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { formatMemberSince } from '../utils/tripUtils';
+import { getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
 
 export interface AuthContextType {
   user: User | null;
@@ -66,7 +67,7 @@ export const DEMO_USERS: Record<string, User> = {
     id: 'user-thant',
     name: 'Alex Thant',
     email: 'alex.thant@travelmail.com',
-    avatarUrl: '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
+    avatarUrl: getDicebearAvatar('user-thant'),
     bio: 'Frequent flyer between Bangkok & Yangon. Reliable community carrier.',
     isVerified: false,
     createdAt: '2026-01-15T00:00:00.000Z',
@@ -85,7 +86,7 @@ export const DEMO_USERS: Record<string, User> = {
     id: 'user-elena',
     name: 'Elena Rostova',
     email: 'elena.rostova@globetrot.com',
-    avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
+    avatarUrl: getDicebearAvatar('user-elena'),
     bio: 'Digital nomad and international event producer.',
     isVerified: false,
     createdAt: '2026-02-01T00:00:00.000Z',
@@ -104,7 +105,7 @@ export const DEMO_USERS: Record<string, User> = {
     id: 'user-kenji',
     name: 'Kenji Sato',
     email: 'kenji.sato@tokyo-design.jp',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
+    avatarUrl: getDicebearAvatar('user-kenji'),
     bio: 'Tech consultant flying Tokyo <-> Singapore weekly.',
     isVerified: false,
     createdAt: '2026-02-10T00:00:00.000Z',
@@ -147,26 +148,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
       if (fbUser) {
+        const dicebearAvatar = getDicebearAvatar(fbUser.uid);
+        const savedStr = localStorage.getItem(STORAGE_KEY);
+        let existingLocalProfile: User | null = null;
+        if (savedStr) {
+          try {
+            const parsed = JSON.parse(savedStr);
+            if (parsed && parsed.id === fbUser.uid) {
+              existingLocalProfile = {
+                ...parsed,
+                avatarUrl: normalizeAvatarUrl(parsed.avatarUrl, fbUser.uid),
+              };
+              setUser(existingLocalProfile);
+            }
+          } catch {}
+        }
+
         try {
           const userDocRef = doc(db, 'users', fbUser.uid);
-          const snap = await getDoc(userDocRef);
+          let snap: any = null;
+          try {
+            const docPromise = getDoc(userDocRef);
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('timeout')), 3000)
+            );
+            snap = await Promise.race([docPromise, timeoutPromise]);
+          } catch (docErr: any) {
+            console.debug('[Firestore] Using offline cache for user profile:', docErr?.message);
+          }
+
           const accountCreatedAt =
             (fbUser.metadata?.creationTime ? new Date(fbUser.metadata.creationTime).toISOString() : null) ||
-            (snap.exists() && snap.data().createdAt) ||
+            (snap && snap.exists() && snap.data().createdAt) ||
+            existingLocalProfile?.createdAt ||
             new Date().toISOString();
           const accountMemberSince = formatMemberSince(accountCreatedAt);
 
-          if (snap.exists()) {
+          if (snap && snap.exists()) {
             const data = snap.data();
+            const avatar = normalizeAvatarUrl(data.avatarUrl, fbUser.uid);
+
             // Ensure Firestore user document has the true account creation date from Firebase Auth
             if (accountCreatedAt && data.createdAt !== accountCreatedAt) {
-              setDoc(userDocRef, { createdAt: accountCreatedAt, memberSince: accountMemberSince }, { merge: true }).catch(() => {});
+              setDoc(userDocRef, { createdAt: accountCreatedAt, memberSince: accountMemberSince, avatarUrl: avatar }, { merge: true }).catch(() => {});
             }
             const profile: User = {
               id: fbUser.uid,
               name: data.name || fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
               email: fbUser.email || '',
-              avatarUrl: data.avatarUrl || '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
+              avatarUrl: avatar,
               bio: data.bio || 'Community traveler on LuuKyone.',
               isVerified: false,
               createdAt: accountCreatedAt,
@@ -183,13 +213,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             };
             setUser(profile);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-          } else {
+          } else if (snap && !snap.exists()) {
             // First time login - auto provision profile document in Firestore
             const initialProfile: User = {
               id: fbUser.uid,
               name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
               email: fbUser.email || '',
-              avatarUrl: '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
+              avatarUrl: dicebearAvatar,
               bio: 'Community traveler sharing extra baggage allowance.',
               isVerified: false,
               createdAt: accountCreatedAt,
@@ -204,18 +234,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               tripsCount: 0,
               languages: ['English', 'Myanmar'],
             };
-            await setDoc(userDocRef, initialProfile, { merge: true });
+            setDoc(userDocRef, initialProfile, { merge: true }).catch(() => {});
             setUser(initialProfile);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(initialProfile));
+          } else {
+            // Offline fallback
+            const fallbackProfile: User = existingLocalProfile || {
+              id: fbUser.uid,
+              name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
+              email: fbUser.email || '',
+              avatarUrl: dicebearAvatar,
+              bio: 'Community traveler on LuuKyone.',
+              isVerified: false,
+              createdAt: accountCreatedAt,
+              memberSince: accountMemberSince,
+              contacts: {
+                whatsapp: '',
+                viber: '',
+                telegram: '',
+                facebook: '',
+                preferred: 'whatsapp',
+              },
+              tripsCount: 0,
+              languages: ['English', 'Myanmar'],
+            };
+            setUser(fallbackProfile);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(fallbackProfile));
           }
         } catch (err) {
-          console.warn('[Firestore] Error loading user profile document:', err);
+          console.debug('[Firestore] Offline fallback applied:', err);
           const fallbackCreatedAt = fbUser.metadata.creationTime || new Date().toISOString();
-          const fallbackProfile: User = {
+          const fallbackProfile: User = existingLocalProfile || {
             id: fbUser.uid,
             name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
             email: fbUser.email || '',
-            avatarUrl: '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
+            avatarUrl: dicebearAvatar,
             bio: 'Traveler on LuuKyone.',
             isVerified: false,
             createdAt: fallbackCreatedAt,
@@ -305,7 +358,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: uid,
         name: cleanName,
         email: email.trim().toLowerCase(),
-        avatarUrl: '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
+        avatarUrl: getDicebearAvatar(uid),
         bio: profileData.bio?.trim() || 'Community traveler sharing extra baggage allowance.',
         isVerified: false,
         createdAt: creationTime,
@@ -362,7 +415,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: `user-${Date.now()}`,
       name: cleanName,
       email: cleanEmail,
-      avatarUrl: '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
+      avatarUrl: getDicebearAvatar(cleanEmail),
       bio: 'Community traveler sharing extra baggage allowance.',
       isVerified: false,
       createdAt: creationTime,
@@ -442,7 +495,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: `user-${Date.now()}`,
       name: cleanName,
       email: cleanEmail,
-      avatarUrl: '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
+      avatarUrl: getDicebearAvatar(cleanEmail),
       bio: 'Traveler on LuuKyone classified community.',
       isVerified: false,
       createdAt: creationTime,
@@ -468,7 +521,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: `user-${Date.now()}`,
       name: data.name?.trim() || 'Traveler',
       email: cleanEmail,
-      avatarUrl: '/src/assets/images/traveler_profile_avatar_1793803079186.jpg',
+      avatarUrl: getDicebearAvatar(cleanEmail),
       bio: data.bio?.trim() || 'Traveler providing extra luggage space.',
       isVerified: false,
       createdAt: creationTime,

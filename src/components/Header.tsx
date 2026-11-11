@@ -2,6 +2,7 @@ import React from 'react';
 import { useTrips } from '../context/TripContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
 import { Plus, ShieldAlert, User, Settings } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -76,10 +77,20 @@ export const Header: React.FC = () => {
           )}
           <button
             onClick={openAuthModal}
-            className="flex items-center gap-1 transition-colors whitespace-nowrap cursor-pointer hover:text-slate-900 dark:hover:text-white py-1"
+            className="flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer hover:text-slate-900 dark:hover:text-white py-1"
           >
-            <User className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span>{isAuthenticated ? 'Profile' : t('navLogin')}</span>
+            {isAuthenticated && user ? (
+              <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 ring-1 ring-blue-300 dark:ring-blue-600 flex items-center justify-center shrink-0">
+                <img
+                  src={normalizeAvatarUrl(user.avatarUrl, user.id)}
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <User className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+            )}
+            <span>{isAuthenticated && user ? user.name.split(' ')[0] : t('navLogin')}</span>
           </button>
         </nav>
 

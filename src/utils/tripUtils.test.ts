@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { isTripExpired, isDropOffDatePassed, filterAndSortTrips, formatMemberSince } from './tripUtils';
+import { getDicebearAvatar, normalizeAvatarUrl } from './userUtils';
 import { TripPost, TripFilters } from '../types/trip';
 
 const dummyTraveler = {
@@ -114,4 +115,19 @@ test('formatMemberSince formats account creation dates and avoids today date fal
   assert.equal(formatMemberSince('Today'), '2026');
   assert.equal(formatMemberSince(''), '2026');
   assert.equal(formatMemberSince(undefined), '2026');
+});
+
+test('getDicebearAvatar generates valid Dicebear Avataaars SVG url', () => {
+  const avatarUrl = getDicebearAvatar('user-123');
+  assert.equal(avatarUrl, 'https://api.dicebear.com/7.x/avataaars/svg?seed=user-123');
+
+  // Test automatic migration from legacy placeholders and identicon
+  assert.equal(
+    normalizeAvatarUrl('/src/assets/images/traveler_profile_avatar_1793803079186.jpg', 'user-123'),
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=user-123'
+  );
+  assert.equal(
+    normalizeAvatarUrl('https://api.dicebear.com/7.x/identicon/svg?seed=user-123', 'user-123'),
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=user-123'
+  );
 });

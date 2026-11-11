@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useTrips } from '../context/TripContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatDateDisplay, isDropOffDatePassed, countCompletedTripsForTraveler, formatMemberSince } from '../utils/tripUtils';
-import { useTravelerAccountDate } from '../utils/userUtils';
+import { useTravelerAccountDate, getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
 import {
   X,
   User,
@@ -102,8 +102,15 @@ export const PublicProfileModal: React.FC = () => {
           <div className="p-5 bg-gradient-to-br from-blue-50/70 via-sky-50/50 to-slate-50 dark:from-slate-800/80 dark:via-slate-800/50 dark:to-slate-900 rounded-3xl border border-blue-100/80 dark:border-slate-700/80 space-y-4">
             <div className="flex items-center gap-4">
               <div className="relative shrink-0">
-                <div className="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 flex items-center justify-center ring-2 ring-blue-300 dark:ring-blue-700/60 shrink-0">
-                  <User className="w-8 h-8 stroke-[2.2]" />
+                <div className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center ring-2 ring-blue-300 dark:ring-blue-700/60 shrink-0 overflow-hidden shadow-xs">
+                  <img
+                    src={normalizeAvatarUrl(publicProfileTraveler.avatarUrl, publicProfileTraveler.userId || publicProfileTraveler.name)}
+                    alt={publicProfileTraveler.name}
+                    className="w-full h-full object-cover p-1 bg-white dark:bg-slate-800"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                    }}
+                  />
                 </div>
               </div>
 

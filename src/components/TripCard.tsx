@@ -3,6 +3,7 @@ import { TripPost } from '../types/trip';
 import { useTrips } from '../context/TripContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatDateDisplay, countCompletedTripsForTraveler } from '../utils/tripUtils';
+import { getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
 import { ArrowRight, Calendar, Clock, ChevronRight, User } from 'lucide-react';
 
 interface TripCardProps {
@@ -87,8 +88,15 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
           title={`View ${trip.traveler.name}'s profile and trip history`}
         >
           <div className="relative shrink-0">
-            <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 text-slate-600 flex items-center justify-center ring-1 ring-sky-200 dark:ring-slate-700 shrink-0 group-hover/author:ring-blue-400">
-              <User className="w-4 h-4 text-sky-700 dark:text-sky-300" />
+            <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center ring-1 ring-sky-200 dark:ring-slate-700 shrink-0 overflow-hidden group-hover/author:ring-blue-400">
+              <img
+                src={normalizeAvatarUrl(trip.traveler.avatarUrl, trip.userId || trip.traveler.name)}
+                alt={trip.traveler.name}
+                className="w-full h-full object-cover p-0.5"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
             </div>
           </div>
           <div className="truncate text-xs">

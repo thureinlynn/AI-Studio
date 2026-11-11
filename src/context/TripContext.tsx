@@ -4,7 +4,7 @@ import { INITIAL_TRIPS } from '../data/mockTrips';
 import { db, trackPageView, trackConversion, trackEvent } from '../firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { formatMemberSince } from '../utils/tripUtils';
-import { getCachedAccountDate } from '../utils/userUtils';
+import { getCachedAccountDate, getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
 
 export interface PublicTravelerInfo {
   name: string;
@@ -154,7 +154,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setPublicProfileTraveler({
       name: traveler.name || 'Traveler',
       userId: targetUserId,
-      avatarUrl: traveler.avatarUrl || '',
+      avatarUrl: normalizeAvatarUrl(traveler.avatarUrl, targetUserId || traveler.name),
       bio: traveler.bio || 'Community traveler on LuuKyone',
       isVerified: false,
       contacts: contacts || traveler.contacts || {},

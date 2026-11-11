@@ -6,6 +6,31 @@ import { formatMemberSince } from './tripUtils';
 // In-memory cache for user account creation dates to eliminate duplicate Firestore calls
 const accountCreationCache = new Map<string, string>();
 
+/**
+ * Generates dynamic profile picture URL using Dicebear Avataaars SVG.
+ * Produces illustrated character avatars with expressions, hair, glasses, and clothing.
+ * e.g. https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}
+ */
+export function getDicebearAvatar(seed?: string): string {
+  const cleanSeed = encodeURIComponent((seed || 'traveler').trim());
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${cleanSeed}`;
+}
+
+/**
+ * Normalizes avatar URLs to ensure the Avataaars style is used,
+ * automatically migrating legacy placeholder assets and older identicon URLs.
+ */
+export function normalizeAvatarUrl(avatarUrl?: string, seed?: string): string {
+  if (
+    !avatarUrl ||
+    avatarUrl.includes('traveler_profile_avatar') ||
+    avatarUrl.includes('dicebear.com/7.x/identicon')
+  ) {
+    return getDicebearAvatar(seed);
+  }
+  return avatarUrl;
+}
+
 // Fallback dates for known demo travelers
 export const KNOWN_TRAVELER_DATES: Record<string, string> = {
   'alex thant': '2026-01-15T00:00:00.000Z',
@@ -73,7 +98,7 @@ export async function fetchTravelerAccountDate(
       }
     }
   } catch (err) {
-    console.warn('[userUtils] Error fetching traveler account date:', err);
+    console.debug('[userUtils] Traveler account date offline fallback:', err);
   }
 
   if (fallbackDate) {

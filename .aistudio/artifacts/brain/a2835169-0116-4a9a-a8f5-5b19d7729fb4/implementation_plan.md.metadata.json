@@ -1,6 +1,0 @@
-{
-  "summary":  "Implementation plan for user profile trip history pagination (10 items per page with numbered navigation, Previous/Next controls, and active-first unified timeline ordering).",
-  "updatedAt":  "2026-11-09T11:17:59.397728442Z",
-  "requestFeedback":  true,
-  "userFacing":  true
-}
