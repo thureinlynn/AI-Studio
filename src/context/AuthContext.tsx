@@ -8,8 +8,6 @@ import {
   onAuthStateChanged,
   updateProfile,
   sendPasswordResetEmail,
-  GoogleAuthProvider,
-  signInWithPopup,
   User as FirebaseUser,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -21,7 +19,6 @@ export interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   isAuthenticated: boolean;
   isLoadingAuth: boolean;
-  loginWithGoogle: (preferredEmail?: string) => Promise<{ success: boolean; error?: string }>;
   loginWithFirebase: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signUpWithFirebase: (
     email: string,
@@ -299,130 +296,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  const loginWithGoogle = async (preferredEmail?: string) => {
-    setIsLoadingAuth(true);
-    try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      
-      let fbUser: any = null;
-
-      try {
-        const res = await signInWithPopup(auth, provider);
-        fbUser = res.user;
-      } catch (popupErr: any) {
-        if (popupErr.code === 'auth/unauthorized-domain') {
-          console.info('[Google Auth] Preview domain not yet in Firebase authorized list. Activating seamless Google account session.');
-          const targetEmail = (preferredEmail && preferredEmail.includes('@') ? preferredEmail : 'thureinlynn.mm@gmail.com').trim().toLowerCase();
-          const targetName = targetEmail === 'thureinlynn.mm@gmail.com' ? 'Thurein Lynn' : targetEmail.split('@')[0];
-          const deterministicUid = `google-${targetEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
-          
-          fbUser = {
-            uid: deterministicUid,
-            email: targetEmail,
-            displayName: targetName,
-            photoURL: getDicebearAvatar(deterministicUid),
-            metadata: {
-              creationTime: getOrSetLocalAccountCreationTime(targetEmail),
-            },
-          };
-        } else {
-          throw popupErr;
-        }
-      }
-
-      const dicebearAvatar = getDicebearAvatar(fbUser.uid);
-      const accountCreatedAt =
-        (fbUser.metadata?.creationTime ? new Date(fbUser.metadata.creationTime).toISOString() : null) ||
-        new Date().toISOString();
-      const accountMemberSince = formatMemberSince(accountCreatedAt);
-
-      const userDocRef = doc(db, 'users', fbUser.uid);
-      let snap: any = null;
-      try {
-        const docPromise = getDoc(userDocRef);
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000));
-        snap = await Promise.race([docPromise, timeoutPromise]);
-      } catch (docErr) {
-        console.debug('[Firestore] Using offline fallback for Google user:', docErr);
-      }
-
-      let profile: User;
-      if (snap && snap.exists()) {
-        const data = snap.data();
-        profile = {
-          id: fbUser.uid,
-          name: data.name || fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
-          email: fbUser.email || '',
-          avatarUrl: normalizeAvatarUrl(data.avatarUrl || fbUser.photoURL, fbUser.uid),
-          bio: data.bio || 'Community traveler on LuuKyone.',
-          isVerified: true,
-          createdAt: data.createdAt || accountCreatedAt,
-          memberSince: formatMemberSince(data.createdAt || accountCreatedAt),
-          contacts: {
-            whatsapp: data.contacts?.whatsapp || '',
-            viber: data.contacts?.viber || '',
-            telegram: data.contacts?.telegram || '',
-            facebook: data.contacts?.facebook || '',
-            preferred: data.contacts?.preferred || 'whatsapp',
-          },
-          tripsCount: data.tripsCount || 0,
-          languages: data.languages || ['English', 'Myanmar'],
-        };
-      } else {
-        profile = {
-          id: fbUser.uid,
-          name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
-          email: fbUser.email || '',
-          avatarUrl: dicebearAvatar,
-          bio: 'Community traveler on LuuKyone (Google Account).',
-          isVerified: true,
-          createdAt: accountCreatedAt,
-          memberSince: accountMemberSince,
-          contacts: {
-            whatsapp: '',
-            viber: '',
-            telegram: '',
-            facebook: '',
-            preferred: 'whatsapp',
-          },
-          tripsCount: 0,
-          languages: ['English', 'Myanmar'],
-        };
-        // Persist to Firestore
-        setDoc(userDocRef, profile, { merge: true }).catch((err) => {
-          console.debug('[Firestore] Profile sync deferred:', err);
-        });
-      }
-
-      setUser(profile);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-      return { success: true };
-    } catch (err: any) {
-      let message = 'Failed to sign in with Google.';
-      if (err.code === 'auth/popup-closed-by-user') {
-        message = 'Google sign-in popup was closed before completing.';
-      } else if (err.code === 'auth/popup-blocked') {
-        message = 'Popup was blocked by your browser. Please allow popups for this site.';
-      } else if (err.code === 'auth/cancelled-popup-request') {
-        message = 'Sign-in cancelled.';
-      } else if (
-        err.code === 'auth/configuration-not-found' ||
-        err.code === 'auth/operation-not-allowed'
-      ) {
-        message =
-          'Google Sign-In is not enabled yet in your Firebase Console (project luukyone-b17b7). Please open Firebase Console > Authentication > Sign-in method and enable "Google".';
-      } else if (err.code === 'auth/network-request-failed') {
-        message = 'Network error connecting to Google Authentication. Check your internet connection.';
-      } else if (err.message) {
-        message = err.message;
-      }
-      return { success: false, error: message };
-    } finally {
-      setIsLoadingAuth(false);
-    }
-  };
-
   const loginWithFirebase = async (email: string, password: string) => {
     setIsLoadingAuth(true);
     try {
@@ -678,7 +551,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         firebaseUser,
         isAuthenticated: !!user,
         isLoadingAuth,
-        loginWithGoogle,
         loginWithFirebase,
         signUpWithFirebase,
         sendPasswordReset,

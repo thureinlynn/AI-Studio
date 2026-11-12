@@ -2,18 +2,13 @@ import React from 'react';
 import { useTrips } from '../context/TripContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { getDicebearAvatar, normalizeAvatarUrl, UNCLE_AVATAR_URL, isAdminAccount } from '../utils/userUtils';
+import { getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
 import { Plus, ShieldAlert, User, Settings } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const { openPostModal, openAuthModal, openSafetyModal, activeTab, setActiveTab, closeTripDetail } = useTrips();
   const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
-
-  const isCurrentUserAdmin = user ? isAdminAccount(user) : false;
-  const headerAvatar = user
-    ? (isCurrentUserAdmin ? UNCLE_AVATAR_URL : normalizeAvatarUrl(user.avatarUrl, user.id, user))
-    : '';
 
   const handleNavClick = (tab: 'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings') => {
     closeTripDetail();
@@ -87,7 +82,7 @@ export const Header: React.FC = () => {
             {isAuthenticated && user ? (
               <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 ring-1 ring-blue-300 dark:ring-blue-600 flex items-center justify-center shrink-0">
                 <img
-                  src={headerAvatar}
+                  src={normalizeAvatarUrl(user.avatarUrl, user.id)}
                   alt={user.name}
                   className="w-full h-full object-cover"
                 />
