@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TripPost } from '../types/trip';
 import { useTrips } from '../context/TripContext';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { SEO } from './SEO';
 import { generateTripJsonLd, formatCanonicalUrl } from '../utils/seoUtils';
@@ -15,7 +16,7 @@ import {
   countCompletedTripsForTraveler,
   formatMemberSince,
 } from '../utils/tripUtils';
-import { useTravelerAccountDate, getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
+import { useTravelerAccountDate, getDicebearAvatar, normalizeAvatarUrl, UNCLE_AVATAR_URL, isAdminAccount } from '../utils/userUtils';
 import {
   ArrowLeft,
   ArrowRight,
@@ -37,7 +38,6 @@ import {
   Luggage,
   Trash2,
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import { trackConversion } from '../firebase';
 
 interface TripDetailProps {
@@ -61,7 +61,14 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
     user && (user.id === trip.userId || (trip.traveler && trip.traveler.name.trim().toLowerCase() === user.name.trim().toLowerCase()))
   );
 
+  const isTravelerAdmin =
+    isAdminAccount(trip.traveler) ||
+    isAdminAccount(trip.userId) ||
+    (user && user.id === trip.userId && isAdminAccount(user));
 
+  const travelerAvatar = isTravelerAdmin
+    ? UNCLE_AVATAR_URL
+    : normalizeAvatarUrl(trip.traveler.avatarUrl, trip.userId || trip.traveler.name, trip.traveler);
 
   const dropOffStatus = getDropOffStatus(trip.lastDropOffDate);
 
@@ -377,7 +384,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
               <div className="relative shrink-0">
                 <div className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center ring-2 ring-blue-300 dark:ring-blue-700/60 shrink-0 overflow-hidden shadow-xs group-hover:scale-105 transition-transform">
                   <img
-                    src={normalizeAvatarUrl(trip.traveler.avatarUrl, trip.userId || trip.traveler.name)}
+                    src={travelerAvatar}
                     alt={trip.traveler.name}
                     className="w-full h-full object-cover p-1 bg-white dark:bg-slate-800"
                     onError={(e) => {

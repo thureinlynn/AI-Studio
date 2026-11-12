@@ -1,9 +1,10 @@
 import React from 'react';
 import { TripPost } from '../types/trip';
 import { useTrips } from '../context/TripContext';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatDateDisplay, countCompletedTripsForTraveler } from '../utils/tripUtils';
-import { getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
+import { getDicebearAvatar, normalizeAvatarUrl, UNCLE_AVATAR_URL, isAdminAccount } from '../utils/userUtils';
 import { ArrowRight, Calendar, Clock, ChevronRight, User } from 'lucide-react';
 
 interface TripCardProps {
@@ -12,7 +13,16 @@ interface TripCardProps {
 
 export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
   const { openTripDetail, openPublicProfile, trips } = useTrips();
+  const { user } = useAuth();
   const { t } = useLanguage();
+
+  const isAuthorAdmin =
+    isAdminAccount(trip.traveler) ||
+    isAdminAccount(trip.userId) ||
+    (user && user.id === trip.userId && isAdminAccount(user));
+  const authorAvatar = isAuthorAdmin
+    ? UNCLE_AVATAR_URL
+    : normalizeAvatarUrl(trip.traveler.avatarUrl, trip.userId || trip.traveler.name, trip.traveler);
 
   return (
     <article
@@ -90,7 +100,7 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
           <div className="relative shrink-0">
             <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center ring-1 ring-sky-200 dark:ring-slate-700 shrink-0 overflow-hidden group-hover/author:ring-blue-400">
               <img
-                src={normalizeAvatarUrl(trip.traveler.avatarUrl, trip.userId || trip.traveler.name)}
+                src={authorAvatar}
                 alt={trip.traveler.name}
                 className="w-full h-full object-cover p-0.5"
                 onError={(e) => {
