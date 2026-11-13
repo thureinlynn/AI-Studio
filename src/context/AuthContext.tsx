@@ -14,7 +14,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { formatMemberSince } from '../utils/tripUtils';
-import { getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
+import { getDicebearAvatar, normalizeAvatarUrl, isAuthenticPhotoUrl } from '../utils/userUtils';
 
 export interface AuthContextType {
   user: User | null;
@@ -151,16 +151,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
       if (fbUser) {
-        const dicebearAvatar = getDicebearAvatar(fbUser.uid);
+        const userMeta = { id: fbUser.uid, email: fbUser.email || '', name: fbUser.displayName || '' };
+        const defaultAvatar = normalizeAvatarUrl(fbUser.photoURL || undefined, fbUser.uid, userMeta);
         const savedStr = localStorage.getItem(STORAGE_KEY);
         let existingLocalProfile: User | null = null;
         if (savedStr) {
           try {
             const parsed = JSON.parse(savedStr);
             if (parsed && parsed.id === fbUser.uid) {
+              const preferredRaw = isAuthenticPhotoUrl(parsed.avatarUrl)
+                ? parsed.avatarUrl
+                : fbUser.photoURL || parsed.avatarUrl;
               existingLocalProfile = {
                 ...parsed,
-                avatarUrl: normalizeAvatarUrl(parsed.avatarUrl, fbUser.uid),
+                avatarUrl: normalizeAvatarUrl(preferredRaw, fbUser.uid, { ...userMeta, ...parsed }),
               };
               setUser(existingLocalProfile);
             }
@@ -189,10 +193,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           if (snap && snap.exists()) {
             const data = snap.data();
-            const avatar = normalizeAvatarUrl(data.avatarUrl, fbUser.uid);
+            const preferredRaw = isAuthenticPhotoUrl(data.avatarUrl)
+              ? data.avatarUrl
+              : fbUser.photoURL || data.avatarUrl;
+            const avatar = normalizeAvatarUrl(preferredRaw, fbUser.uid, { ...userMeta, ...data });
 
-            // Ensure Firestore user document has the true account creation date from Firebase Auth
-            if (accountCreatedAt && data.createdAt !== accountCreatedAt) {
+            // Ensure Firestore user document has the true account creation date and normalized avatar
+            if ((accountCreatedAt && data.createdAt !== accountCreatedAt) || data.avatarUrl !== avatar) {
               setDoc(userDocRef, { createdAt: accountCreatedAt, memberSince: accountMemberSince, avatarUrl: avatar }, { merge: true }).catch(() => {});
             }
             const profile: User = {
@@ -222,7 +229,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               id: fbUser.uid,
               name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
               email: fbUser.email || '',
-              avatarUrl: dicebearAvatar,
+              avatarUrl: defaultAvatar,
               bio: 'Community traveler sharing extra baggage allowance.',
               isVerified: false,
               createdAt: accountCreatedAt,
@@ -246,7 +253,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               id: fbUser.uid,
               name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
               email: fbUser.email || '',
-              avatarUrl: dicebearAvatar,
+              avatarUrl: defaultAvatar,
               bio: 'Community traveler on LuuKyone.',
               isVerified: false,
               createdAt: accountCreatedAt,
@@ -271,7 +278,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: fbUser.uid,
             name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
             email: fbUser.email || '',
-            avatarUrl: dicebearAvatar,
+            avatarUrl: defaultAvatar,
             bio: 'Traveler on LuuKyone.',
             isVerified: false,
             createdAt: fallbackCreatedAt,
@@ -307,7 +314,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const cred = await signInWithPopup(auth, provider);
       const fbUser = cred.user;
 
-      const dicebearAvatar = getDicebearAvatar(fbUser.uid);
+      const userMeta = { id: fbUser.uid, email: fbUser.email || '', name: fbUser.displayName || '' };
+      const googleAvatar = normalizeAvatarUrl(fbUser.photoURL || undefined, fbUser.uid, userMeta);
       const accountCreatedAt =
         (fbUser.metadata?.creationTime ? new Date(fbUser.metadata.creationTime).toISOString() : null) ||
         new Date().toISOString();
@@ -326,11 +334,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       let profile: User;
       if (snap && snap.exists()) {
         const data = snap.data();
+        const preferredRaw = isAuthenticPhotoUrl(data.avatarUrl)
+          ? data.avatarUrl
+          : fbUser.photoURL || data.avatarUrl;
+        const resolvedAvatar = normalizeAvatarUrl(preferredRaw, fbUser.uid, { ...userMeta, ...data });
+        if (data.avatarUrl !== resolvedAvatar) {
+          setDoc(userDocRef, { avatarUrl: resolvedAvatar }, { merge: true }).catch(() => {});
+        }
         profile = {
           id: fbUser.uid,
           name: data.name || fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
           email: fbUser.email || '',
-          avatarUrl: normalizeAvatarUrl(data.avatarUrl || fbUser.photoURL, fbUser.uid),
+          avatarUrl: resolvedAvatar,
           bio: data.bio || 'Community traveler on LuuKyone.',
           isVerified: false,
           createdAt: data.createdAt || accountCreatedAt,
@@ -350,7 +365,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: fbUser.uid,
           name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
           email: fbUser.email || '',
-          avatarUrl: dicebearAvatar,
+          avatarUrl: googleAvatar,
           bio: 'Community traveler sharing extra baggage allowance.',
           isVerified: false,
           createdAt: accountCreatedAt,
@@ -452,11 +467,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const creationTime = cred.user.metadata.creationTime || new Date().toISOString();
       const memberSince = formatMemberSince(creationTime);
 
+      const cleanEmail = email.trim().toLowerCase();
       const newProfile: User = {
         id: uid,
         name: cleanName,
-        email: email.trim().toLowerCase(),
-        avatarUrl: getDicebearAvatar(uid),
+        email: cleanEmail,
+        avatarUrl: normalizeAvatarUrl(undefined, uid, { id: uid, email: cleanEmail, name: cleanName }),
         bio: profileData.bio?.trim() || 'Community traveler sharing extra baggage allowance.',
         isVerified: false,
         createdAt: creationTime,

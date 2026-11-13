@@ -16,7 +16,7 @@ import {
   countCompletedTripsForTraveler,
   formatMemberSince,
 } from '../utils/tripUtils';
-import { useTravelerAccountDate, getDicebearAvatar, normalizeAvatarUrl, UNCLE_AVATAR_URL, isAdminAccount } from '../utils/userUtils';
+import { useTravelerAccountDate, normalizeAvatarUrl, handleAvatarImageError } from '../utils/userUtils';
 import {
   ArrowLeft,
   ArrowRight,
@@ -50,32 +50,35 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
   const { t, translateItem } = useLanguage();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
+  const travelerName = trip.traveler?.name || 'Traveler';
+
   // Resolve authentic account creation date for traveler profile
   const travelerAccount = useTravelerAccountDate(
     trip.userId,
-    trip.traveler.name,
-    trip.traveler.createdAt || trip.traveler.memberSince
+    travelerName,
+    trip.traveler?.createdAt || trip.traveler?.memberSince
   );
+
+  const dropOffStatus = getDropOffStatus(trip.lastDropOffDate);
 
   const isOwner = Boolean(
-    user && (user.id === trip.userId || (trip.traveler && trip.traveler.name.trim().toLowerCase() === user.name.trim().toLowerCase()))
+    user && (user.id === trip.userId || (travelerName && travelerName.trim().toLowerCase() === user.name.trim().toLowerCase()))
   );
 
-  const isTravelerAdmin =
-    isAdminAccount(trip.traveler) ||
-    isAdminAccount(trip.userId) ||
-    (user && user.id === trip.userId && isAdminAccount(user));
+  const isOwnTrip = Boolean(user && user.id === trip.userId);
+  const travelerAvatar = normalizeAvatarUrl(
+    isOwnTrip ? user!.avatarUrl : trip.traveler?.avatarUrl,
+    trip.userId || travelerName,
+    isOwnTrip ? user : trip.traveler
+  );
 
-  const travelerAvatar = isTravelerAdmin
-    ? UNCLE_AVATAR_URL
-    : normalizeAvatarUrl(trip.traveler.avatarUrl, trip.userId || trip.traveler.name, trip.traveler);
+  const contacts = trip.contacts || { whatsapp: '', viber: '', telegram: '', facebook: '', preferred: 'whatsapp' as const };
+  const prefilledMsg = `Hi ${travelerName}, I found your trip from ${trip.departureCity} to ${trip.arrivalCity} on LuuKyone. I would like to inquire about sending a parcel with you. Is luggage space still available?`;
 
-  const prefilledMsg = `Hi ${trip.traveler.name}, I found your trip from ${trip.departureCity} to ${trip.arrivalCity} on LuuKyone. I would like to inquire about sending a parcel with you. Is luggage space still available?`;
-
-  const waUrl = formatWhatsAppUrl(trip.contacts.whatsapp, prefilledMsg);
-  const tgUrl = formatTelegramUrl(trip.contacts.telegram);
-  const fbUrl = formatFacebookUrl(trip.contacts.facebook);
-  const viberUrl = formatViberUrl(trip.contacts.viber);
+  const waUrl = formatWhatsAppUrl(contacts.whatsapp, prefilledMsg);
+  const tgUrl = formatTelegramUrl(contacts.telegram);
+  const fbUrl = formatFacebookUrl(contacts.facebook);
+  const viberUrl = formatViberUrl(contacts.viber);
 
   const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -271,7 +274,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                   {t('detailAccepted')}
                 </span>
                 <ul className="space-y-2">
-                  {trip.acceptedItems.map((item, idx) => (
+                  {(trip.acceptedItems || []).map((item, idx) => (
                     <li key={idx} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
                       <span>{translateItem(item)}</span>
@@ -287,7 +290,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                   {t('detailProhibited')}
                 </span>
                 <ul className="space-y-2">
-                  {trip.prohibitedItems.map((item, idx) => (
+                  {(trip.prohibitedItems || []).map((item, idx) => (
                     <li key={idx} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
                       <span>{translateItem(item)}</span>
@@ -383,11 +386,9 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                 <div className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center ring-2 ring-blue-300 dark:ring-blue-700/60 shrink-0 overflow-hidden shadow-xs group-hover:scale-105 transition-transform">
                   <img
                     src={travelerAvatar}
-                    alt={trip.traveler.name}
+                    alt={travelerName}
                     className="w-full h-full object-cover p-1 bg-white dark:bg-slate-800"
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = 'none';
-                    }}
+                    onError={(e) => handleAvatarImageError(e, trip.userId || travelerName)}
                   />
                 </div>
               </div>
@@ -429,7 +430,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
 
             <div className="space-y-3">
               {/* WhatsApp Button */}
-              {trip.contacts.whatsapp ? (
+              {contacts.whatsapp ? (
                 <div className="space-y-1">
                   <a
                     href={waUrl}
@@ -442,9 +443,9 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                     <span>{t('detailChatWhatsApp')}</span>
                   </a>
                   <div className="flex items-center justify-between px-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                    <span>{trip.contacts.whatsapp}</span>
+                    <span>{contacts.whatsapp}</span>
                     <button
-                      onClick={() => copyToClipboard(trip.contacts.whatsapp, 'wa')}
+                      onClick={() => copyToClipboard(contacts.whatsapp, 'wa')}
                       className="text-emerald-700 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer font-sans"
                     >
                       {copiedKey === 'wa' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
@@ -455,7 +456,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
               ) : null}
 
               {/* Telegram Button */}
-              {trip.contacts.telegram ? (
+              {contacts.telegram ? (
                 <div className="space-y-1 pt-1">
                   <a
                     href={tgUrl}
@@ -468,9 +469,9 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                     <span>{t('detailMessageTelegram')}</span>
                   </a>
                   <div className="flex items-center justify-between px-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                    <span>@{trip.contacts.telegram.replace(/^@/, '')}</span>
+                    <span>@{contacts.telegram.replace(/^@/, '')}</span>
                     <button
-                      onClick={() => copyToClipboard(`@${trip.contacts.telegram.replace(/^@/, '')}`, 'tg')}
+                      onClick={() => copyToClipboard(`@${contacts.telegram.replace(/^@/, '')}`, 'tg')}
                       className="text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1 cursor-pointer font-sans"
                     >
                       {copiedKey === 'tg' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
@@ -481,7 +482,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
               ) : null}
 
               {/* Facebook Button (Positioned below Telegram link as requested) */}
-              {trip.contacts.facebook ? (
+              {contacts.facebook ? (
                 <div className="space-y-1 pt-1">
                   <a
                     href={fbUrl}
@@ -494,7 +495,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                     <span>{t('detailConnectFacebook')}</span>
                   </a>
                   <div className="flex items-center justify-between px-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                    <span className="truncate max-w-[200px]">{getFacebookDisplay(trip.contacts.facebook)}</span>
+                    <span className="truncate max-w-[200px]">{getFacebookDisplay(contacts.facebook)}</span>
                     <button
                       onClick={() => copyToClipboard(fbUrl, 'fb')}
                       className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer font-sans shrink-0"
@@ -507,7 +508,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
               ) : null}
 
               {/* Viber Button */}
-              {trip.contacts.viber ? (
+              {contacts.viber ? (
                 <div className="space-y-1 pt-1">
                   <a
                     href={viberUrl}
@@ -518,9 +519,9 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                     <span>{t('detailCallViber')}</span>
                   </a>
                   <div className="flex items-center justify-between px-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                    <span>{trip.contacts.viber}</span>
+                    <span>{contacts.viber}</span>
                     <button
-                      onClick={() => copyToClipboard(trip.contacts.viber, 'viber')}
+                      onClick={() => copyToClipboard(contacts.viber, 'viber')}
                       className="text-purple-700 dark:text-purple-400 hover:underline flex items-center gap-1 cursor-pointer font-sans"
                     >
                       {copiedKey === 'viber' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}

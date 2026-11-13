@@ -7,9 +7,9 @@ import { formatMemberSince } from './tripUtils';
 const accountCreationCache = new Map<string, string>();
 
 // Dicebear Avataaars illustrated character uncle avatar matching user's requested specification
-export const UNCLE_AVATAR_URL = '/uncle_avatar.svg';
 export const UNCLE_AVATAR_DICEBEAR_URL =
   'https://api.dicebear.com/7.x/avataaars/svg?eyes=xDizzy&facialHair=beardLight&facialHairProbability=100&accessories=prescription02&accessoriesProbability=100&accessoriesColor=25557c&clothingColor=265672&clothing=collarAndSweater&mouth=sad&top=shaggyMullet&hairColor=a55728&skinColor=edb98a&facialHairColor=e8e1e1';
+export const UNCLE_AVATAR_URL = UNCLE_AVATAR_DICEBEAR_URL;
 
 /**
  * Checks if a given user, email, ID, or name corresponds to an admin account.
@@ -82,43 +82,53 @@ export function isGoogleVerifiedUser(userOrTraveler?: any): boolean {
 }
 
 /**
- * Normalizes avatar URLs.
- * If the user has a Google account photo, it is preserved and prioritized.
- * Otherwise falls back to Dicebear Avataaars or admin uncle avatar.
+ * Returns true if the URL is an authentic uploaded or Google profile photo.
+ */
+export function isAuthenticPhotoUrl(url?: string): boolean {
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  return (
+    lower.includes('googleusercontent.com') ||
+    lower.includes('lh3.google') ||
+    lower.includes('ggpht.com') ||
+    lower.startsWith('data:image/')
+  );
+}
+
+/**
+ * Normalizes avatar URLs deterministically across cards, headers, and profile pages.
+ * Priority:
+ * 1. Authentic Google / uploaded photo URL
+ * 2. Legacy or Dicebear uncle avatar for admin accounts without a custom Google photo
+ * 3. Deterministic Dicebear Avataaars avatar keyed by seed
  */
 export function normalizeAvatarUrl(avatarUrl?: string, seed?: string, userOrTraveler?: any): string {
-  // If user has an authentic Google account photo, ALWAYS preserve and return it!
-  if (
-    avatarUrl &&
-    (avatarUrl.includes('googleusercontent.com') ||
-      avatarUrl.includes('lh3.google') ||
-      avatarUrl.includes('google.com') ||
-      avatarUrl.startsWith('data:image/'))
-  ) {
-    return avatarUrl;
+  // 1. Preserve authentic Google or uploaded profile photos everywhere
+  if (isAuthenticPhotoUrl(avatarUrl)) {
+    return avatarUrl!;
   }
 
-  // If user is Google verified with a custom photo
-  if (isGoogleVerifiedUser(userOrTraveler) && avatarUrl && !avatarUrl.includes('uncle_avatar')) {
-    return avatarUrl;
-  }
-
-  // If admin account identified by seed, user object, avatarUrl, or current auth user
-  if (
-    isAdminAccount(seed) ||
-    isAdminAccount(userOrTraveler) ||
-    isAdminAccount(avatarUrl) ||
-    (auth.currentUser &&
-      (isAdminAccount(auth.currentUser.email) || isAdminAccount(auth.currentUser.uid)) &&
-      (!seed || seed === auth.currentUser.uid || seed === auth.currentUser.email || userOrTraveler?.id === auth.currentUser.uid || userOrTraveler?.userId === auth.currentUser.uid))
-  ) {
-    return UNCLE_AVATAR_URL;
-  }
-
+  // 2. Preserve legacy uncle avatar references
   if (avatarUrl && (avatarUrl.includes('uncle_avatar') || avatarUrl.includes('eyes=xDizzy'))) {
     return UNCLE_AVATAR_URL;
   }
 
+  // 3. Admin account fallback when no authentic Google photo is present
+  const matchesCurrentAdmin = Boolean(
+    auth.currentUser &&
+      (isAdminAccount(auth.currentUser.email) || isAdminAccount(auth.currentUser.uid)) &&
+      (!seed ||
+        seed === auth.currentUser.uid ||
+        seed === auth.currentUser.email ||
+        userOrTraveler?.id === auth.currentUser.uid ||
+        userOrTraveler?.userId === auth.currentUser.uid)
+  );
+
+  if (isAdminAccount(userOrTraveler) || isAdminAccount(seed) || matchesCurrentAdmin) {
+    return UNCLE_AVATAR_URL;
+  }
+
+  // 4. Generate deterministic Dicebear avatar for missing or legacy placeholder URLs
   if (
     !avatarUrl ||
     avatarUrl.includes('traveler_profile_avatar') ||
@@ -126,7 +136,21 @@ export function normalizeAvatarUrl(avatarUrl?: string, seed?: string, userOrTrav
   ) {
     return getDicebearAvatar(seed);
   }
+
   return avatarUrl;
+}
+
+/**
+ * Safe image onError handler that falls back to a deterministic Dicebear avatar once.
+ */
+export function handleAvatarImageError(e: React.SyntheticEvent<HTMLImageElement>, seed?: string): void {
+  const img = e.currentTarget;
+  if (img.dataset.fallbackApplied === '1') {
+    img.style.display = 'none';
+    return;
+  }
+  img.dataset.fallbackApplied = '1';
+  img.src = getDicebearAvatar(seed);
 }
 
 // Fallback dates for known demo travelers

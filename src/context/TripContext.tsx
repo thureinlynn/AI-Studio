@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { TripPost, TripFilters } from '../types/trip';
 import { INITIAL_TRIPS } from '../data/mockTrips';
 import { db, trackPageView, trackConversion, trackEvent } from '../firebase';
-import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, getDoc, getDocs, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { formatMemberSince } from '../utils/tripUtils';
 import { getCachedAccountDate, getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
 
@@ -21,6 +21,7 @@ export interface PublicTravelerInfo {
 
 interface TripContextType {
   trips: TripPost[];
+  isLoadingTrips: boolean;
   selectedTripId: string | null;
   selectedTrip: TripPost | null;
   filters: TripFilters;
@@ -96,6 +97,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return null;
     }
   });
+  const [isLoadingTrips, setIsLoadingTrips] = useState<boolean>(true);
 
   const [filters, setFilters] = useState<TripFilters>(defaultFilters);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
@@ -149,19 +151,20 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const openPublicProfile = (traveler: any, userId?: string, contacts?: any, createdAt?: string) => {
-    const targetUserId = userId || traveler.userId || '';
-    const resolvedAccountDate = getCachedAccountDate(targetUserId, traveler.name) || createdAt || traveler.createdAt;
+    const targetUserId = userId || traveler?.userId || '';
+    const resolvedAccountDate = getCachedAccountDate(targetUserId, traveler?.name) || createdAt || traveler?.createdAt;
     setPublicProfileTraveler({
-      name: traveler.name || 'Traveler',
+      ...traveler,
+      name: traveler?.name || 'Traveler',
       userId: targetUserId,
-      avatarUrl: normalizeAvatarUrl(traveler.avatarUrl, targetUserId || traveler.name),
-      bio: traveler.bio || 'Community traveler on LuuKyone',
+      avatarUrl: normalizeAvatarUrl(traveler?.avatarUrl, targetUserId || traveler?.name, traveler),
+      bio: traveler?.bio || 'Community traveler on LuuKyone',
       isVerified: false,
-      contacts: contacts || traveler.contacts || {},
-      memberSince: formatMemberSince(resolvedAccountDate || traveler.memberSince),
+      contacts: contacts || traveler?.contacts || {},
+      memberSince: formatMemberSince(resolvedAccountDate || traveler?.memberSince),
       createdAt: resolvedAccountDate,
-      tripsCompleted: traveler.tripsCompleted || 0,
-      languages: traveler.languages || ['English', 'Myanmar'],
+      tripsCompleted: traveler?.tripsCompleted || 0,
+      languages: traveler?.languages || ['English', 'Myanmar'],
     });
   };
 
@@ -181,13 +184,32 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Listen to Firestore collection 'trips' for real-time multi-client updates
+    // 1. Fetch initial trips via getDocs and listen to Firestore collection 'trips' for real-time updates
+    let hasSnapshotData = false;
+    getDocs(collection(db, 'trips'))
+      .then((snap) => {
+        if (!isMounted || hasSnapshotData) return;
+        if (!snap.empty) {
+          const fetched: TripPost[] = [];
+          snap.forEach((docSnap) => {
+            fetched.push({ ...(docSnap.data() as TripPost), id: docSnap.id });
+          });
+          fetched.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+          setTrips(fetched);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (isMounted) setIsLoadingTrips(false);
+      });
+
     let unsubscribeFirestore: (() => void) | null = null;
     try {
       unsubscribeFirestore = onSnapshot(
         collection(db, 'trips'),
         (snapshot) => {
           if (!isMounted) return;
+          hasSnapshotData = true;
           if (!snapshot.empty) {
             const firestoreTrips: TripPost[] = [];
             snapshot.forEach((docSnap) => {
@@ -197,13 +219,16 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
             firestoreTrips.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
             setTrips(firestoreTrips);
           }
+          setIsLoadingTrips(false);
         },
         (error) => {
-          console.warn('[Firestore] Sync warning (using server API fallback):', error.message);
+          console.warn('[Firestore] Sync warning (using getDocs/server API fallback):', error.message);
+          if (isMounted) setIsLoadingTrips(false);
         }
       );
     } catch (e) {
       console.warn('[Firestore] Initialization error:', e);
+      setIsLoadingTrips(false);
     }
 
     // 2. Continuous fallback to server API / Vercel KV
@@ -223,6 +248,8 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch {
         // Fallback to local storage state if server unavailable
+      } finally {
+        if (isMounted) setIsLoadingTrips(false);
       }
     };
 
@@ -234,6 +261,39 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (unsubscribeFirestore) unsubscribeFirestore();
       clearInterval(interval);
     };
+  }, []);
+
+  // Ensure deep-linked ?trip=<id> is fetched directly from Firestore if not yet in state
+  useEffect(() => {
+    if (!selectedTripId) return;
+    if (trips.some((t) => t.id === selectedTripId)) return;
+
+    let isMounted = true;
+    getDoc(doc(db, 'trips', selectedTripId))
+      .then((snap) => {
+        if (!isMounted || !snap.exists()) return;
+        const fetched = { ...(snap.data() as TripPost), id: snap.id };
+        setTrips((prev) => (prev.some((t) => t.id === fetched.id) ? prev : [fetched, ...prev]));
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedTripId, trips]);
+
+  // Keep selectedTripId in sync with browser Back/Forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        setSelectedTripId(params.get('trip'));
+      } catch {
+        setSelectedTripId(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   // Sync selected trip with URL query param
@@ -397,6 +457,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <TripContext.Provider
       value={{
         trips,
+        isLoadingTrips,
         selectedTripId,
         selectedTrip,
         filters,

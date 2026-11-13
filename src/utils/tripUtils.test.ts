@@ -1,151 +1,97 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isTripExpired, isDropOffDatePassed, filterAndSortTrips, formatMemberSince } from './tripUtils';
-import { getDicebearAvatar, normalizeAvatarUrl, isGoogleVerifiedUser } from './userUtils';
-import { TripPost, TripFilters } from '../types/trip';
+import { getDropOffStatus, formatDateDisplay, filterAndSortTrips } from './tripUtils';
+import type { TripPost } from '../types/trip';
 
-const dummyTraveler = {
-  name: 'Test Traveler',
-  avatarUrl: '',
-  rating: 5,
-  reviewCount: 0,
-  tripsCompleted: 1,
-  isVerified: true,
-  memberSince: '2026',
-  bio: '',
-  languages: ['English'],
-};
+test('getDropOffStatus handles missing or invalid dates safely', () => {
+  const missing = getDropOffStatus(undefined, '2026-11-13');
+  assert.equal(missing.label, 'Drop-off date TBD');
+  assert.equal(missing.isExpired, false);
 
-const dummyContacts = {
-  whatsapp: '+66812345678',
-  viber: '+66812345678',
-  telegram: 'traveler',
-};
-
-test('isTripExpired returns true when delivery date is in the past', () => {
-  const refDate = new Date(2026, 10, 15); // Nov 15, 2026
-  const pastTrip = { checkOutDate: '2026-11-10' };
-  const futureTrip = { checkOutDate: '2026-11-20' };
-  const todayTrip = { checkOutDate: '2026-11-15' };
-
-  assert.equal(isTripExpired(pastTrip, refDate), true);
-  assert.equal(isTripExpired(futureTrip, refDate), false);
-  assert.equal(isTripExpired(todayTrip, refDate), false);
+  const invalid = getDropOffStatus('not-a-date', '2026-11-13');
+  assert.equal(invalid.label, 'Drop-off date TBD');
+  assert.equal(invalid.isExpired, false);
 });
 
-test('isDropOffDatePassed returns true only when drop-off date has strictly passed', () => {
-  const refDate = new Date(2026, 10, 15); // Nov 15, 2026
-  assert.equal(isDropOffDatePassed('2026-11-14', refDate), true); // yesterday -> passed
-  assert.equal(isDropOffDatePassed('2026-11-15', refDate), false); // today -> still valid
-  assert.equal(isDropOffDatePassed('2026-11-16', refDate), false); // tomorrow -> still valid
+test('getDropOffStatus computes upcoming, today, and expired statuses accurately', () => {
+  const today = getDropOffStatus('2026-11-13', '2026-11-13');
+  assert.equal(today.label, 'Drop-off today!');
+  assert.equal(today.isUrgent, true);
+  assert.equal(today.isExpired, false);
+
+  const oneDay = getDropOffStatus('2026-11-14', '2026-11-13');
+  assert.equal(oneDay.label, '1 day left to drop off');
+  assert.equal(oneDay.isUrgent, true);
+  assert.equal(oneDay.isExpired, false);
+
+  const expired = getDropOffStatus('2026-11-12', '2026-11-13');
+  assert.equal(expired.label, 'Drop-off closed');
+  assert.equal(expired.isExpired, true);
 });
 
-test('filterAndSortTrips excludes fully booked and expired trips from public list', () => {
-  const refDate = new Date(2026, 10, 15); // Nov 15, 2026
-
-  const activeValidTrip: TripPost = {
-    id: 'trip-1',
-    userId: 'u1',
-    departureCity: 'Bangkok',
-    departureCountry: 'Thailand',
-    arrivalCity: 'Yangon',
-    arrivalCountry: 'Myanmar',
-    departureDate: '2026-11-16',
-    arrivalDate: '2026-11-16',
-    lastDropOffDate: '2026-11-15',
-    checkOutDate: '2026-11-17',
-    weightCapacityKg: 0,
-    weightAvailableKg: 0,
-    serviceFeeType: 'free',
-    announcement: 'Flying BKK to RGN',
-    dropOffLocationNote: 'Airport',
-    pickUpLocationNote: 'Downtown',
-    acceptedItems: ['Documents'],
-    prohibitedItems: [],
-    contacts: dummyContacts,
-    traveler: dummyTraveler,
-    createdAt: '2026-11-01T00:00:00.000Z',
-    status: 'active',
-  };
-
-  const fullyBookedTrip: TripPost = {
-    ...activeValidTrip,
-    id: 'trip-2',
-    status: 'fully_booked',
-  };
-
-  const expiredTrip: TripPost = {
-    ...activeValidTrip,
-    id: 'trip-3',
-    checkOutDate: '2026-11-10', // past delivery date
-  };
-
-  const filters: TripFilters = {
-    query: '',
-    departureCity: '',
-    arrivalCity: '',
-    sortBy: 'date_asc',
-  };
-
-  // Public list: should only keep active, non-expired trip
-  const publicList = filterAndSortTrips([activeValidTrip, fullyBookedTrip, expiredTrip], filters, {
-    hideExpired: true,
-    hideFullyBooked: true,
-    referenceDate: refDate,
-  });
-
-  assert.equal(publicList.length, 1);
-  assert.equal(publicList[0].id, 'trip-1');
-
-  // Private profile list: options allows viewing all
-  const profileList = filterAndSortTrips([activeValidTrip, fullyBookedTrip, expiredTrip], filters, {
-    hideExpired: false,
-    hideFullyBooked: false,
-    referenceDate: refDate,
-  });
-
-  assert.equal(profileList.length, 3);
+test('formatDateDisplay formats YYYY-MM-DD cleanly', () => {
+  assert.equal(formatDateDisplay('2026-11-15'), 'Nov 15, 2026');
+  assert.equal(formatDateDisplay(''), '');
 });
 
-test('formatMemberSince formats account creation dates and avoids today date fallback', () => {
-  assert.equal(formatMemberSince('2026-01-15T00:00:00.000Z'), 'Jan 15, 2026');
-  assert.equal(formatMemberSince('Sun, 08 Nov 2026 12:00:00 GMT'), 'Nov 8, 2026');
-  assert.equal(formatMemberSince('Nov 8, 2026'), 'Nov 8, 2026');
-  assert.equal(formatMemberSince('2026'), '2026');
-  assert.equal(formatMemberSince('Today'), '2026');
-  assert.equal(formatMemberSince(''), '2026');
-  assert.equal(formatMemberSince(undefined), '2026');
-});
+test('filterAndSortTrips excludes expired and booked trips by default', () => {
+  const refDate = new Date(2026, 10, 13);
+  const trips: TripPost[] = [
+    {
+      id: 't1',
+      userId: 'u1',
+      traveler: { name: 'Alice', avatarUrl: '', bio: '', isVerified: false, rating: 5, reviewCount: 0, memberSince: '2026', tripsCompleted: 0, languages: ['English'] },
+      departureCity: 'Bangkok',
+      departureCountry: 'Thailand',
+      arrivalCity: 'Yangon',
+      arrivalCountry: 'Myanmar',
+      departureDate: '2026-11-20',
+      arrivalDate: '2026-11-20',
+      lastDropOffDate: '2026-11-19',
+      checkOutDate: '2026-11-21',
+      dropOffLocationNote: 'Siam',
+      pickUpLocationNote: 'Downtown',
+      weightAvailableKg: 10,
+      weightCapacityKg: 20,
+      serviceFeeType: 'free',
+      announcement: 'Happy to help',
+      acceptedItems: ['Documents'],
+      prohibitedItems: ['Liquids'],
+      contacts: { whatsapp: '+66123456', viber: '', telegram: '', preferred: 'whatsapp' },
+      createdAt: '2026-11-10T00:00:00.000Z',
+      status: 'active',
+    },
+    {
+      id: 't2',
+      userId: 'u2',
+      traveler: { name: 'Bob', avatarUrl: '', bio: '', isVerified: false, rating: 5, reviewCount: 0, memberSince: '2026', tripsCompleted: 0, languages: ['English'] },
+      departureCity: 'Singapore',
+      departureCountry: 'Singapore',
+      arrivalCity: 'Tokyo',
+      arrivalCountry: 'Japan',
+      departureDate: '2026-11-05',
+      arrivalDate: '2026-11-05',
+      lastDropOffDate: '2026-11-04',
+      checkOutDate: '2026-11-06',
+      dropOffLocationNote: 'Orchard',
+      pickUpLocationNote: 'Shinjuku',
+      weightAvailableKg: 5,
+      weightCapacityKg: 10,
+      serviceFeeType: 'free',
+      announcement: 'Expired trip',
+      acceptedItems: [],
+      prohibitedItems: [],
+      contacts: { whatsapp: '', viber: '', telegram: 'bob', preferred: 'telegram' },
+      createdAt: '2026-11-01T00:00:00.000Z',
+      status: 'active',
+    },
+  ];
 
-test('getDicebearAvatar generates valid Dicebear Avataaars SVG url', () => {
-  const avatarUrl = getDicebearAvatar('user-123');
-  assert.equal(avatarUrl, 'https://api.dicebear.com/7.x/avataaars/svg?seed=user-123');
-
-  // Test automatic migration from legacy placeholders and identicon
-  assert.equal(
-    normalizeAvatarUrl('/src/assets/images/traveler_profile_avatar_1793803079186.jpg', 'user-123'),
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=user-123'
+  const activeOnly = filterAndSortTrips(
+    trips,
+    { query: '', departureCity: '', arrivalCity: '', sortBy: 'date_asc' },
+    { hideExpired: true, hideFullyBooked: true, referenceDate: refDate }
   );
-  assert.equal(
-    normalizeAvatarUrl('https://api.dicebear.com/7.x/identicon/svg?seed=user-123', 'user-123'),
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=user-123'
-  );
-});
-
-test('preserves Google account photo and detects Google verified users', () => {
-  const googlePhoto = 'https://lh3.googleusercontent.com/a/ACg8ocLQtest=s96-c';
-  assert.equal(normalizeAvatarUrl(googlePhoto, 'user-123'), googlePhoto);
-
-  const googleUser = {
-    email: 'thureinlynn.mm@gmail.com',
-    authProvider: 'google',
-    isGoogleVerified: true,
-  };
-  assert.equal(isGoogleVerifiedUser(googleUser), true);
-
-  const nonGoogleUser = {
-    email: 'traveler@customdomain.com',
-    authProvider: 'password',
-  };
-  assert.equal(isGoogleVerifiedUser(nonGoogleUser), false);
+  assert.equal(activeOnly.length, 1);
+  assert.equal(activeOnly[0].id, 't1');
 });

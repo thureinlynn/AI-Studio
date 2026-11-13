@@ -4,8 +4,7 @@ import { useTrips } from '../context/TripContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatDateDisplay, countCompletedTripsForTraveler } from '../utils/tripUtils';
-import { getDicebearAvatar, normalizeAvatarUrl, UNCLE_AVATAR_URL, isAdminAccount, isGoogleVerifiedUser } from '../utils/userUtils';
-import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
+import { normalizeAvatarUrl, handleAvatarImageError } from '../utils/userUtils';
 import { ArrowRight, Calendar, Clock, ChevronRight, User } from 'lucide-react';
 
 interface TripCardProps {
@@ -17,16 +16,12 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
   const { user } = useAuth();
   const { t } = useLanguage();
 
-  const isGoogle = isGoogleVerifiedUser(trip.traveler) || isGoogleVerifiedUser({ id: trip.userId });
-  const isAuthorAdmin =
-    !isGoogle && (isAdminAccount(trip.traveler) ||
-    isAdminAccount(trip.userId) ||
-    (user && user.id === trip.userId && isAdminAccount(user)));
-  const authorAvatar = isGoogle && trip.traveler.avatarUrl && !trip.traveler.avatarUrl.includes('uncle_avatar')
-    ? trip.traveler.avatarUrl
-    : isAuthorAdmin
-    ? UNCLE_AVATAR_URL
-    : normalizeAvatarUrl(trip.traveler.avatarUrl, trip.userId || trip.traveler.name, trip.traveler);
+  const isOwnTrip = Boolean(user && user.id === trip.userId);
+  const authorAvatar = normalizeAvatarUrl(
+    isOwnTrip ? user!.avatarUrl : trip.traveler?.avatarUrl,
+    trip.userId || trip.traveler?.name,
+    isOwnTrip ? user : trip.traveler
+  );
 
   return (
     <article
@@ -107,21 +102,13 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
                 src={authorAvatar}
                 alt={trip.traveler.name}
                 className="w-full h-full object-cover p-0.5"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
+                onError={(e) => handleAvatarImageError(e, trip.userId || trip.traveler?.name)}
               />
             </div>
-            {isGoogle && (
-              <div className="absolute -bottom-1 -right-1">
-                <GoogleVerifiedBadge size="xs" />
-              </div>
-            )}
           </div>
           <div className="truncate text-xs">
             <div className="font-semibold text-slate-900 dark:text-slate-100 truncate group-hover/author:text-blue-600 dark:group-hover/author:text-blue-400 flex items-center gap-1">
               <span className="truncate">{trip.traveler.name}</span>
-              {isGoogle && <GoogleVerifiedBadge size="xs" />}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400">
               <span>{countCompletedTripsForTraveler(trips, { name: trip.traveler.name, userId: trip.userId })} {t('cardTripsCompleted')}</span>

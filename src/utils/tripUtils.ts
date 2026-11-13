@@ -116,17 +116,39 @@ export function formatDateDisplay(dateStr: string): string {
 /**
  * Calculates drop-off urgency relative to today.
  */
-export function getDropOffStatus(lastDropOffDateStr: string, referenceDateStr?: string): {
+export function getDropOffStatus(lastDropOffDateStr?: string, referenceDateStr?: string): {
   daysRemaining: number;
   label: string;
   isUrgent: boolean;
   isExpired: boolean;
 } {
+  if (!lastDropOffDateStr || typeof lastDropOffDateStr !== 'string') {
+    return {
+      daysRemaining: 0,
+      label: 'Drop-off date TBD',
+      isUrgent: false,
+      isExpired: false,
+    };
+  }
+
   const refDate = referenceDateStr ? new Date(referenceDateStr) : new Date();
   refDate.setHours(0, 0, 0, 0);
 
-  const [y, m, d] = lastDropOffDateStr.split('-').map(Number);
-  const targetDate = new Date(y, m - 1, d);
+  const parts = lastDropOffDateStr.split('-').map(Number);
+  const targetDate =
+    parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])
+      ? new Date(parts[0], parts[1] - 1, parts[2])
+      : new Date(lastDropOffDateStr);
+
+  if (isNaN(targetDate.getTime())) {
+    return {
+      daysRemaining: 0,
+      label: 'Drop-off date TBD',
+      isUrgent: false,
+      isExpired: false,
+    };
+  }
+
   targetDate.setHours(0, 0, 0, 0);
 
   const diffTime = targetDate.getTime() - refDate.getTime();

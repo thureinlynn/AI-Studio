@@ -2,8 +2,7 @@ import React from 'react';
 import { useTrips } from '../context/TripContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { getDicebearAvatar, normalizeAvatarUrl, UNCLE_AVATAR_URL, isAdminAccount, isGoogleVerifiedUser } from '../utils/userUtils';
-import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
+import { normalizeAvatarUrl, handleAvatarImageError } from '../utils/userUtils';
 import { Plus, ShieldAlert, User, Settings } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -11,15 +10,7 @@ export const Header: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
 
-  const isGoogle = user ? isGoogleVerifiedUser(user) : false;
-  const isCurrentUserAdmin = user && !isGoogle ? isAdminAccount(user) : false;
-  const headerAvatar = user
-    ? (isGoogle && user.avatarUrl && !user.avatarUrl.includes('uncle_avatar')
-        ? user.avatarUrl
-        : isCurrentUserAdmin
-        ? UNCLE_AVATAR_URL
-        : normalizeAvatarUrl(user.avatarUrl, user.id, user))
-    : '';
+  const headerAvatar = user ? normalizeAvatarUrl(user.avatarUrl, user.id, user) : '';
 
   const handleNavClick = (tab: 'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings') => {
     closeTripDetail();
@@ -97,20 +88,15 @@ export const Header: React.FC = () => {
                     src={headerAvatar}
                     alt={user.name}
                     className="w-full h-full object-cover"
+                    onError={(e) => handleAvatarImageError(e, user.id)}
                   />
                 </div>
-                {isGoogle && (
-                  <div className="absolute -bottom-1 -right-1">
-                    <GoogleVerifiedBadge size="xs" />
-                  </div>
-                )}
               </div>
             ) : (
               <User className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             )}
             <span className="flex items-center gap-1">
               <span>{isAuthenticated && user ? user.name.split(' ')[0] : t('navLogin')}</span>
-              {isAuthenticated && user && isGoogle && <GoogleVerifiedBadge size="xs" />}
             </span>
           </button>
         </nav>

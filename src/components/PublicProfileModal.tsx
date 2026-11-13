@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTrips } from '../context/TripContext';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatDateDisplay, isDropOffDatePassed, countCompletedTripsForTraveler, formatMemberSince } from '../utils/tripUtils';
-import { useTravelerAccountDate, getDicebearAvatar, normalizeAvatarUrl, UNCLE_AVATAR_URL, isAdminAccount, isGoogleVerifiedUser } from '../utils/userUtils';
-import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
+import { useTravelerAccountDate, normalizeAvatarUrl, handleAvatarImageError } from '../utils/userUtils';
 import {
   X,
   User,
@@ -24,6 +24,7 @@ import {
 
 export const PublicProfileModal: React.FC = () => {
   const { publicProfileTraveler, closePublicProfile, trips, openTripDetail } = useTrips();
+  const { user } = useAuth();
   const { t } = useLanguage();
 
   // Resolve authentic account creation date for traveler profile
@@ -75,15 +76,12 @@ export const PublicProfileModal: React.FC = () => {
 
   const contacts = publicProfileTraveler.contacts || {};
 
-  const isGoogle = isGoogleVerifiedUser(publicProfileTraveler);
-  const isTravelerAdmin =
-    !isGoogle && (isAdminAccount(publicProfileTraveler) || isAdminAccount(publicProfileTraveler.userId));
-
-  const travelerAvatar = isGoogle && publicProfileTraveler.avatarUrl && !publicProfileTraveler.avatarUrl.includes('uncle_avatar')
-    ? publicProfileTraveler.avatarUrl
-    : isTravelerAdmin
-    ? UNCLE_AVATAR_URL
-    : normalizeAvatarUrl(publicProfileTraveler.avatarUrl, publicProfileTraveler.userId || publicProfileTraveler.name, publicProfileTraveler);
+  const isOwnProfile = Boolean(user && publicProfileTraveler.userId && user.id === publicProfileTraveler.userId);
+  const travelerAvatar = normalizeAvatarUrl(
+    isOwnProfile ? user!.avatarUrl : publicProfileTraveler.avatarUrl,
+    publicProfileTraveler.userId || publicProfileTraveler.name,
+    isOwnProfile ? user : publicProfileTraveler
+  );
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
@@ -118,16 +116,9 @@ export const PublicProfileModal: React.FC = () => {
                     src={travelerAvatar}
                     alt={publicProfileTraveler.name}
                     className="w-full h-full object-cover p-0.5 bg-white dark:bg-slate-800"
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = 'none';
-                    }}
+                    onError={(e) => handleAvatarImageError(e, publicProfileTraveler.userId || publicProfileTraveler.name)}
                   />
                 </div>
-                {isGoogle && (
-                  <div className="absolute -bottom-1 -right-1">
-                    <GoogleVerifiedBadge size="xs" />
-                  </div>
-                )}
               </div>
 
               <div className="min-w-0">
@@ -135,9 +126,6 @@ export const PublicProfileModal: React.FC = () => {
                   <h4 className="text-lg font-extrabold text-slate-900 dark:text-white truncate">
                     {publicProfileTraveler.name}
                   </h4>
-                  {isGoogle && (
-                    <GoogleVerifiedBadge size="sm" showLabel />
-                  )}
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                   {t('detailMemberSince')} {travelerAccount.formattedMemberSince}

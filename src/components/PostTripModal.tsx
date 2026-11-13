@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { COMMON_ITEM_CATEGORIES } from '../data/mockTrips';
 import { formatMemberSince } from '../utils/tripUtils';
-import { getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
+import { normalizeAvatarUrl, handleAvatarImageError } from '../utils/userUtils';
 import {
   X,
   MapPin,
@@ -184,7 +184,7 @@ export const PostTripModal: React.FC = () => {
       },
       traveler: {
         name: user.name,
-        avatarUrl: normalizeAvatarUrl(user.avatarUrl, user.id),
+        avatarUrl: normalizeAvatarUrl(user.avatarUrl, user.id, user),
         rating: 5.0,
         reviewCount: 1,
         tripsCompleted: 0,
@@ -266,12 +266,10 @@ export const PostTripModal: React.FC = () => {
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-slate-200 dark:ring-slate-700">
                   <img
-                    src={normalizeAvatarUrl(user.avatarUrl, user.id)}
+                    src={normalizeAvatarUrl(user.avatarUrl, user.id, user)}
                     alt={user.name}
                     className="w-full h-full object-cover p-0.5"
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = 'none';
-                    }}
+                    onError={(e) => handleAvatarImageError(e, user.id)}
                   />
                 </div>
                 <div>
