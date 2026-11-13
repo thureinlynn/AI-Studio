@@ -17,12 +17,16 @@ import {
   Info,
   Sliders,
   Sparkles,
+  Smartphone,
 } from 'lucide-react';
+import { usePWAInstall } from '../hooks/usePWAInstall';
+import { PWAInstallButton } from './PWAInstallButton';
 
 export const SettingsView: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { weightUnit, setWeightUnit, currency, setCurrency, resetFilters, openSafetyModal } = useTrips();
+  const { isInstallable, isInstalled, isIOS } = usePWAInstall();
 
   const [clearMessage, setClearMessage] = useState<string | null>(null);
 
@@ -277,6 +281,44 @@ export const SettingsView: React.FC = () => {
           </div>
         </section>
       </div>
+
+      {/* Install App (Full-Screen Native Mode) */}
+      <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-900/50">
+            <Smartphone className="w-4.5 h-4.5" />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                App Installation &amp; Full-Screen Mode
+              </h3>
+              {isInstalled && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Standalone Active
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-xl">
+              {isInstalled
+                ? 'LuuKyone is running in full-screen standalone mode without a browser address bar.'
+                : 'Install LuuKyone to your home screen or desktop so it launches full-screen without a browser address bar.'}
+            </p>
+            {!isInstalled && !isInstallable && !isIOS && (
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                Chrome: open browser menu and select &ldquo;Install LuuKyone&rdquo;. Safari: tap Share &rarr; &ldquo;Add to Home Screen&rdquo;.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {(isInstallable || isIOS) && !isInstalled && (
+          <div className="shrink-0">
+            <PWAInstallButton variant="card" />
+          </div>
+        )}
+      </section>
 
       {/* About Box */}
       <div className="bg-slate-100/80 dark:bg-slate-900/50 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

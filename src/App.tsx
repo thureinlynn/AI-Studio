@@ -21,6 +21,7 @@ import { SafetyModal } from './components/SafetyModal';
 import { PublicProfileModal } from './components/PublicProfileModal';
 import { MobileNav } from './components/MobileNav';
 import { CookieConsentBanner } from './components/CookieConsentBanner';
+import { OfflineIndicator } from './components/OfflineIndicator';
 import { Footer } from './components/Footer';
 import { SEO } from './components/SEO';
 import {
@@ -150,6 +151,9 @@ const AppContent: React.FC = () => {
 
       {/* Analytics Cookie Consent Banner */}
       <CookieConsentBanner />
+
+      {/* Offline Status Toast */}
+      <OfflineIndicator />
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { normalizeAvatarUrl, handleAvatarImageError } from '../utils/userUtils';
 import { Plus, ShieldAlert, User, Settings } from 'lucide-react';
+import { PWAInstallButton } from './PWAInstallButton';
 
 export const Header: React.FC = () => {
   const { openPostModal, openAuthModal, openSafetyModal, activeTab, setActiveTab, closeTripDetail } = useTrips();
@@ -18,7 +19,7 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
+    <header className="sticky top-0 z-30 pt-[env(safe-area-inset-top)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-4 sm:gap-8">
         {/* Zone 1: Brand Wordmark */}
         <button
@@ -102,8 +103,10 @@ export const Header: React.FC = () => {
           </button>
         </nav>
 
-        {/* Zone 3: Actions - Settings Icon Button + Prominent Post Button + Responsive Auth */}
+        {/* Zone 3: Actions - Install App + Settings Icon Button + Prominent Post Button */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <PWAInstallButton variant="header" />
+
           {/* Settings Icon Button */}
           <button
             onClick={() => handleNavClick('settings')}

@@ -285,7 +285,7 @@ export const AuthModal: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <Luggage className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     <h5 className="font-bold text-slate-900 dark:text-white text-xs">
-                      {t('authMyTrips')} ({userTrips.length})
+                      Active Trips
                     </h5>
                     {totalPages > 1 && (
                       <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full tabular-nums">
@@ -302,7 +302,7 @@ export const AuthModal: React.FC = () => {
                     className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <Plus className="w-3 h-3" />
-                    <span>{t('authPostNewTrip')}</span>
+                    <span>Post Trip</span>
                   </button>
                 </div>
 

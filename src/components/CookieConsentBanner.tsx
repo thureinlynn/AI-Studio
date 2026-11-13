@@ -24,7 +24,7 @@ export const CookieConsentBanner: React.FC = () => {
     <aside
       role="region"
       aria-label="Cookie consent"
-      className="fixed bottom-20 md:bottom-5 left-0 right-0 z-40 px-3 sm:px-6 pointer-events-none"
+      className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] md:bottom-5 left-0 right-0 z-40 px-3 sm:px-6 pointer-events-none"
     >
       <div className="max-w-4xl mx-auto pointer-events-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl shadow-slate-900/10 dark:shadow-black/40 p-4 sm:px-5 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 transition-colors">
         <div className="flex items-start gap-3 min-w-0">
