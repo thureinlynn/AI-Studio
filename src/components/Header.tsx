@@ -2,13 +2,24 @@ import React from 'react';
 import { useTrips } from '../context/TripContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
+import { getDicebearAvatar, normalizeAvatarUrl, UNCLE_AVATAR_URL, isAdminAccount, isGoogleVerifiedUser } from '../utils/userUtils';
+import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
 import { Plus, ShieldAlert, User, Settings } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const { openPostModal, openAuthModal, openSafetyModal, activeTab, setActiveTab, closeTripDetail } = useTrips();
   const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
+
+  const isGoogle = user ? isGoogleVerifiedUser(user) : false;
+  const isCurrentUserAdmin = user && !isGoogle ? isAdminAccount(user) : false;
+  const headerAvatar = user
+    ? (isGoogle && user.avatarUrl && !user.avatarUrl.includes('uncle_avatar')
+        ? user.avatarUrl
+        : isCurrentUserAdmin
+        ? UNCLE_AVATAR_URL
+        : normalizeAvatarUrl(user.avatarUrl, user.id, user))
+    : '';
 
   const handleNavClick = (tab: 'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings') => {
     closeTripDetail();
@@ -80,17 +91,27 @@ export const Header: React.FC = () => {
             className="flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer hover:text-slate-900 dark:hover:text-white py-1"
           >
             {isAuthenticated && user ? (
-              <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 ring-1 ring-blue-300 dark:ring-blue-600 flex items-center justify-center shrink-0">
-                <img
-                  src={normalizeAvatarUrl(user.avatarUrl, user.id)}
-                  alt={user.name}
-                  className="w-full h-full object-cover"
-                />
+              <div className="relative shrink-0">
+                <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 ring-1 ring-blue-300 dark:ring-blue-600 flex items-center justify-center shrink-0">
+                  <img
+                    src={headerAvatar}
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                {isGoogle && (
+                  <div className="absolute -bottom-1 -right-1">
+                    <GoogleVerifiedBadge size="xs" />
+                  </div>
+                )}
               </div>
             ) : (
               <User className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             )}
-            <span>{isAuthenticated && user ? user.name.split(' ')[0] : t('navLogin')}</span>
+            <span className="flex items-center gap-1">
+              <span>{isAuthenticated && user ? user.name.split(' ')[0] : t('navLogin')}</span>
+              {isAuthenticated && user && isGoogle && <GoogleVerifiedBadge size="xs" />}
+            </span>
           </button>
         </nav>
 

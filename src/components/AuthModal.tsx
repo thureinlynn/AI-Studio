@@ -39,7 +39,6 @@ export const AuthModal: React.FC = () => {
     sendPasswordReset,
     logout,
     instantSignIn,
-    loginAsDemoUser,
   } = useAuth();
   const { isAuthModalOpen, closeAuthModal, trips, openTripDetail, openPostModal, deleteTrip } = useTrips();
   const { t } = useLanguage();
@@ -593,28 +592,8 @@ export const AuthModal: React.FC = () => {
                     ) : (
                       <LogIn className="w-4 h-4" />
                     )}
-                    <span>{isLoading ? 'Signing In...' : 'Sign In with Firebase'}</span>
+                    <span>{isLoading ? 'Signing In...' : 'Sign in'}</span>
                   </button>
-
-                  {/* Quick Profile Access (Alex Thant) */}
-                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-center space-y-2">
-                    <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 text-[11px]">
-                      <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-                      <span>Quick Access</span>
-                      <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => loginAsDemoUser('alex')}
-                      className="w-full py-2.5 px-3 bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-amber-500/20 hover:from-amber-500/25 hover:to-amber-500/30 border border-amber-300 dark:border-amber-600/40 text-amber-900 dark:text-amber-200 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-2xs"
-                    >
-                      <User className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 stroke-[2.5]" />
-                      <span>Instant Sign-In as Alex Thant (Preview Profile Page)</span>
-                    </button>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500">
-                      Instantly loads traveler profile with contact channels, trips, and 10-item pagination
-                    </p>
-                  </div>
                 </form>
               ) : (
                 /* Registration Form */

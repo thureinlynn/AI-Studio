@@ -12,4 +12,6 @@ export interface User {
   languages: string[];
   createdAt?: string;
   memberSince?: string;
+  isGoogleVerified?: boolean;
+  authProvider?: 'google' | 'password' | 'demo';
 }

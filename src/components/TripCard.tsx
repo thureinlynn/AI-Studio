@@ -1,9 +1,11 @@
 import React from 'react';
 import { TripPost } from '../types/trip';
 import { useTrips } from '../context/TripContext';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatDateDisplay, countCompletedTripsForTraveler } from '../utils/tripUtils';
-import { getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
+import { getDicebearAvatar, normalizeAvatarUrl, UNCLE_AVATAR_URL, isAdminAccount, isGoogleVerifiedUser } from '../utils/userUtils';
+import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
 import { ArrowRight, Calendar, Clock, ChevronRight, User } from 'lucide-react';
 
 interface TripCardProps {
@@ -12,7 +14,19 @@ interface TripCardProps {
 
 export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
   const { openTripDetail, openPublicProfile, trips } = useTrips();
+  const { user } = useAuth();
   const { t } = useLanguage();
+
+  const isGoogle = isGoogleVerifiedUser(trip.traveler) || isGoogleVerifiedUser({ id: trip.userId });
+  const isAuthorAdmin =
+    !isGoogle && (isAdminAccount(trip.traveler) ||
+    isAdminAccount(trip.userId) ||
+    (user && user.id === trip.userId && isAdminAccount(user)));
+  const authorAvatar = isGoogle && trip.traveler.avatarUrl && !trip.traveler.avatarUrl.includes('uncle_avatar')
+    ? trip.traveler.avatarUrl
+    : isAuthorAdmin
+    ? UNCLE_AVATAR_URL
+    : normalizeAvatarUrl(trip.traveler.avatarUrl, trip.userId || trip.traveler.name, trip.traveler);
 
   return (
     <article
@@ -90,7 +104,7 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
           <div className="relative shrink-0">
             <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center ring-1 ring-sky-200 dark:ring-slate-700 shrink-0 overflow-hidden group-hover/author:ring-blue-400">
               <img
-                src={normalizeAvatarUrl(trip.traveler.avatarUrl, trip.userId || trip.traveler.name)}
+                src={authorAvatar}
                 alt={trip.traveler.name}
                 className="w-full h-full object-cover p-0.5"
                 onError={(e) => {
@@ -98,10 +112,16 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
                 }}
               />
             </div>
+            {isGoogle && (
+              <div className="absolute -bottom-1 -right-1">
+                <GoogleVerifiedBadge size="xs" />
+              </div>
+            )}
           </div>
           <div className="truncate text-xs">
-            <div className="font-semibold text-slate-900 dark:text-slate-100 truncate group-hover/author:text-blue-600 dark:group-hover/author:text-blue-400">
-              {trip.traveler.name}
+            <div className="font-semibold text-slate-900 dark:text-slate-100 truncate group-hover/author:text-blue-600 dark:group-hover/author:text-blue-400 flex items-center gap-1">
+              <span className="truncate">{trip.traveler.name}</span>
+              {isGoogle && <GoogleVerifiedBadge size="xs" />}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400">
               <span>{countCompletedTripsForTraveler(trips, { name: trip.traveler.name, userId: trip.userId })} {t('cardTripsCompleted')}</span>

@@ -17,6 +17,8 @@ export interface TravelerProfile {
   createdAt?: string;
   bio: string;
   languages: string[];
+  isGoogleVerified?: boolean;
+  authProvider?: string;
 }
 
 export type TripStatus = 'active' | 'fully_booked' | 'completed';

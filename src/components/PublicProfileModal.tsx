@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useTrips } from '../context/TripContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatDateDisplay, isDropOffDatePassed, countCompletedTripsForTraveler, formatMemberSince } from '../utils/tripUtils';
-import { useTravelerAccountDate, getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
+import { useTravelerAccountDate, getDicebearAvatar, normalizeAvatarUrl, UNCLE_AVATAR_URL, isAdminAccount, isGoogleVerifiedUser } from '../utils/userUtils';
+import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
 import {
   X,
   User,
@@ -74,6 +75,16 @@ export const PublicProfileModal: React.FC = () => {
 
   const contacts = publicProfileTraveler.contacts || {};
 
+  const isGoogle = isGoogleVerifiedUser(publicProfileTraveler);
+  const isTravelerAdmin =
+    !isGoogle && (isAdminAccount(publicProfileTraveler) || isAdminAccount(publicProfileTraveler.userId));
+
+  const travelerAvatar = isGoogle && publicProfileTraveler.avatarUrl && !publicProfileTraveler.avatarUrl.includes('uncle_avatar')
+    ? publicProfileTraveler.avatarUrl
+    : isTravelerAdmin
+    ? UNCLE_AVATAR_URL
+    : normalizeAvatarUrl(publicProfileTraveler.avatarUrl, publicProfileTraveler.userId || publicProfileTraveler.name, publicProfileTraveler);
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
       <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
@@ -104,21 +115,29 @@ export const PublicProfileModal: React.FC = () => {
               <div className="relative shrink-0">
                 <div className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center ring-2 ring-blue-300 dark:ring-blue-700/60 shrink-0 overflow-hidden shadow-xs">
                   <img
-                    src={normalizeAvatarUrl(publicProfileTraveler.avatarUrl, publicProfileTraveler.userId || publicProfileTraveler.name)}
+                    src={travelerAvatar}
                     alt={publicProfileTraveler.name}
-                    className="w-full h-full object-cover p-1 bg-white dark:bg-slate-800"
+                    className="w-full h-full object-cover p-0.5 bg-white dark:bg-slate-800"
                     onError={(e) => {
                       (e.target as HTMLElement).style.display = 'none';
                     }}
                   />
                 </div>
+                {isGoogle && (
+                  <div className="absolute -bottom-1 -right-1">
+                    <GoogleVerifiedBadge size="xs" />
+                  </div>
+                )}
               </div>
 
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h4 className="text-lg font-extrabold text-slate-900 dark:text-white truncate">
                     {publicProfileTraveler.name}
                   </h4>
+                  {isGoogle && (
+                    <GoogleVerifiedBadge size="sm" showLabel />
+                  )}
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                   {t('detailMemberSince')} {travelerAccount.formattedMemberSince}

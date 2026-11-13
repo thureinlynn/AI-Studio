@@ -6,21 +6,119 @@ import { formatMemberSince } from './tripUtils';
 // In-memory cache for user account creation dates to eliminate duplicate Firestore calls
 const accountCreationCache = new Map<string, string>();
 
+// Dicebear Avataaars illustrated character uncle avatar matching user's requested specification
+export const UNCLE_AVATAR_URL = '/uncle_avatar.svg';
+export const UNCLE_AVATAR_DICEBEAR_URL =
+  'https://api.dicebear.com/7.x/avataaars/svg?eyes=xDizzy&facialHair=beardLight&facialHairProbability=100&accessories=prescription02&accessoriesProbability=100&accessoriesColor=25557c&clothingColor=265672&clothing=collarAndSweater&mouth=sad&top=shaggyMullet&hairColor=a55728&skinColor=edb98a&facialHairColor=e8e1e1';
+
+/**
+ * Checks if a given user, email, ID, or name corresponds to an admin account.
+ */
+export function isAdminAccount(identifier?: any): boolean {
+  if (!identifier) return false;
+  if (typeof identifier === 'object') {
+    const email = String(identifier.email || '').toLowerCase().trim();
+    const name = String(identifier.name || '').toLowerCase().trim();
+    const id = String(identifier.id || identifier.userId || '').toLowerCase().trim();
+    const role = String(identifier.role || '').toLowerCase().trim();
+    return (
+      email.includes('admin') ||
+      email.includes('thurein') ||
+      email === 'thureinlynn.mm@gmail.com' ||
+      name.includes('admin') ||
+      name.includes('thurein') ||
+      name.includes('uncle') ||
+      id.includes('admin') ||
+      id.includes('thurein') ||
+      role === 'admin'
+    );
+  }
+  const clean = String(identifier).toLowerCase().trim();
+  return (
+    clean.includes('admin') ||
+    clean.includes('thurein') ||
+    clean.includes('uncle') ||
+    clean === 'thureinlynn.mm@gmail.com' ||
+    clean === 'admin@luukyone.com'
+  );
+}
+
+/**
+ * Returns the uncle avatar URL for administrator profiles.
+ */
+export function getUncleAvatar(): string {
+  return UNCLE_AVATAR_URL;
+}
+
 /**
  * Generates dynamic profile picture URL using Dicebear Avataaars SVG.
  * Produces illustrated character avatars with expressions, hair, glasses, and clothing.
  * e.g. https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}
  */
 export function getDicebearAvatar(seed?: string): string {
+  if (isAdminAccount(seed)) {
+    return UNCLE_AVATAR_URL;
+  }
   const cleanSeed = encodeURIComponent((seed || 'traveler').trim());
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${cleanSeed}`;
 }
 
 /**
- * Normalizes avatar URLs to ensure the Avataaars style is used,
- * automatically migrating legacy placeholder assets and older identicon URLs.
+ * Detects if a user or traveler profile is an authenticated/verified Google account.
  */
-export function normalizeAvatarUrl(avatarUrl?: string, seed?: string): string {
+export function isGoogleVerifiedUser(userOrTraveler?: any): boolean {
+  if (!userOrTraveler) return false;
+  if (userOrTraveler.isGoogleVerified) return true;
+  if (userOrTraveler.authProvider === 'google') return true;
+  const email = String(userOrTraveler.email || '').toLowerCase().trim();
+  const id = String(userOrTraveler.id || userOrTraveler.userId || '').toLowerCase().trim();
+  const avatar = String(userOrTraveler.avatarUrl || '').toLowerCase();
+  return (
+    email.endsWith('@gmail.com') ||
+    id.startsWith('google-') ||
+    avatar.includes('googleusercontent.com') ||
+    avatar.includes('lh3.google')
+  );
+}
+
+/**
+ * Normalizes avatar URLs.
+ * If the user has a Google account photo, it is preserved and prioritized.
+ * Otherwise falls back to Dicebear Avataaars or admin uncle avatar.
+ */
+export function normalizeAvatarUrl(avatarUrl?: string, seed?: string, userOrTraveler?: any): string {
+  // If user has an authentic Google account photo, ALWAYS preserve and return it!
+  if (
+    avatarUrl &&
+    (avatarUrl.includes('googleusercontent.com') ||
+      avatarUrl.includes('lh3.google') ||
+      avatarUrl.includes('google.com') ||
+      avatarUrl.startsWith('data:image/'))
+  ) {
+    return avatarUrl;
+  }
+
+  // If user is Google verified with a custom photo
+  if (isGoogleVerifiedUser(userOrTraveler) && avatarUrl && !avatarUrl.includes('uncle_avatar')) {
+    return avatarUrl;
+  }
+
+  // If admin account identified by seed, user object, avatarUrl, or current auth user
+  if (
+    isAdminAccount(seed) ||
+    isAdminAccount(userOrTraveler) ||
+    isAdminAccount(avatarUrl) ||
+    (auth.currentUser &&
+      (isAdminAccount(auth.currentUser.email) || isAdminAccount(auth.currentUser.uid)) &&
+      (!seed || seed === auth.currentUser.uid || seed === auth.currentUser.email || userOrTraveler?.id === auth.currentUser.uid || userOrTraveler?.userId === auth.currentUser.uid))
+  ) {
+    return UNCLE_AVATAR_URL;
+  }
+
+  if (avatarUrl && (avatarUrl.includes('uncle_avatar') || avatarUrl.includes('eyes=xDizzy'))) {
+    return UNCLE_AVATAR_URL;
+  }
+
   if (
     !avatarUrl ||
     avatarUrl.includes('traveler_profile_avatar') ||

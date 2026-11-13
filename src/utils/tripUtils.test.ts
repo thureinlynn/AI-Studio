@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { isTripExpired, isDropOffDatePassed, filterAndSortTrips, formatMemberSince } from './tripUtils';
-import { getDicebearAvatar, normalizeAvatarUrl } from './userUtils';
+import { getDicebearAvatar, normalizeAvatarUrl, isGoogleVerifiedUser } from './userUtils';
 import { TripPost, TripFilters } from '../types/trip';
 
 const dummyTraveler = {
@@ -130,4 +130,22 @@ test('getDicebearAvatar generates valid Dicebear Avataaars SVG url', () => {
     normalizeAvatarUrl('https://api.dicebear.com/7.x/identicon/svg?seed=user-123', 'user-123'),
     'https://api.dicebear.com/7.x/avataaars/svg?seed=user-123'
   );
+});
+
+test('preserves Google account photo and detects Google verified users', () => {
+  const googlePhoto = 'https://lh3.googleusercontent.com/a/ACg8ocLQtest=s96-c';
+  assert.equal(normalizeAvatarUrl(googlePhoto, 'user-123'), googlePhoto);
+
+  const googleUser = {
+    email: 'thureinlynn.mm@gmail.com',
+    authProvider: 'google',
+    isGoogleVerified: true,
+  };
+  assert.equal(isGoogleVerifiedUser(googleUser), true);
+
+  const nonGoogleUser = {
+    email: 'traveler@customdomain.com',
+    authProvider: 'password',
+  };
+  assert.equal(isGoogleVerifiedUser(nonGoogleUser), false);
 });
