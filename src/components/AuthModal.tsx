@@ -34,6 +34,7 @@ export const AuthModal: React.FC = () => {
   const {
     user,
     isAuthenticated,
+    loginWithGoogle,
     loginWithFirebase,
     signUpWithFirebase,
     sendPasswordReset,
@@ -58,6 +59,7 @@ export const AuthModal: React.FC = () => {
 
   // UI state
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [resetSentNotice, setResetSentNotice] = useState<string | null>(null);
 
@@ -65,9 +67,15 @@ export const AuthModal: React.FC = () => {
   const ITEMS_PER_PAGE = 10;
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Reset to page 1 whenever user changes or modal opens
+  // Reset pagination and transient auth banners whenever user changes or modal opens/closes
   useEffect(() => {
     setCurrentPage(1);
+    if (isAuthModalOpen) {
+      setAuthError(null);
+      setResetSentNotice(null);
+      setIsLoading(false);
+      setIsGoogleLoading(false);
+    }
   }, [user?.id, isAuthModalOpen]);
 
   // User trips unified list with active trips first, then past/completed trips
@@ -78,6 +86,24 @@ export const AuthModal: React.FC = () => {
     const past = all.filter((t) => t.status !== 'active' || isDropOffDatePassed(t.lastDropOffDate));
     return [...active, ...past];
   }, [user, trips]);
+
+  const handleGoogleSignIn = async () => {
+    setAuthError(null);
+    setResetSentNotice(null);
+    setIsGoogleLoading(true);
+    try {
+      const result = await loginWithGoogle();
+      if (result.success) {
+        closeAuthModal();
+      } else {
+        setAuthError(result.error || 'Failed to sign in with Google.');
+      }
+    } catch (err: any) {
+      setAuthError(err?.message || 'Failed to sign in with Google.');
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -196,6 +222,7 @@ export const AuthModal: React.FC = () => {
                   <img
                     src={normalizeAvatarUrl(user.avatarUrl, user.id, user)}
                     alt={user.name}
+                    referrerPolicy="no-referrer"
                     className="w-full h-full object-cover p-1 bg-white dark:bg-slate-800"
                     onError={(e) => handleAvatarImageError(e, user.id)}
                   />
@@ -518,11 +545,52 @@ export const AuthModal: React.FC = () => {
                 </div>
               )}
 
+              {/* Google Sign-In Button */}
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={isLoading || isGoogleLoading}
+                className="w-full py-2.5 px-4 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-100 font-semibold text-xs rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50"
+              >
+                {isGoogleLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-slate-600 dark:text-slate-300" />
+                ) : (
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      fill="#4285F4"
+                      d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 24c3.3 0 6.08-1.09 8.11-2.95l-3.88-3.05c-1.1.74-2.51 1.18-4.23 1.18-3.25 0-6.01-2.2-7-5.16H1.01v3.14C3.05 21.2 7.21 24 12 24Z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5 14.02c-.25-.74-.39-1.54-.39-2.36 0-.82.14-1.62.39-2.36V6.16H1.01C.37 7.45 0 8.9 0 10.45c0 1.55.37 3 .99 4.29l4.01-3.14v2.42Z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 4.75c1.8 0 3.41.62 4.68 1.84l3.51-3.51C18.07 1.19 15.3 0 12 0 7.21 0 3.05 2.8 1.01 6.86l3.99 3.1C5.99 6.95 8.75 4.75 12 4.75Z"
+                    />
+                  </svg>
+                )}
+                <span>{isGoogleLoading ? 'Connecting to Google...' : 'Continue with Google'}</span>
+              </button>
+
+              {/* Divider */}
+              <div className="relative flex items-center py-0.5">
+                <div className="flex-grow border-t border-slate-200 dark:border-slate-800" />
+                <span className="shrink-0 mx-3 text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  or continue with email
+                </span>
+                <div className="flex-grow border-t border-slate-200 dark:border-slate-800" />
+              </div>
+
               {mode === 'signin' ? (
                 /* Sign In Form */
                 <form onSubmit={handleSignIn} className="space-y-3.5 text-xs pt-1">
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Sign in with your Firebase account credentials to post trips and manage your community listings.
+                    Sign in with your account credentials to post trips and manage your community listings.
                   </p>
 
                   <div>
@@ -582,7 +650,7 @@ export const AuthModal: React.FC = () => {
 
                   <button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isLoading || isGoogleLoading}
                     className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shadow-sm mt-2 flex items-center justify-center gap-1.5 disabled:opacity-50"
                   >
                     {isLoading ? (
@@ -694,7 +762,7 @@ export const AuthModal: React.FC = () => {
 
                   <button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isLoading || isGoogleLoading}
                     className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shadow-sm mt-2 flex items-center justify-center gap-1.5 disabled:opacity-50"
                   >
                     {isLoading ? (

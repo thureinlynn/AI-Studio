@@ -15,6 +15,7 @@ import {
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { formatMemberSince } from '../utils/tripUtils';
 import { getDicebearAvatar, normalizeAvatarUrl, isAuthenticPhotoUrl } from '../utils/userUtils';
+import { mapGoogleAuthError, pickFirebasePhotoUrl, buildResolvedUserProfile } from '../utils/authUtils';
 
 export interface AuthContextType {
   user: User | null;
@@ -151,8 +152,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
       if (fbUser) {
+        const fbPhotoUrl = pickFirebasePhotoUrl(fbUser.photoURL, fbUser.providerData);
         const userMeta = { id: fbUser.uid, email: fbUser.email || '', name: fbUser.displayName || '' };
-        const defaultAvatar = normalizeAvatarUrl(fbUser.photoURL || undefined, fbUser.uid, userMeta);
+        const defaultAvatar = normalizeAvatarUrl(fbPhotoUrl, fbUser.uid, userMeta);
         const savedStr = localStorage.getItem(STORAGE_KEY);
         let existingLocalProfile: User | null = null;
         if (savedStr) {
@@ -161,7 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (parsed && parsed.id === fbUser.uid) {
               const preferredRaw = isAuthenticPhotoUrl(parsed.avatarUrl)
                 ? parsed.avatarUrl
-                : fbUser.photoURL || parsed.avatarUrl;
+                : fbPhotoUrl || parsed.avatarUrl;
               existingLocalProfile = {
                 ...parsed,
                 avatarUrl: normalizeAvatarUrl(preferredRaw, fbUser.uid, { ...userMeta, ...parsed }),
@@ -195,104 +197,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const data = snap.data();
             const preferredRaw = isAuthenticPhotoUrl(data.avatarUrl)
               ? data.avatarUrl
-              : fbUser.photoURL || data.avatarUrl;
+              : fbPhotoUrl || data.avatarUrl;
             const avatar = normalizeAvatarUrl(preferredRaw, fbUser.uid, { ...userMeta, ...data });
 
             // Ensure Firestore user document has the true account creation date and normalized avatar
             if ((accountCreatedAt && data.createdAt !== accountCreatedAt) || data.avatarUrl !== avatar) {
               setDoc(userDocRef, { createdAt: accountCreatedAt, memberSince: accountMemberSince, avatarUrl: avatar }, { merge: true }).catch(() => {});
             }
-            const profile: User = {
-              id: fbUser.uid,
-              name: data.name || fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
-              email: fbUser.email || '',
+            const profile = buildResolvedUserProfile({
+              uid: fbUser.uid,
+              email: fbUser.email,
+              displayName: fbUser.displayName,
               avatarUrl: avatar,
-              bio: data.bio || 'Community traveler on LuuKyone.',
-              isVerified: false,
               createdAt: accountCreatedAt,
               memberSince: accountMemberSince,
-              contacts: {
-                whatsapp: data.contacts?.whatsapp || '',
-                viber: data.contacts?.viber || '',
-                telegram: data.contacts?.telegram || '',
-                facebook: data.contacts?.facebook || '',
-                preferred: data.contacts?.preferred || 'whatsapp',
-              },
-              tripsCount: data.tripsCount || 0,
-              languages: data.languages || ['English', 'Myanmar'],
-            };
+              existingData: data,
+            });
             setUser(profile);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
           } else if (snap && !snap.exists()) {
             // First time login - auto provision profile document in Firestore
-            const initialProfile: User = {
-              id: fbUser.uid,
-              name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
-              email: fbUser.email || '',
+            const initialProfile = buildResolvedUserProfile({
+              uid: fbUser.uid,
+              email: fbUser.email,
+              displayName: fbUser.displayName,
               avatarUrl: defaultAvatar,
-              bio: 'Community traveler sharing extra baggage allowance.',
-              isVerified: false,
               createdAt: accountCreatedAt,
               memberSince: accountMemberSince,
-              contacts: {
-                whatsapp: '',
-                viber: '',
-                telegram: '',
-                facebook: '',
-                preferred: 'whatsapp',
-              },
-              tripsCount: 0,
-              languages: ['English', 'Myanmar'],
-            };
+              existingData: null,
+            });
             setDoc(userDocRef, initialProfile, { merge: true }).catch(() => {});
             setUser(initialProfile);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(initialProfile));
           } else {
-            // Offline fallback
-            const fallbackProfile: User = existingLocalProfile || {
-              id: fbUser.uid,
-              name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
-              email: fbUser.email || '',
-              avatarUrl: defaultAvatar,
-              bio: 'Community traveler on LuuKyone.',
-              isVerified: false,
-              createdAt: accountCreatedAt,
-              memberSince: accountMemberSince,
-              contacts: {
-                whatsapp: '',
-                viber: '',
-                telegram: '',
-                facebook: '',
-                preferred: 'whatsapp',
-              },
-              tripsCount: 0,
-              languages: ['English', 'Myanmar'],
-            };
+            // Offline fallback - do not overwrite existing Firestore document
+            const fallbackProfile: User =
+              existingLocalProfile ||
+              buildResolvedUserProfile({
+                uid: fbUser.uid,
+                email: fbUser.email,
+                displayName: fbUser.displayName,
+                avatarUrl: defaultAvatar,
+                createdAt: accountCreatedAt,
+                memberSince: accountMemberSince,
+                existingData: { bio: 'Community traveler on LuuKyone.' },
+              });
             setUser(fallbackProfile);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(fallbackProfile));
           }
         } catch (err) {
           console.debug('[Firestore] Offline fallback applied:', err);
           const fallbackCreatedAt = fbUser.metadata.creationTime || new Date().toISOString();
-          const fallbackProfile: User = existingLocalProfile || {
-            id: fbUser.uid,
-            name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
-            email: fbUser.email || '',
-            avatarUrl: defaultAvatar,
-            bio: 'Traveler on LuuKyone.',
-            isVerified: false,
-            createdAt: fallbackCreatedAt,
-            memberSince: formatMemberSince(fallbackCreatedAt),
-            contacts: {
-              whatsapp: '',
-              viber: '',
-              telegram: '',
-              facebook: '',
-              preferred: 'whatsapp',
-            },
-            tripsCount: 0,
-            languages: ['English'],
-          };
+          const fallbackProfile: User =
+            existingLocalProfile ||
+            buildResolvedUserProfile({
+              uid: fbUser.uid,
+              email: fbUser.email,
+              displayName: fbUser.displayName,
+              avatarUrl: defaultAvatar,
+              createdAt: fallbackCreatedAt,
+              memberSince: formatMemberSince(fallbackCreatedAt),
+              existingData: { bio: 'Traveler on LuuKyone.', languages: ['English'] },
+            });
           setUser(fallbackProfile);
         }
       } else {
@@ -310,16 +276,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoadingAuth(true);
     try {
       const provider = new GoogleAuthProvider();
+      provider.addScope('profile');
+      provider.addScope('email');
       provider.setCustomParameters({ prompt: 'select_account' });
+
       const cred = await signInWithPopup(auth, provider);
       const fbUser = cred.user;
+      const fbPhotoUrl = pickFirebasePhotoUrl(fbUser.photoURL, fbUser.providerData);
 
       const userMeta = { id: fbUser.uid, email: fbUser.email || '', name: fbUser.displayName || '' };
-      const googleAvatar = normalizeAvatarUrl(fbUser.photoURL || undefined, fbUser.uid, userMeta);
-      const accountCreatedAt =
-        (fbUser.metadata?.creationTime ? new Date(fbUser.metadata.creationTime).toISOString() : null) ||
-        new Date().toISOString();
-      const accountMemberSince = formatMemberSince(accountCreatedAt);
+      const googleAvatar = normalizeAvatarUrl(fbPhotoUrl, fbUser.uid, userMeta);
+
+      let existingLocalProfile: User | null = null;
+      try {
+        const savedStr = localStorage.getItem(STORAGE_KEY);
+        if (savedStr) {
+          const parsed = JSON.parse(savedStr);
+          if (parsed && parsed.id === fbUser.uid) {
+            const preferredRaw = isAuthenticPhotoUrl(parsed.avatarUrl)
+              ? parsed.avatarUrl
+              : fbPhotoUrl || parsed.avatarUrl;
+            existingLocalProfile = {
+              ...parsed,
+              avatarUrl: normalizeAvatarUrl(preferredRaw, fbUser.uid, { ...userMeta, ...parsed }),
+            };
+          }
+        }
+      } catch {}
 
       const userDocRef = doc(db, 'users', fbUser.uid);
       let snap: any = null;
@@ -331,79 +314,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.debug('[Firestore] Using offline fallback for Google user:', e);
       }
 
+      const accountCreatedAt =
+        (fbUser.metadata?.creationTime ? new Date(fbUser.metadata.creationTime).toISOString() : null) ||
+        (snap && snap.exists() && snap.data().createdAt) ||
+        existingLocalProfile?.createdAt ||
+        new Date().toISOString();
+      const accountMemberSince = formatMemberSince(accountCreatedAt);
+
       let profile: User;
       if (snap && snap.exists()) {
         const data = snap.data();
         const preferredRaw = isAuthenticPhotoUrl(data.avatarUrl)
           ? data.avatarUrl
-          : fbUser.photoURL || data.avatarUrl;
+          : fbPhotoUrl || data.avatarUrl;
         const resolvedAvatar = normalizeAvatarUrl(preferredRaw, fbUser.uid, { ...userMeta, ...data });
-        if (data.avatarUrl !== resolvedAvatar) {
-          setDoc(userDocRef, { avatarUrl: resolvedAvatar }, { merge: true }).catch(() => {});
+        if ((accountCreatedAt && data.createdAt !== accountCreatedAt) || data.avatarUrl !== resolvedAvatar) {
+          setDoc(
+            userDocRef,
+            { createdAt: accountCreatedAt, memberSince: accountMemberSince, avatarUrl: resolvedAvatar },
+            { merge: true }
+          ).catch(() => {});
         }
-        profile = {
-          id: fbUser.uid,
-          name: data.name || fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
-          email: fbUser.email || '',
+        profile = buildResolvedUserProfile({
+          uid: fbUser.uid,
+          email: fbUser.email,
+          displayName: fbUser.displayName,
           avatarUrl: resolvedAvatar,
-          bio: data.bio || 'Community traveler on LuuKyone.',
-          isVerified: false,
-          createdAt: data.createdAt || accountCreatedAt,
-          memberSince: formatMemberSince(data.createdAt || accountCreatedAt),
-          contacts: {
-            whatsapp: data.contacts?.whatsapp || '',
-            viber: data.contacts?.viber || '',
-            telegram: data.contacts?.telegram || '',
-            facebook: data.contacts?.facebook || '',
-            preferred: data.contacts?.preferred || 'whatsapp',
-          },
-          tripsCount: data.tripsCount || 0,
-          languages: data.languages || ['English', 'Myanmar'],
-        };
-      } else {
-        profile = {
-          id: fbUser.uid,
-          name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Traveler',
-          email: fbUser.email || '',
-          avatarUrl: googleAvatar,
-          bio: 'Community traveler sharing extra baggage allowance.',
-          isVerified: false,
           createdAt: accountCreatedAt,
           memberSince: accountMemberSince,
-          contacts: {
-            whatsapp: '',
-            viber: '',
-            telegram: '',
-            facebook: '',
-            preferred: 'whatsapp',
-          },
-          tripsCount: 0,
-          languages: ['English', 'Myanmar'],
-        };
+          existingData: data,
+        });
+      } else if (snap && !snap.exists()) {
+        profile = buildResolvedUserProfile({
+          uid: fbUser.uid,
+          email: fbUser.email,
+          displayName: fbUser.displayName,
+          avatarUrl: googleAvatar,
+          createdAt: accountCreatedAt,
+          memberSince: accountMemberSince,
+          existingData: null,
+        });
         setDoc(userDocRef, profile, { merge: true }).catch(() => {});
+      } else {
+        // Offline / timeout fallback — preserve local data and never overwrite Firestore with blanks
+        profile =
+          existingLocalProfile ||
+          buildResolvedUserProfile({
+            uid: fbUser.uid,
+            email: fbUser.email,
+            displayName: fbUser.displayName,
+            avatarUrl: googleAvatar,
+            createdAt: accountCreatedAt,
+            memberSince: accountMemberSince,
+            existingData: { bio: 'Community traveler on LuuKyone.' },
+          });
       }
 
       setUser(profile);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
       return { success: true };
     } catch (err: any) {
-      let message = 'Failed to sign in with Google.';
-      if (err.code === 'auth/popup-closed-by-user') {
-        message = 'Google sign-in popup was closed before completing.';
-      } else if (err.code === 'auth/popup-blocked') {
-        message = 'Popup was blocked by your browser. Please allow popups for this site.';
-      } else if (err.code === 'auth/cancelled-popup-request') {
-        message = 'Sign-in cancelled.';
-      } else if (
-        err.code === 'auth/configuration-not-found' ||
-        err.code === 'auth/operation-not-allowed'
-      ) {
-        message =
-          'Google Sign-in is not yet enabled in your Firebase Console (project luukyone-b17b7). Please open Firebase Console > Authentication > Sign-in method and enable "Google".';
-      } else if (err.message) {
-        message = err.message;
-      }
-      return { success: false, error: message };
+      const hostname = typeof window !== 'undefined' ? window.location.hostname : undefined;
+      return { success: false, error: mapGoogleAuthError(err, hostname) };
     } finally {
       setIsLoadingAuth(false);
     }

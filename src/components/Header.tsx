@@ -87,6 +87,7 @@ export const Header: React.FC = () => {
                   <img
                     src={headerAvatar}
                     alt={user.name}
+                    referrerPolicy="no-referrer"
                     className="w-full h-full object-cover"
                     onError={(e) => handleAvatarImageError(e, user.id)}
                   />
