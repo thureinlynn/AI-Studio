@@ -153,7 +153,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setFirebaseUser(fbUser);
       if (fbUser) {
         const fbPhotoUrl = pickFirebasePhotoUrl(fbUser.photoURL, fbUser.providerData);
-        const userMeta = { id: fbUser.uid, email: fbUser.email || '', name: fbUser.displayName || '' };
+        const hasGoogleProvider =
+          Array.isArray(fbUser.providerData) &&
+          fbUser.providerData.some((p) => p?.providerId === 'google.com');
+        const userMeta = {
+          id: fbUser.uid,
+          email: fbUser.email || '',
+          name: fbUser.displayName || '',
+          ...(hasGoogleProvider ? { authProvider: 'google' as const, isGoogleVerified: true } : {}),
+        };
         const defaultAvatar = normalizeAvatarUrl(fbPhotoUrl, fbUser.uid, userMeta);
         const savedStr = localStorage.getItem(STORAGE_KEY);
         let existingLocalProfile: User | null = null;
@@ -166,6 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 : fbPhotoUrl || parsed.avatarUrl;
               existingLocalProfile = {
                 ...parsed,
+                ...(hasGoogleProvider ? { authProvider: 'google' as const, isGoogleVerified: true } : {}),
                 avatarUrl: normalizeAvatarUrl(preferredRaw, fbUser.uid, { ...userMeta, ...parsed }),
               };
               setUser(existingLocalProfile);
@@ -199,10 +208,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               ? data.avatarUrl
               : fbPhotoUrl || data.avatarUrl;
             const avatar = normalizeAvatarUrl(preferredRaw, fbUser.uid, { ...userMeta, ...data });
+            const shouldMarkGoogle = hasGoogleProvider && (!data.isGoogleVerified || data.authProvider !== 'google');
 
-            // Ensure Firestore user document has the true account creation date and normalized avatar
-            if ((accountCreatedAt && data.createdAt !== accountCreatedAt) || data.avatarUrl !== avatar) {
-              setDoc(userDocRef, { createdAt: accountCreatedAt, memberSince: accountMemberSince, avatarUrl: avatar }, { merge: true }).catch(() => {});
+            // Ensure Firestore user document has the true account creation date, Google verification flag, and normalized avatar
+            if ((accountCreatedAt && data.createdAt !== accountCreatedAt) || data.avatarUrl !== avatar || shouldMarkGoogle) {
+              setDoc(
+                userDocRef,
+                {
+                  createdAt: accountCreatedAt,
+                  memberSince: accountMemberSince,
+                  avatarUrl: avatar,
+                  ...(hasGoogleProvider ? { isGoogleVerified: true, authProvider: 'google' } : {}),
+                },
+                { merge: true }
+              ).catch(() => {});
             }
             const profile = buildResolvedUserProfile({
               uid: fbUser.uid,
@@ -212,6 +231,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               createdAt: accountCreatedAt,
               memberSince: accountMemberSince,
               existingData: data,
+              ...(hasGoogleProvider ? { authProvider: 'google' as const, isGoogleVerified: true } : {}),
             });
             setUser(profile);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
@@ -225,6 +245,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               createdAt: accountCreatedAt,
               memberSince: accountMemberSince,
               existingData: null,
+              authProvider: hasGoogleProvider ? 'google' : 'password',
+              isGoogleVerified: hasGoogleProvider,
             });
             setDoc(userDocRef, initialProfile, { merge: true }).catch(() => {});
             setUser(initialProfile);
@@ -241,6 +263,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 createdAt: accountCreatedAt,
                 memberSince: accountMemberSince,
                 existingData: { bio: 'Community traveler on LuuKyone.' },
+                ...(hasGoogleProvider ? { authProvider: 'google' as const, isGoogleVerified: true } : {}),
               });
             setUser(fallbackProfile);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(fallbackProfile));
@@ -258,6 +281,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               createdAt: fallbackCreatedAt,
               memberSince: formatMemberSince(fallbackCreatedAt),
               existingData: { bio: 'Traveler on LuuKyone.', languages: ['English'] },
+              ...(hasGoogleProvider ? { authProvider: 'google' as const, isGoogleVerified: true } : {}),
             });
           setUser(fallbackProfile);
         }
@@ -328,10 +352,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ? data.avatarUrl
           : fbPhotoUrl || data.avatarUrl;
         const resolvedAvatar = normalizeAvatarUrl(preferredRaw, fbUser.uid, { ...userMeta, ...data });
-        if ((accountCreatedAt && data.createdAt !== accountCreatedAt) || data.avatarUrl !== resolvedAvatar) {
+        if (
+          (accountCreatedAt && data.createdAt !== accountCreatedAt) ||
+          data.avatarUrl !== resolvedAvatar ||
+          !data.isGoogleVerified ||
+          data.authProvider !== 'google'
+        ) {
           setDoc(
             userDocRef,
-            { createdAt: accountCreatedAt, memberSince: accountMemberSince, avatarUrl: resolvedAvatar },
+            {
+              createdAt: accountCreatedAt,
+              memberSince: accountMemberSince,
+              avatarUrl: resolvedAvatar,
+              isGoogleVerified: true,
+              authProvider: 'google',
+            },
             { merge: true }
           ).catch(() => {});
         }
@@ -343,6 +378,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           createdAt: accountCreatedAt,
           memberSince: accountMemberSince,
           existingData: data,
+          authProvider: 'google',
+          isGoogleVerified: true,
         });
       } else if (snap && !snap.exists()) {
         profile = buildResolvedUserProfile({
@@ -353,12 +390,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           createdAt: accountCreatedAt,
           memberSince: accountMemberSince,
           existingData: null,
+          authProvider: 'google',
+          isGoogleVerified: true,
         });
         setDoc(userDocRef, profile, { merge: true }).catch(() => {});
       } else {
         // Offline / timeout fallback — preserve local data and never overwrite Firestore with blanks
         profile =
-          existingLocalProfile ||
+          (existingLocalProfile
+            ? { ...existingLocalProfile, authProvider: 'google', isGoogleVerified: true }
+            : null) ||
           buildResolvedUserProfile({
             uid: fbUser.uid,
             email: fbUser.email,
@@ -367,6 +408,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             createdAt: accountCreatedAt,
             memberSince: accountMemberSince,
             existingData: { bio: 'Community traveler on LuuKyone.' },
+            authProvider: 'google',
+            isGoogleVerified: true,
           });
       }
 
@@ -447,6 +490,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         avatarUrl: normalizeAvatarUrl(undefined, uid, { id: uid, email: cleanEmail, name: cleanName }),
         bio: profileData.bio?.trim() || 'Community traveler sharing extra baggage allowance.',
         isVerified: false,
+        isGoogleVerified: false,
+        authProvider: 'password',
         createdAt: creationTime,
         memberSince: memberSince,
         contacts: {

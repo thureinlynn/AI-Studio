@@ -64,20 +64,20 @@ export function getDicebearAvatar(seed?: string): string {
 }
 
 /**
- * Detects if a user or traveler profile is an authenticated/verified Google account.
+ * Detects if a user or traveler profile is an authenticated/verified Google login account.
  */
 export function isGoogleVerifiedUser(userOrTraveler?: any): boolean {
   if (!userOrTraveler) return false;
   if (userOrTraveler.isGoogleVerified) return true;
   if (userOrTraveler.authProvider === 'google') return true;
-  const email = String(userOrTraveler.email || '').toLowerCase().trim();
+  if (userOrTraveler.authProvider === 'password' || userOrTraveler.authProvider === 'demo') return false;
   const id = String(userOrTraveler.id || userOrTraveler.userId || '').toLowerCase().trim();
   const avatar = String(userOrTraveler.avatarUrl || '').toLowerCase();
   return (
-    email.endsWith('@gmail.com') ||
     id.startsWith('google-') ||
     avatar.includes('googleusercontent.com') ||
-    avatar.includes('lh3.google')
+    avatar.includes('lh3.google') ||
+    avatar.includes('ggpht.com')
   );
 }
 

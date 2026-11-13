@@ -3,7 +3,8 @@ import { useTrips } from '../context/TripContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatDateDisplay, isDropOffDatePassed, countCompletedTripsForTraveler, formatMemberSince } from '../utils/tripUtils';
-import { useTravelerAccountDate, normalizeAvatarUrl, handleAvatarImageError } from '../utils/userUtils';
+import { useTravelerAccountDate, normalizeAvatarUrl, handleAvatarImageError, isGoogleVerifiedUser } from '../utils/userUtils';
+import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
 import {
   X,
   User,
@@ -77,6 +78,9 @@ export const PublicProfileModal: React.FC = () => {
   const contacts = publicProfileTraveler.contacts || {};
 
   const isOwnProfile = Boolean(user && publicProfileTraveler.userId && user.id === publicProfileTraveler.userId);
+  const isGoogleVerified = isGoogleVerifiedUser(
+    isOwnProfile ? { ...publicProfileTraveler, ...user } : publicProfileTraveler
+  );
   const travelerAvatar = normalizeAvatarUrl(
     isOwnProfile ? user!.avatarUrl : publicProfileTraveler.avatarUrl,
     publicProfileTraveler.userId || publicProfileTraveler.name,
@@ -127,6 +131,7 @@ export const PublicProfileModal: React.FC = () => {
                   <h4 className="text-lg font-extrabold text-slate-900 dark:text-white truncate">
                     {publicProfileTraveler.name}
                   </h4>
+                  {isGoogleVerified && <GoogleVerifiedBadge />}
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                   {t('detailMemberSince')} {travelerAccount.formattedMemberSince}

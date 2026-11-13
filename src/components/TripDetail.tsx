@@ -16,7 +16,8 @@ import {
   countCompletedTripsForTraveler,
   formatMemberSince,
 } from '../utils/tripUtils';
-import { useTravelerAccountDate, normalizeAvatarUrl, handleAvatarImageError } from '../utils/userUtils';
+import { useTravelerAccountDate, normalizeAvatarUrl, handleAvatarImageError, isGoogleVerifiedUser } from '../utils/userUtils';
+import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
 import {
   ArrowLeft,
   ArrowRight,
@@ -66,6 +67,9 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
   );
 
   const isOwnTrip = Boolean(user && user.id === trip.userId);
+  const isGoogleVerified = isGoogleVerifiedUser(
+    isOwnTrip ? { ...trip.traveler, ...user } : trip.traveler
+  );
   const travelerAvatar = normalizeAvatarUrl(
     isOwnTrip ? user!.avatarUrl : trip.traveler?.avatarUrl,
     trip.userId || travelerName,
@@ -395,10 +399,11 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
               </div>
 
               <div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <h4 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                     {trip.traveler.name}
                   </h4>
+                  {isGoogleVerified && <GoogleVerifiedBadge />}
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                   {t('detailMemberSince')} {travelerAccount.formattedMemberSince}

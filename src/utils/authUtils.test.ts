@@ -84,9 +84,13 @@ test('buildResolvedUserProfile preserves existing Firestore contacts, bio, and t
     createdAt: '2026-11-01T00:00:00.000Z',
     memberSince: 'Nov 1, 2026',
     existingData: null,
+    authProvider: 'google',
+    isGoogleVerified: true,
   });
 
   assert.equal(fresh.name, 'New Google User');
   assert.equal(fresh.tripsCount, 0);
   assert.equal(fresh.contacts.whatsapp, '');
+  assert.equal(fresh.authProvider, 'google');
+  assert.equal(fresh.isGoogleVerified, true);
 });

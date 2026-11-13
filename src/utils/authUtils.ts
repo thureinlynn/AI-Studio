@@ -73,6 +73,8 @@ export interface ResolveProfileParams {
   createdAt: string;
   memberSince: string;
   existingData?: Record<string, any> | null;
+  authProvider?: 'google' | 'password' | 'demo';
+  isGoogleVerified?: boolean;
 }
 
 /**
@@ -87,10 +89,19 @@ export function buildResolvedUserProfile({
   createdAt,
   memberSince,
   existingData,
+  authProvider,
+  isGoogleVerified,
 }: ResolveProfileParams): User {
   const cleanEmail = (email || existingData?.email || '').trim();
   const fallbackName = cleanEmail ? cleanEmail.split('@')[0] : 'Traveler';
   const data = existingData || {};
+  const resolvedProvider: 'google' | 'password' | 'demo' | undefined =
+    authProvider ||
+    data.authProvider ||
+    (isGoogleVerified || data.isGoogleVerified ? 'google' : undefined);
+  const resolvedGoogleVerified = Boolean(
+    isGoogleVerified || data.isGoogleVerified || resolvedProvider === 'google'
+  );
 
   return {
     id: uid,
@@ -103,6 +114,8 @@ export function buildResolvedUserProfile({
         ? 'Community traveler on LuuKyone.'
         : 'Community traveler sharing extra baggage allowance.'),
     isVerified: false,
+    isGoogleVerified: resolvedGoogleVerified,
+    ...(resolvedProvider ? { authProvider: resolvedProvider } : {}),
     createdAt,
     memberSince,
     contacts: {

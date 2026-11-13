@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { useTrips } from '../context/TripContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatDateDisplay, formatMemberSince, countCompletedTripsForTraveler, isDropOffDatePassed } from '../utils/tripUtils';
-import { normalizeAvatarUrl, handleAvatarImageError } from '../utils/userUtils';
+import { normalizeAvatarUrl, handleAvatarImageError, isGoogleVerifiedUser } from '../utils/userUtils';
+import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
 import {
   X,
   User,
@@ -228,8 +229,9 @@ export const AuthModal: React.FC = () => {
                   />
                 </div>
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <h4 className="font-bold text-slate-900 dark:text-white truncate text-base">{user.name}</h4>
+                    {isGoogleVerifiedUser(user) && <GoogleVerifiedBadge />}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 font-mono truncate">{user.email}</div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">

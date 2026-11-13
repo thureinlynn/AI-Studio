@@ -4,7 +4,8 @@ import { useTrips } from '../context/TripContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { formatDateDisplay, countCompletedTripsForTraveler } from '../utils/tripUtils';
-import { normalizeAvatarUrl, handleAvatarImageError } from '../utils/userUtils';
+import { normalizeAvatarUrl, handleAvatarImageError, isGoogleVerifiedUser } from '../utils/userUtils';
+import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
 import { ArrowRight, Calendar, Clock, ChevronRight, User } from 'lucide-react';
 
 interface TripCardProps {
@@ -17,6 +18,9 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
   const { t } = useLanguage();
 
   const isOwnTrip = Boolean(user && user.id === trip.userId);
+  const isGoogleVerified = isGoogleVerifiedUser(
+    isOwnTrip ? { ...trip.traveler, ...user } : trip.traveler
+  );
   const authorAvatar = normalizeAvatarUrl(
     isOwnTrip ? user!.avatarUrl : trip.traveler?.avatarUrl,
     trip.userId || trip.traveler?.name,
@@ -108,8 +112,9 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
             </div>
           </div>
           <div className="truncate text-xs">
-            <div className="font-semibold text-slate-900 dark:text-slate-100 truncate group-hover/author:text-blue-600 dark:group-hover/author:text-blue-400 flex items-center gap-1">
+            <div className="font-semibold text-slate-900 dark:text-slate-100 truncate group-hover/author:text-blue-600 dark:group-hover/author:text-blue-400 flex items-center gap-1.5 min-w-0">
               <span className="truncate">{trip.traveler.name}</span>
+              {isGoogleVerified && <GoogleVerifiedBadge />}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400">
               <span>{countCompletedTripsForTraveler(trips, { name: trip.traveler.name, userId: trip.userId })} {t('cardTripsCompleted')}</span>

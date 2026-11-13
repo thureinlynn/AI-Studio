@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { COMMON_ITEM_CATEGORIES } from '../data/mockTrips';
 import { formatMemberSince } from '../utils/tripUtils';
-import { normalizeAvatarUrl, handleAvatarImageError } from '../utils/userUtils';
+import { normalizeAvatarUrl, handleAvatarImageError, isGoogleVerifiedUser } from '../utils/userUtils';
+import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
 import {
   X,
   MapPin,
@@ -189,6 +190,8 @@ export const PostTripModal: React.FC = () => {
         reviewCount: 1,
         tripsCompleted: 0,
         isVerified: false,
+        isGoogleVerified: isGoogleVerifiedUser(user),
+        authProvider: user.authProvider || (isGoogleVerifiedUser(user) ? 'google' : 'password'),
         createdAt: user.createdAt || new Date().toISOString(),
         memberSince: formatMemberSince(user.createdAt || user.memberSince),
         bio: user.bio || 'Community traveler sharing extra luggage allowance.',
@@ -274,8 +277,9 @@ export const PostTripModal: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <div className="font-semibold text-xs text-slate-900 dark:text-white">
+                  <div className="font-semibold text-xs text-slate-900 dark:text-white flex items-center gap-1.5 flex-wrap">
                     <span>Posting as {user.name}</span>
+                    {isGoogleVerifiedUser(user) && <GoogleVerifiedBadge />}
                   </div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                     {user.email}

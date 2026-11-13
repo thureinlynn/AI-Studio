@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   normalizeAvatarUrl,
   isAuthenticPhotoUrl,
+  isGoogleVerifiedUser,
   getDicebearAvatar,
   UNCLE_AVATAR_URL,
 } from './userUtils';
@@ -12,6 +13,18 @@ test('isAuthenticPhotoUrl detects Google and data URLs', () => {
   assert.equal(isAuthenticPhotoUrl('data:image/png;base64,AAA'), true);
   assert.equal(isAuthenticPhotoUrl('https://api.dicebear.com/7.x/avataaars/svg?seed=u1'), false);
   assert.equal(isAuthenticPhotoUrl(''), false);
+});
+
+test('isGoogleVerifiedUser detects Google login accounts and excludes plain email accounts', () => {
+  assert.equal(isGoogleVerifiedUser({ authProvider: 'google', isGoogleVerified: true }), true);
+  assert.equal(isGoogleVerifiedUser({ authProvider: 'google' }), true);
+  assert.equal(
+    isGoogleVerifiedUser({ avatarUrl: 'https://lh3.googleusercontent.com/a/abc=s96-c' }),
+    true
+  );
+  assert.equal(isGoogleVerifiedUser({ email: 'alice@gmail.com', authProvider: 'password' }), false);
+  assert.equal(isGoogleVerifiedUser({ email: 'alice@gmail.com' }), false);
+  assert.equal(isGoogleVerifiedUser(null), false);
 });
 
 test('normalizeAvatarUrl preserves authentic Google photo even for admin users', () => {
