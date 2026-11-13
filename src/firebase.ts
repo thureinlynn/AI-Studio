@@ -1,7 +1,8 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { getAnalytics, isSupported, logEvent, Analytics } from "firebase/analytics";
+import { getAnalytics, isSupported, logEvent, Analytics, setAnalyticsCollectionEnabled } from "firebase/analytics";
+import { CookieConsentChoice, isAnalyticsConsented } from "./utils/cookieConsentUtils";
 
 const measurementId =
   (typeof import.meta !== "undefined" && import.meta.env?.VITE_FIREBASE_MEASUREMENT_ID) ||
@@ -25,15 +26,23 @@ export const db = initializeFirestore(app, {
   }),
 });
 
-// Safe Google Analytics initialization
+// Safe, consent-gated Google Analytics initialization
 export let analytics: Analytics | null = null;
 
-if (typeof window !== "undefined") {
+const enableAnalyticsIfSupported = () => {
+  if (typeof window === "undefined") return;
+  if (analytics) {
+    try {
+      setAnalyticsCollectionEnabled(analytics, true);
+    } catch {}
+    return;
+  }
   isSupported()
     .then((supported) => {
-      if (supported) {
+      if (supported && isAnalyticsConsented()) {
         try {
           analytics = getAnalytics(app);
+          setAnalyticsCollectionEnabled(analytics, true);
         } catch (err) {
           console.warn("[Firebase Analytics] Initialization warning:", err);
         }
@@ -42,13 +51,28 @@ if (typeof window !== "undefined") {
     .catch(() => {
       // Analytics not supported in current environment
     });
+};
+
+if (typeof window !== "undefined" && isAnalyticsConsented()) {
+  enableAnalyticsIfSupported();
 }
 
+export const syncAnalyticsConsent = (choice: CookieConsentChoice) => {
+  if (typeof window === "undefined") return;
+  if (choice === "accepted") {
+    enableAnalyticsIfSupported();
+  } else if (analytics) {
+    try {
+      setAnalyticsCollectionEnabled(analytics, false);
+    } catch {}
+  }
+};
+
 /**
- * Log custom analytics event
+ * Log custom analytics event (only when analytics cookies are accepted)
  */
 export const trackEvent = (eventName: string, eventParams?: Record<string, any>) => {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || !isAnalyticsConsented()) return;
   try {
     if (analytics) {
       logEvent(analytics, eventName, eventParams);

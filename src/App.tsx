@@ -20,6 +20,7 @@ import { AuthModal } from './components/AuthModal';
 import { SafetyModal } from './components/SafetyModal';
 import { PublicProfileModal } from './components/PublicProfileModal';
 import { MobileNav } from './components/MobileNav';
+import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { Footer } from './components/Footer';
 import { SEO } from './components/SEO';
 import {
@@ -146,6 +147,9 @@ const AppContent: React.FC = () => {
 
       {/* Mobile Touch Navigation Anchor */}
       <MobileNav />
+
+      {/* Analytics Cookie Consent Banner */}
+      <CookieConsentBanner />
     </div>
   );
 };
