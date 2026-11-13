@@ -27,8 +27,8 @@ export function mapGoogleAuthError(
       return 'Another sign-in window was opened. Please try signing in with Google again.';
     case 'auth/unauthorized-domain':
       return hostname
-        ? `Domain "${hostname}" is not authorized for Google Sign-In. Add it in Firebase Console > Authentication > Settings > Authorized domains.`
-        : 'This domain is not authorized for Google Sign-In. Add it in Firebase Console > Authentication > Settings > Authorized domains.';
+        ? `Domain "${hostname}" is not authorized for Google Sign-In. Add it in Firebase Console (project luukyone-b17b7) > Authentication > Settings > Authorized domains.`
+        : 'This domain is not authorized for Google Sign-In. Add it in Firebase Console (project luukyone-b17b7) > Authentication > Settings > Authorized domains.';
     case 'auth/configuration-not-found':
     case 'auth/operation-not-allowed':
       return 'Google Sign-in is not yet enabled in your Firebase Console (project luukyone-b17b7). Please open Firebase Console > Authentication > Sign-in method and enable "Google".';

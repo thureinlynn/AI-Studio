@@ -9,6 +9,7 @@ import {
 test('mapGoogleAuthError handles unauthorized-domain with hostname context', () => {
   const msg = mapGoogleAuthError({ code: 'auth/unauthorized-domain' }, 'luukyone.astronerd.me');
   assert.match(msg, /luukyone\.astronerd\.me/);
+  assert.match(msg, /luukyone-b17b7/);
   assert.match(msg, /Authorized domains/);
 });
 
