@@ -12,4 +12,21 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   });
 }
 
+if (typeof document !== 'undefined') {
+  const preventPinchZoom = (e: Event) => {
+    e.preventDefault();
+  };
+  document.addEventListener('gesturestart', preventPinchZoom, { passive: false });
+  document.addEventListener('gesturechange', preventPinchZoom, { passive: false });
+  document.addEventListener(
+    'touchmove',
+    (e: TouchEvent) => {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    },
+    { passive: false }
+  );
+}
+
 createRoot(document.getElementById('root')!).render(<App />);
