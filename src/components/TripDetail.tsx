@@ -112,7 +112,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
   const tripJsonLd = generateTripJsonLd(trip);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <SEO
         title={tripTitle}
         description={tripDescription}
@@ -420,9 +420,6 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
             </div>
           </section>
 
-          {/* Native Ad Banner between Trip Description / Profile and Direct Contact Buttons */}
-          <AdsterraAdCard variant="detail" slotKey={`detail-${trip.id}`} />
-
           {/* Direct Contact Buttons (WhatsApp, Telegram, Viber) */}
           <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative transition-colors">
             <div className="flex items-center justify-between mb-4">
@@ -548,6 +545,9 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
               LuuKyone is a free bulletin service. Please confirm parcel contents, legal customs allowances, and inspection procedures directly with the traveler before handing over items.
             </div>
           </section>
+
+          {/* Native Ad Banner after Direct Traveler Contact */}
+          <AdsterraAdCard variant="detail" slotKey={`detail-${trip.id}`} />
 
         </div>
 
