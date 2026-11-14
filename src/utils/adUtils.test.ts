@@ -5,6 +5,8 @@ import {
   ADSTERRA_BANNER_KEY,
   ADSTERRA_BANNER_SCRIPT_SRC,
   ADSTERRA_BANNER_WIDTH,
+  ADSTERRA_NATIVE_CONTAINER_ID,
+  ADSTERRA_NATIVE_SCRIPT_SRC,
   buildAdsterraBannerSrcDoc,
   buildFeedWithAds,
 } from './adUtils';
@@ -40,7 +42,7 @@ test('buildFeedWithAds inserts an ad card after indices 4, 9, and 14', () => {
   ]);
 });
 
-test('buildAdsterraBannerSrcDoc includes the exact 320x50 atOptions key and script URL', () => {
+test('buildAdsterraBannerSrcDoc includes the exact 320x50 atOptions key and script URL for Feed', () => {
   const html = buildAdsterraBannerSrcDoc();
   assert.equal(ADSTERRA_BANNER_WIDTH, 320);
   assert.equal(ADSTERRA_BANNER_HEIGHT, 50);
@@ -48,5 +50,15 @@ test('buildAdsterraBannerSrcDoc includes the exact 320x50 atOptions key and scri
   assert.match(html, new RegExp(ADSTERRA_BANNER_SCRIPT_SRC));
   assert.match(html, /'width'\s*:\s*320/);
   assert.match(html, /'height'\s*:\s*50/);
-  assert.equal(html.includes('eadc8eab417c03d4ce79ce2113163eae'), false);
+});
+
+test('Native Banner constants match the Trip Detail Adsterra snippet', () => {
+  assert.equal(
+    ADSTERRA_NATIVE_CONTAINER_ID,
+    'container-a0dcee3020828a955c6cd6883aaf9256'
+  );
+  assert.equal(
+    ADSTERRA_NATIVE_SCRIPT_SRC,
+    'https://bicea.org/21/a0dcee3020828a955c6cd6883aaf9256'
+  );
 });

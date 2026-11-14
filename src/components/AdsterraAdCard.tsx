@@ -3,11 +3,13 @@ import {
   ADSTERRA_BANNER_HEIGHT,
   ADSTERRA_BANNER_KEY,
   ADSTERRA_BANNER_WIDTH,
+  ADSTERRA_NATIVE_CONTAINER_ID,
+  ADSTERRA_NATIVE_SCRIPT_SRC,
   buildAdsterraBannerSrcDoc,
 } from '../utils/adUtils';
 
 export interface AdsterraAdCardProps {
-  /** Layout context so the card integrates cleanly in the trip grid or detail sidebar */
+  /** 'feed' renders the 320x50 iframe banner; 'detail' renders the Native Banner */
   variant?: 'feed' | 'detail';
   /** Optional unique identifier for multi-slot feeds */
   slotKey?: string;
@@ -15,6 +17,8 @@ export interface AdsterraAdCardProps {
 }
 
 const IFRAME_DATA_ATTR = 'data-adsterra-banner-slot';
+const NATIVE_CONTAINER_DATA_ATTR = 'data-adsterra-native-container';
+const NATIVE_SCRIPT_DATA_ATTR = 'data-adsterra-native-script';
 
 export const AdsterraAdCard: React.FC<AdsterraAdCardProps> = ({
   variant = 'feed',
@@ -29,7 +33,50 @@ export const AdsterraAdCard: React.FC<AdsterraAdCardProps> = ({
     const hostEl = hostRef.current;
     if (!hostEl) return;
 
-    // Prevent duplicate iframe / script creation on re-renders
+    if (variant === 'detail') {
+      // Trip Detail: Native Banner (<script async data-cfasync="false" src="...21/a0dcee..."> + <div id="container-a0dcee...">)
+      if (hostEl.querySelector(`[${NATIVE_CONTAINER_DATA_ATTR}]`)) {
+        return;
+      }
+
+      const existingPrimary = document.getElementById(ADSTERRA_NATIVE_CONTAINER_ID);
+      const containerEl = document.createElement('div');
+      containerEl.setAttribute(NATIVE_CONTAINER_DATA_ATTR, resolvedSlotKey);
+      containerEl.className = 'w-full min-h-[120px] flex items-center justify-center';
+      containerEl.id = !existingPrimary
+        ? ADSTERRA_NATIVE_CONTAINER_ID
+        : `${ADSTERRA_NATIVE_CONTAINER_ID}-${resolvedSlotKey.replace(/[^a-zA-Z0-9_-]/g, '')}`;
+
+      const existingScript = document.querySelector<HTMLScriptElement>(
+        `script[${NATIVE_SCRIPT_DATA_ATTR}="${ADSTERRA_NATIVE_CONTAINER_ID}"]`
+      );
+
+      let appendedScript: HTMLScriptElement | null = null;
+      if (!existingScript) {
+        const scriptEl = document.createElement('script');
+        scriptEl.async = true;
+        scriptEl.setAttribute('async', 'async');
+        scriptEl.setAttribute('data-cfasync', 'false');
+        scriptEl.setAttribute(NATIVE_SCRIPT_DATA_ATTR, ADSTERRA_NATIVE_CONTAINER_ID);
+        scriptEl.src = ADSTERRA_NATIVE_SCRIPT_SRC;
+        scriptEl.onerror = () => {};
+        hostEl.appendChild(scriptEl);
+        appendedScript = scriptEl;
+      }
+
+      hostEl.appendChild(containerEl);
+
+      return () => {
+        if (appendedScript && appendedScript.parentNode) {
+          appendedScript.parentNode.removeChild(appendedScript);
+        }
+        if (containerEl.parentNode) {
+          containerEl.parentNode.removeChild(containerEl);
+        }
+      };
+    }
+
+    // Main Feed: 320x50 iframe banner
     if (hostEl.querySelector(`iframe[${IFRAME_DATA_ATTR}]`)) {
       return;
     }
@@ -56,12 +103,17 @@ export const AdsterraAdCard: React.FC<AdsterraAdCardProps> = ({
         iframeEl.parentNode.removeChild(iframeEl);
       }
     };
-  }, [resolvedSlotKey]);
+  }, [variant, resolvedSlotKey]);
 
   const cardSurfaceClasses =
     variant === 'detail'
-      ? 'bg-white dark:bg-slate-900 rounded-2xl shadow-xs p-3 sm:p-4 border border-slate-200 dark:border-slate-800'
+      ? 'bg-white dark:bg-slate-900 rounded-3xl shadow-xs p-5 border border-slate-200 dark:border-slate-800'
       : 'bg-white dark:bg-slate-900/90 rounded-2xl shadow-xs p-3.5 sm:p-5 border border-sky-200/80 dark:border-slate-800 h-full';
+
+  const hostWrapperClasses =
+    variant === 'detail'
+      ? 'w-full flex items-center justify-center rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 p-2 min-h-[132px] overflow-hidden'
+      : 'w-full flex-1 flex items-center justify-center rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 py-2.5 px-1.5 min-h-[70px] overflow-hidden';
 
   return (
     <aside
@@ -80,11 +132,8 @@ export const AdsterraAdCard: React.FC<AdsterraAdCardProps> = ({
         </span>
       </div>
 
-      {/* Centered 320x50 Adsterra Iframe Host */}
-      <div
-        ref={hostRef}
-        className="w-full flex-1 flex items-center justify-center rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 py-2.5 px-1.5 min-h-[70px] overflow-hidden"
-      />
+      {/* Dynamic Adsterra Container / Iframe Host */}
+      <div ref={hostRef} className={hostWrapperClasses} />
     </aside>
   );
 };

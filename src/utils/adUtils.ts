@@ -1,8 +1,15 @@
+// Feed placement: 320x50 iframe banner
 export const ADSTERRA_BANNER_KEY = 'd13f09e326ea9306377915a20333ddd5';
 export const ADSTERRA_BANNER_SCRIPT_SRC =
   'https://bicea.org/22/d13f09e326ea9306377915a20333ddd5';
 export const ADSTERRA_BANNER_WIDTH = 320;
 export const ADSTERRA_BANNER_HEIGHT = 50;
+
+// Trip Detail placement: Native Banner
+export const ADSTERRA_NATIVE_CONTAINER_ID =
+  'container-a0dcee3020828a955c6cd6883aaf9256';
+export const ADSTERRA_NATIVE_SCRIPT_SRC =
+  'https://bicea.org/21/a0dcee3020828a955c6cd6883aaf9256';
 
 export type FeedItem<T> =
   | { type: 'trip'; trip: T; index: number }
@@ -40,7 +47,7 @@ export function buildFeedWithAds<T>(
 /**
  * Generates an isolated HTML document for a 320x50 Adsterra iframe banner slot
  * so `atOptions` and `document.write` execute cleanly per slot without
- * colliding across multiple cards or SPA navigation.
+ * colliding across multiple cards in the feed.
  */
 export function buildAdsterraBannerSrcDoc(): string {
   return `<!doctype html>
