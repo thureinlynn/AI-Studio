@@ -193,7 +193,7 @@ export const TripList: React.FC = () => {
             <select
               value={filters.sortBy}
               onChange={(e) => updateFilterField('sortBy', e.target.value as any)}
-              className="px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+              className="sort-select-compact px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs md:text-[11px] font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
             >
               <option value="date_asc">{t('sortDateAsc')}</option>
               <option value="newest">{t('sortNewest')}</option>
