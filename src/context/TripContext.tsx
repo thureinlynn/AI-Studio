@@ -5,6 +5,7 @@ import { db, trackPageView, trackConversion, trackEvent } from '../firebase';
 import { collection, onSnapshot, doc, getDoc, getDocs, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { formatMemberSince } from '../utils/tripUtils';
 import { getCachedAccountDate, getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
+import { isTransientFirestoreError } from '../utils/firebaseUtils';
 
 export interface PublicTravelerInfo {
   name: string;
@@ -222,12 +223,16 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsLoadingTrips(false);
         },
         (error) => {
-          console.warn('[Firestore] Sync warning (using getDocs/server API fallback):', error.message);
+          if (!isTransientFirestoreError(error)) {
+            console.warn('[Firestore] Sync warning (using server API fallback):', error.message);
+          }
           if (isMounted) setIsLoadingTrips(false);
         }
       );
     } catch (e) {
-      console.warn('[Firestore] Initialization error:', e);
+      if (!isTransientFirestoreError(e)) {
+        console.warn('[Firestore] Initialization error:', e);
+      }
       setIsLoadingTrips(false);
     }
 

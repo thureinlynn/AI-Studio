@@ -1,8 +1,18 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import {
+  initializeFirestore,
+  getFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  enableNetwork,
+  disableNetwork,
+  setLogLevel,
+  Firestore,
+} from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getAnalytics, isSupported, logEvent, Analytics, setAnalyticsCollectionEnabled } from "firebase/analytics";
 import { CookieConsentChoice, isAnalyticsConsented } from "./utils/cookieConsentUtils";
+import { isBrowserOffline } from "./utils/firebaseUtils";
 
 const measurementId =
   (typeof import.meta !== "undefined" && import.meta.env?.VITE_FIREBASE_MEASUREMENT_ID) ||
@@ -20,11 +30,37 @@ const firebaseConfig = {
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager(),
-  }),
-});
+
+// Suppress internal @firebase/firestore SDK console.error noise during transient offline/network switches;
+// application callbacks explicitly handle errors and fall back to local cache + server API.
+setLogLevel("silent");
+
+let firestoreDb: Firestore;
+try {
+  firestoreDb = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager(),
+    }),
+    // Force long-polling to avoid WebChannel streaming connection drops behind proxies, iframes, and mobile carriers
+    experimentalForceLongPolling: true,
+  });
+} catch {
+  firestoreDb = getFirestore(app);
+}
+
+export const db = firestoreDb;
+
+if (typeof window !== "undefined") {
+  if (isBrowserOffline(window.navigator)) {
+    disableNetwork(db).catch(() => {});
+  }
+  window.addEventListener("offline", () => {
+    disableNetwork(db).catch(() => {});
+  });
+  window.addEventListener("online", () => {
+    enableNetwork(db).catch(() => {});
+  });
+}
 
 // Safe, consent-gated Google Analytics initialization
 export let analytics: Analytics | null = null;
