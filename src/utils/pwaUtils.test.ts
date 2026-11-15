@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isStandalonePWA, isIOSDevice } from './pwaUtils';
+import {
+  PWA_PROMPT_DISMISSED_KEY,
+  isStandalonePWA,
+  isIOSDevice,
+  isMobileDevice,
+  hasDismissedPWAPrompt,
+  markPWAPromptDismissed,
+  shouldShowMobileInstallAlert,
+} from './pwaUtils';
 
 test('isStandalonePWA detects display-mode standalone, fullscreen, and iOS navigator.standalone', () => {
   assert.equal(
@@ -29,3 +37,53 @@ test('isIOSDevice detects iPhone, iPad, and iPadOS desktop-mode touch devices', 
     false
   );
 });
+
+test('isMobileDevice detects mobile user agents and narrow mobile viewports', () => {
+  assert.equal(
+    isMobileDevice({ userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8)' }, 1440),
+    true
+  );
+  assert.equal(
+    isMobileDevice({ userAgent: 'Mozilla/5.0 (X11; Linux x86_64)' }, 390),
+    true
+  );
+  assert.equal(
+    isMobileDevice({ userAgent: 'Mozilla/5.0 (X11; Linux x86_64)' }, 1440),
+    false
+  );
+});
+
+test('hasDismissedPWAPrompt and markPWAPromptDismissed persist state safely', () => {
+  const store = new Map<string, string>();
+  const mockStorage = {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => {
+      store.set(k, v);
+    },
+  };
+
+  assert.equal(hasDismissedPWAPrompt(mockStorage), false);
+  markPWAPromptDismissed(mockStorage, '2026-11-15T00:00:00Z');
+  assert.equal(store.get(PWA_PROMPT_DISMISSED_KEY), '2026-11-15T00:00:00Z');
+  assert.equal(hasDismissedPWAPrompt(mockStorage), true);
+});
+
+test('shouldShowMobileInstallAlert shows only on non-installed, non-dismissed mobile visits', () => {
+  assert.equal(
+    shouldShowMobileInstallAlert({ isMobile: true, isInstalled: false, isDismissed: false }),
+    true
+  );
+  assert.equal(
+    shouldShowMobileInstallAlert({ isMobile: true, isInstalled: true, isDismissed: false }),
+    false
+  );
+  assert.equal(
+    shouldShowMobileInstallAlert({ isMobile: true, isInstalled: false, isDismissed: true }),
+    false
+  );
+  assert.equal(
+    shouldShowMobileInstallAlert({ isMobile: false, isInstalled: false, isDismissed: false }),
+    false
+  );
+});
+

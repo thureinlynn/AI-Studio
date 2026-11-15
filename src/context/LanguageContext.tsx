@@ -326,6 +326,31 @@ export const translations: Translations = {
   publicNoTrips: { en: 'No other active trips currently available.', my: 'လတ်တလော အခြားဖွင့်လှစ်ထားသော ခရီးစဉ် မရှိသေးပါ။' },
   viewTripDetails: { en: 'View Trip Details', my: 'ခရီးစဉ် အသေးစိတ် ကြည့်မည်' },
   viewProfile: { en: 'View Profile', my: 'ပရိုဖိုင် ကြည့်မည်' },
+
+  // Mobile PWA Install Alert
+  pwaAlertTitle: {
+    en: 'Install LuuKyone App',
+    my: 'လူကြုံ (LuuKyone) အက်ပ်ကို ထည့်သွင်းပါ',
+  },
+  pwaAlertDesc: {
+    en: 'Add to your home screen for full-screen browsing without the browser bar.',
+    my: 'ဘရောက်ဇာဘား မပါဘဲ မျက်နှာပြင်အပြည့် အသုံးပြုနိုင်ရန် ဖုန်းမျက်နှာပြင်ပေါ်သို့ ထည့်သွင်းပါ။',
+  },
+  pwaInstallBtn: { en: 'Install App', my: 'အက်ပ် ထည့်သွင်းမည်' },
+  pwaDismissAria: { en: 'Dismiss install alert', my: 'အသိပေးချက် ပိတ်မည်' },
+  pwaGuideTitleIOS: {
+    en: 'Install LuuKyone on iPhone / iPad',
+    my: 'iPhone / iPad တွင် ထည့်သွင်းနည်း',
+  },
+  pwaGuideTitleMobile: {
+    en: 'Install LuuKyone on Your Phone',
+    my: 'ဖုန်းတွင် အက်ပ်အဖြစ် ထည့်သွင်းနည်း',
+  },
+  pwaGuideDesc: {
+    en: 'Add LuuKyone to your home screen to launch full screen without the browser address bar:',
+    my: 'ဘရောက်ဇာလိပ်စာဘား မပါဘဲ မျက်နှာပြင်အပြည့် ဖွင့်နိုင်ရန် အောက်ပါအတိုင်း ထည့်သွင်းပါ:',
+  },
+  pwaGuideGotIt: { en: 'Got it', my: 'နားလည်ပါပြီ' },
 };
 
 const ITEM_TRANSLATIONS: Record<string, string> = {

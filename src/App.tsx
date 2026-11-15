@@ -22,6 +22,7 @@ import { PublicProfileModal } from './components/PublicProfileModal';
 import { MobileNav } from './components/MobileNav';
 import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { OfflineIndicator } from './components/OfflineIndicator';
+import { MobilePWAInstallAlert } from './components/MobilePWAInstallAlert';
 import { Footer } from './components/Footer';
 import { SEO } from './components/SEO';
 import {
@@ -100,6 +101,7 @@ const AppContent: React.FC = () => {
 
       {/* Main View Router */}
       <main className="flex-1">
+        <MobilePWAInstallAlert />
         {selectedTrip ? (
           <TripDetail trip={selectedTrip} />
         ) : selectedTripId ? (
