@@ -276,6 +276,7 @@ export const TripList: React.FC = () => {
                   key={item.id}
                   variant="feed"
                   slotKey={item.id}
+                  customAd={item.customAd}
                 />
               )
             )}

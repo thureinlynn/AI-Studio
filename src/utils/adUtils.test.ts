@@ -40,6 +40,21 @@ test('buildFeedWithAds inserts an ad card after indices 4, 9, and 14', () => {
     { pos: 11, afterIndex: 9 },
     { pos: 17, afterIndex: 14 },
   ]);
+
+  const adItems = result.filter((item) => item.type === 'ad');
+  assert.equal(adItems[0]?.customAd?.title, 'AstroNerd Inc.');
+  assert.equal(adItems[0]?.customAd?.text, 'Digital Products');
+  assert.equal(adItems[0]?.customAd?.href, 'https://www.astronerd.me');
+  assert.equal(
+    adItems[1]?.customAd?.title,
+    'Khint Power International Trading Co.,Ltd.'
+  );
+  assert.equal(adItems[1]?.customAd?.text, 'Cargo & E-commerence');
+  assert.equal(
+    adItems[1]?.customAd?.href,
+    'https://web.facebook.com/Khintpowercargo'
+  );
+  assert.equal(adItems[2]?.customAd, null);
 });
 
 test('buildAdsterraBannerSrcDoc includes the exact 320x50 atOptions key and script URL for Feed', () => {

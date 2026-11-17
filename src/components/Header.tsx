@@ -3,7 +3,7 @@ import { useTrips } from '../context/TripContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { normalizeAvatarUrl, handleAvatarImageError } from '../utils/userUtils';
-import { Plus, ShieldAlert, User, Settings } from 'lucide-react';
+import { Plus, ShieldAlert, User } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 
 export const Header: React.FC = () => {
@@ -44,7 +44,7 @@ export const Header: React.FC = () => {
         </button>
 
         {/* Zone 2: Navigation Links */}
-        <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-600 dark:text-slate-300">
+        <nav className="hidden md:flex items-center gap-4 lg:gap-7 text-sm font-medium text-slate-600 dark:text-slate-300">
           <button
             onClick={() => handleNavClick('browse')}
             className={`transition-colors whitespace-nowrap cursor-pointer hover:text-slate-900 dark:hover:text-white py-1 ${
@@ -79,6 +79,14 @@ export const Header: React.FC = () => {
             </button>
           )}
           <button
+            onClick={() => handleNavClick('settings')}
+            className={`transition-colors whitespace-nowrap cursor-pointer hover:text-slate-900 dark:hover:text-white py-1 ${
+              activeTab === 'settings' ? 'text-slate-950 dark:text-white font-semibold border-b-2 border-blue-600' : ''
+            }`}
+          >
+            {t('navSettings')}
+          </button>
+          <button
             onClick={openAuthModal}
             className="flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer hover:text-slate-900 dark:hover:text-white py-1"
           >
@@ -103,23 +111,9 @@ export const Header: React.FC = () => {
           </button>
         </nav>
 
-        {/* Zone 3: Actions - Install App + Settings Icon Button + Prominent Post Button */}
+        {/* Zone 3: Actions - Install App + Prominent Post Button */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <PWAInstallButton variant="header" />
-
-          {/* Settings Icon Button */}
-          <button
-            onClick={() => handleNavClick('settings')}
-            className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center shrink-0 ${
-              activeTab === 'settings'
-                ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/60 dark:text-blue-400 dark:border-blue-800 shadow-xs ring-2 ring-blue-500/20'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-950 border-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:border-slate-700'
-            }`}
-            title={t('navSettings')}
-            aria-label={t('navSettings')}
-          >
-            <Settings className="w-4.5 h-4.5 stroke-[2.2]" />
-          </button>
 
           {/* Elevated Post Button */}
           <button
