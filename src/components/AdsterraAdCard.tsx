@@ -113,7 +113,7 @@ export const AdsterraAdCard: React.FC<AdsterraAdCardProps> = ({
   const hostWrapperClasses =
     variant === 'detail'
       ? 'w-full flex items-center justify-center rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 p-2 min-h-[132px] overflow-hidden'
-      : 'w-full flex-1 flex items-center justify-center rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 py-2.5 px-1.5 min-h-[70px] overflow-hidden';
+      : 'w-full flex-1 flex flex-col items-center justify-center gap-2 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 py-2.5 px-2 min-h-[70px] overflow-hidden';
 
   return (
     <aside
@@ -133,7 +133,17 @@ export const AdsterraAdCard: React.FC<AdsterraAdCardProps> = ({
       </div>
 
       {/* Dynamic Adsterra Container / Iframe Host */}
-      <div ref={hostRef} className={hostWrapperClasses} />
+      <div className={hostWrapperClasses}>
+        {variant === 'feed' && (
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wide text-center">
+            Advertise here
+          </p>
+        )}
+        <div
+          ref={hostRef}
+          className="w-full flex items-center justify-center overflow-hidden"
+        />
+      </div>
     </aside>
   );
 };
