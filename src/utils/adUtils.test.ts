@@ -25,11 +25,11 @@ test('buildFeedWithAds does not inject an ad when fewer than 5 trips exist', () 
   );
 });
 
-test('buildFeedWithAds inserts an ad card after indices 4, 9, and 14', () => {
-  const trips = Array.from({ length: 16 }, (_, idx) => ({ id: `trip-${idx}` }));
+test('buildFeedWithAds inserts an ad card after indices 4, 9, 14, and 19', () => {
+  const trips = Array.from({ length: 21 }, (_, idx) => ({ id: `trip-${idx}` }));
   const result = buildFeedWithAds(trips, 5);
 
-  assert.equal(result.length, 19);
+  assert.equal(result.length, 25);
 
   const adIndices = result
     .map((item, pos) => (item.type === 'ad' ? { pos, afterIndex: item.afterIndex } : null))
@@ -39,6 +39,7 @@ test('buildFeedWithAds inserts an ad card after indices 4, 9, and 14', () => {
     { pos: 5, afterIndex: 4 },
     { pos: 11, afterIndex: 9 },
     { pos: 17, afterIndex: 14 },
+    { pos: 23, afterIndex: 19 },
   ]);
 
   const adItems = result.filter((item) => item.type === 'ad');
@@ -54,7 +55,13 @@ test('buildFeedWithAds inserts an ad card after indices 4, 9, and 14', () => {
     adItems[1]?.customAd?.href,
     'https://web.facebook.com/Khintpowercargo'
   );
-  assert.equal(adItems[2]?.customAd, null);
+  assert.equal(adItems[2]?.customAd?.title, 'NXE Gadgets');
+  assert.equal(adItems[2]?.customAd?.text, 'Electronics Store');
+  assert.equal(
+    adItems[2]?.customAd?.href,
+    'https://web.facebook.com/nxegadgets'
+  );
+  assert.equal(adItems[3]?.customAd, null);
 });
 
 test('buildAdsterraBannerSrcDoc includes the exact 320x50 atOptions key and script URL for Feed', () => {

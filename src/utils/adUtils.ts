@@ -39,6 +39,15 @@ export const CUSTOM_FEED_ADS: readonly CustomFeedAd[] = [
     text: 'Cargo & E-commerence',
     href: 'https://web.facebook.com/Khintpowercargo',
   },
+  {
+    id: 'custom-ad-nxe-gadgets',
+    logoUrl:
+      'https://scontent.fbkk33-3.fna.fbcdn.net/v/t39.30808-6/668831614_122189178782759077_293872300741641685_n.jpg?stp=dst-jpg_tt6&cstp=mx1080x1080&ctp=s1080x1080&_nc_cat=106&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeF3GfsNHjjJ3Bjx7elItY6tytK0KomyKLzK0rQqibIovJF2Y8Ha0zYzq3T_ljO5T3462Lq4DrOlZ61mrBjoorJy&_nc_ohc=pK2c0mXJJPQQ7kNvwGj8roJ&_nc_oc=AdqzYtxkxwQH3Bx_EyUgk81Glv4-9kTSpQvd2d-ZZH3ROHw1KxCBW1jVFsQnTkliAu4&_nc_zt=23&_nc_ht=scontent.fbkk33-3.fna&_nc_gid=dLjXBkHvgKjy2ZzLzcIfYA&_nc_ss=7b2a8&oh=00_AQQpf4dQOgQEcO0wv3CpeD-gKUC8UcvcjsmqpE0i2mGGag&oe=6B02568B',
+    fallbackLogoUrl: '/ads/nxe-gadgets-logo.jpg',
+    title: 'NXE Gadgets',
+    text: 'Electronics Store',
+    href: 'https://web.facebook.com/nxegadgets',
+  },
 ];
 
 export function getCustomFeedAd(adSlotIndex: number): CustomFeedAd | null {
@@ -60,8 +69,8 @@ export type FeedItem<T> =
 
 /**
  * Interleaves an ad slot after every `interval` trip items
- * (by default after indices 4, 9, 14, etc.).
- * Slots 0 (6th card) and 1 (12th card) map to configured custom ads;
+ * (by default after indices 4, 9, 14, 19, etc.).
+ * Slots 0 (6th card), 1 (12th card), and 2 (18th card) map to configured custom ads;
  * later slots fall back to the Adsterra feed ad.
  */
 export function buildFeedWithAds<T>(
