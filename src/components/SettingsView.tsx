@@ -21,14 +21,28 @@ import {
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { PWAInstallButton } from './PWAInstallButton';
+import { useAuth } from '../context/AuthContext';
+import { KeyRound } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { weightUnit, setWeightUnit, currency, setCurrency, resetFilters, openSafetyModal } = useTrips();
   const { isInstallable, isInstalled, isIOS } = usePWAInstall();
+  const { user, isAuthenticated, firebaseUser, updatePassword } = useAuth();
+  const isGoogleUser =
+    user?.authProvider === 'google' ||
+    user?.isGoogleVerified ||
+    (firebaseUser?.providerData &&
+      firebaseUser.providerData.some((p) => p?.providerId === 'google.com'));
 
   const [clearMessage, setClearMessage] = useState<string | null>(null);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   const handleClearFilters = () => {
     resetFilters();
@@ -36,6 +50,46 @@ export const SettingsView: React.FC = () => {
     setTimeout(() => {
       setClearMessage(null);
     }, 3000);
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(null);
+
+    if (!isAuthenticated) {
+      setPasswordError(t('passwordLoginRequired'));
+      return;
+    }
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('Please fill in all password fields.');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters long.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match.');
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    const res = await updatePassword(currentPassword, newPassword);
+    setIsUpdatingPassword(false);
+
+    if (res.success) {
+      setPasswordSuccess(t('passwordSuccessMsg'));
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => setPasswordSuccess(null), 4000);
+    } else {
+      setPasswordError(res.error || 'Failed to update password.');
+    }
   };
 
   return (
@@ -280,6 +334,91 @@ export const SettingsView: React.FC = () => {
             </button>
           </div>
         </section>
+
+        {/* Card 5: Password & Account Security (Only if logged in with password) */}
+        {isAuthenticated && !isGoogleUser && (
+          <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                <KeyRound className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  {t('settingsSecurity')}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {t('settingsSecurityDesc')}
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handlePasswordChange} className="space-y-4 pt-1">
+              {passwordError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs">
+                  {passwordError}
+                </div>
+              )}
+              {passwordSuccess && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{passwordSuccess}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  {t('currentPasswordLabel')}
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  {t('newPasswordLabel')}
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  {t('confirmNewPasswordLabel')}
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <button
+                  type="submit"
+                  disabled={isUpdatingPassword}
+                  className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm rounded-xl transition-all shadow-md shadow-blue-600/25 cursor-pointer disabled:opacity-50"
+                >
+                  {isUpdatingPassword ? 'Updating...' : t('updatePasswordBtn')}
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
       </div>
 
       {/* Install App (Full-Screen Native Mode) */}

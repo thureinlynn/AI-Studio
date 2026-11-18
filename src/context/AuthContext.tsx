@@ -11,6 +11,9 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   User as FirebaseUser,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword as firebaseUpdatePassword,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { formatMemberSince } from '../utils/tripUtils';
@@ -37,6 +40,7 @@ export interface AuthContextType {
     }
   ) => Promise<{ success: boolean; error?: string }>;
   sendPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>;
+  updatePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateUserContacts: (contacts: { whatsapp: string; viber: string; telegram: string; facebook?: string }) => Promise<void>;
   resetAuth: () => void;
@@ -583,6 +587,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updatePassword = async (currentPassword: string, newPassword: string) => {
+    const currentUser = auth.currentUser;
+    if (!currentUser || !currentUser.email) {
+      return { success: false, error: 'You must be signed in with email and password to change your password.' };
+    }
+    try {
+      const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
+      await reauthenticateWithCredential(currentUser, credential);
+      await firebaseUpdatePassword(currentUser, newPassword);
+      return { success: true };
+    } catch (err: any) {
+      let message = 'Failed to update password. Please verify your current password.';
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        message = 'Incorrect current password.';
+      } else if (err.code === 'auth/weak-password') {
+        message = 'New password must be at least 6 characters long.';
+      } else if (err.message) {
+        message = err.message;
+      }
+      return { success: false, error: message };
+    }
+  };
+
   const logout = async () => {
     try {
       await signOut(auth);
@@ -686,6 +713,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loginWithFirebase,
         signUpWithFirebase,
         sendPasswordReset,
+        updatePassword,
         logout,
         updateUserContacts,
         resetAuth,
