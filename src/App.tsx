@@ -19,6 +19,7 @@ import { PostTripModal } from './components/PostTripModal';
 import { AuthModal } from './components/AuthModal';
 import { SafetyModal } from './components/SafetyModal';
 import { PublicProfileModal } from './components/PublicProfileModal';
+import { ConfirmDialogModal } from './components/ConfirmDialogModal';
 import { MobileNav } from './components/MobileNav';
 import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { OfflineIndicator } from './components/OfflineIndicator';
@@ -147,6 +148,7 @@ const AppContent: React.FC = () => {
       <AuthModal />
       <SafetyModal />
       <PublicProfileModal />
+      <ConfirmDialogModal />
 
       {/* Mobile Touch Navigation Anchor */}
       <MobileNav />

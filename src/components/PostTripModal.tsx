@@ -3,6 +3,7 @@ import { useTrips } from '../context/TripContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { COMMON_ITEM_CATEGORIES } from '../data/mockTrips';
+import { TripPost } from '../types/trip';
 import { formatMemberSince } from '../utils/tripUtils';
 import { normalizeAvatarUrl, handleAvatarImageError, isGoogleVerifiedUser } from '../utils/userUtils';
 import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
@@ -63,6 +64,7 @@ export const PostTripModal: React.FC = () => {
   const [preferredContact, setPreferredContact] = useState<'whatsapp' | 'viber' | 'telegram' | 'facebook'>('whatsapp');
 
   const [formError, setFormError] = useState<string | null>(null);
+  const [successTrip, setSuccessTrip] = useState<TripPost | null>(null);
 
   const resetForm = () => {
     setDepartureCity('');
@@ -81,6 +83,7 @@ export const PostTripModal: React.FC = () => {
     setTelegram(user?.contacts?.telegram || '');
     setFacebook((user?.contacts as any)?.facebook || '');
     setFormError(null);
+    setSuccessTrip(null);
   };
 
   // Sync contacts if user logs in while modal is open
@@ -199,10 +202,72 @@ export const PostTripModal: React.FC = () => {
       },
     });
 
-    resetForm();
-    closePostModal();
-    openTripDetail(createdTrip.id);
+    setSuccessTrip(createdTrip);
   };
+
+  if (successTrip) {
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 animate-fadeIn">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 text-center space-y-5">
+          <div className="w-16 h-16 rounded-3xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-inner">
+            <CheckCircle2 className="w-9 h-9 stroke-[2.2]" />
+          </div>
+
+          <div>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 mb-2">
+              Successfully Published
+            </span>
+            <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
+              Trip Has Been Listed!
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-2 leading-relaxed max-w-sm mx-auto">
+              Your baggage space from <strong className="text-slate-900 dark:text-white">{successTrip.departureCity}</strong> to <strong className="text-slate-900 dark:text-white">{successTrip.arrivalCity}</strong> ({successTrip.weightAvailableKg} kg spare capacity) is now live on the LuuKyone community bulletin.
+            </p>
+          </div>
+
+          <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-700/80 text-left space-y-2 text-xs">
+            <div className="flex justify-between items-center text-slate-500 dark:text-slate-400">
+              <span>Drop-off Deadline:</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">{successTrip.lastDropOffDate}</span>
+            </div>
+            <div className="flex justify-between items-center text-slate-500 dark:text-slate-400">
+              <span>Delivery Date:</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">{successTrip.checkOutDate}</span>
+            </div>
+            <div className="flex justify-between items-center text-slate-500 dark:text-slate-400">
+              <span>Status:</span>
+              <span className="font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Active</span>
+            </div>
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                const tripId = successTrip.id;
+                resetForm();
+                closePostModal();
+                openTripDetail(tripId);
+              }}
+              className="w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm rounded-xl transition-all shadow-md shadow-blue-600/25 cursor-pointer"
+            >
+              View Listing Details
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                resetForm();
+                closePostModal();
+              }}
+              className="w-full sm:w-auto px-5 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs sm:text-sm rounded-xl transition-colors cursor-pointer"
+            >
+              Back to Browse
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">

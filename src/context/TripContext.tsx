@@ -55,6 +55,8 @@ interface TripContextType {
   addNewTrip: (tripData: Omit<TripPost, 'id' | 'createdAt' | 'status'>) => TripPost;
   deleteTrip: (id: string) => void;
   toggleTripStatus: (id: string) => void;
+  confirmDialog: { title: string; message: string; onConfirm: () => void } | null;
+  closeConfirmDialog: () => void;
   resetAllDataToDemoBeginning: () => void;
 }
 
@@ -105,6 +107,14 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSafetyModalOpen, setIsSafetyModalOpen] = useState(false);
   const [isMyTripsModalOpen, setIsMyTripsModalOpen] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
+
+  const closeConfirmDialog = () => setConfirmDialog(null);
+
   const [activeTab, setActiveTabState] = useState<'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings'>('browse');
 
   const setActiveTab = (tab: 'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings') => {
@@ -384,55 +394,72 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deleteTrip = (id: string) => {
-    setTrips((prev) => prev.filter((t) => t.id !== id));
-    if (selectedTripId === id) {
-      closeTripDetail();
-    }
+    const tripToDelete = trips.find((t) => t.id === id);
+    const label = tripToDelete ? `${tripToDelete.departureCity} to ${tripToDelete.arrivalCity}` : 'this trip';
+    setConfirmDialog({
+      title: 'Delete Listing',
+      message: `Are you sure you want to delete the trip from ${label}? This action cannot be undone.`,
+      onConfirm: () => {
+        setTrips((prev) => prev.filter((t) => t.id !== id));
+        if (selectedTripId === id) {
+          closeTripDetail();
+        }
 
-    // 1. Delete from Firestore
-    try {
-      deleteDoc(doc(db, 'trips', id)).catch((err) => {
-        console.warn('[Firestore] Failed to delete trip from db:', err);
-      });
-    } catch (err) {
-      console.warn('[Firestore] deleteDoc error:', err);
-    }
+        // 1. Delete from Firestore
+        try {
+          deleteDoc(doc(db, 'trips', id)).catch((err) => {
+            console.warn('[Firestore] Failed to delete trip from db:', err);
+          });
+        } catch (err) {
+          console.warn('[Firestore] deleteDoc error:', err);
+        }
 
-    // 2. Delete from server API
-    fetch(`/api/trips?id=${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    }).catch((err) => console.error('Failed to delete trip from server:', err));
+        // 2. Delete from server API
+        fetch(`/api/trips?id=${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id }),
+        }).catch((err) => console.error('Failed to delete trip from server:', err));
+      },
+    });
   };
 
   const toggleTripStatus = (id: string) => {
-    let nextStatus: 'active' | 'fully_booked' = 'fully_booked';
-    setTrips((prev) =>
-      prev.map((t) => {
-        if (t.id === id) {
-          nextStatus = t.status === 'active' ? 'fully_booked' : 'active';
-          return { ...t, status: nextStatus };
+    const tripToToggle = trips.find((t) => t.id === id);
+    const currentStatus = tripToToggle ? tripToToggle.status : 'active';
+    const actionLabel = currentStatus === 'active' ? 'mark this listing as Fully Booked' : 'reactivate this listing';
+    setConfirmDialog({
+      title: 'Update Listing Status',
+      message: `Are you sure you want to ${actionLabel}?`,
+      onConfirm: () => {
+        let nextStatus: 'active' | 'fully_booked' = 'fully_booked';
+        setTrips((prev) =>
+          prev.map((t) => {
+            if (t.id === id) {
+              nextStatus = t.status === 'active' ? 'fully_booked' : 'active';
+              return { ...t, status: nextStatus };
+            }
+            return t;
+          })
+        );
+
+        // 1. Update in Firestore
+        try {
+          updateDoc(doc(db, 'trips', id), { status: nextStatus }).catch((err) => {
+            console.warn('[Firestore] Failed to update trip status in db:', err);
+          });
+        } catch (err) {
+          console.warn('[Firestore] updateDoc error:', err);
         }
-        return t;
-      })
-    );
 
-    // 1. Update in Firestore
-    try {
-      updateDoc(doc(db, 'trips', id), { status: nextStatus }).catch((err) => {
-        console.warn('[Firestore] Failed to update trip status in db:', err);
-      });
-    } catch (err) {
-      console.warn('[Firestore] updateDoc error:', err);
-    }
-
-    // 2. Update in server API
-    fetch(`/api/trips?id=${encodeURIComponent(id)}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, status: nextStatus }),
-    }).catch((err) => console.error('Failed to update trip status on server:', err));
+        // 2. Update in server API
+        fetch(`/api/trips?id=${encodeURIComponent(id)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, status: nextStatus }),
+        }).catch((err) => console.error('Failed to update trip status on server:', err));
+      },
+    });
   };
 
   const resetAllDataToDemoBeginning = () => {
@@ -495,6 +522,8 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addNewTrip,
         deleteTrip,
         toggleTripStatus,
+        confirmDialog,
+        closeConfirmDialog,
         resetAllDataToDemoBeginning,
       }}
     >
