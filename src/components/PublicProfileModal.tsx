@@ -120,7 +120,7 @@ export const PublicProfileModal: React.FC = () => {
                     src={travelerAvatar}
                     alt={publicProfileTraveler.name}
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover p-0.5 bg-white dark:bg-slate-800"
+                    className="w-full h-full object-cover"
                     onError={(e) => handleAvatarImageError(e, publicProfileTraveler.userId || publicProfileTraveler.name)}
                   />
                 </div>

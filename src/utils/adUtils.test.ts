@@ -46,20 +46,20 @@ test('buildFeedWithAds inserts an ad card after indices 4, 9, 14, and 19', () =>
   assert.equal(adItems[0]?.customAd?.title, 'AstroNerd Inc.');
   assert.equal(adItems[0]?.customAd?.text, 'Digital Products');
   assert.equal(adItems[0]?.customAd?.href, 'https://www.astronerd.me');
-  assert.equal(
-    adItems[1]?.customAd?.title,
-    'Khint Power International Trading Co.,Ltd.'
-  );
-  assert.equal(adItems[1]?.customAd?.text, 'Cargo & E-commerence');
+  assert.equal(adItems[1]?.customAd?.title, 'NXE Gadgets');
+  assert.equal(adItems[1]?.customAd?.text, 'Electronics Store');
   assert.equal(
     adItems[1]?.customAd?.href,
-    'https://web.facebook.com/Khintpowercargo'
+    'https://web.facebook.com/nxegadgets'
   );
-  assert.equal(adItems[2]?.customAd?.title, 'NXE Gadgets');
-  assert.equal(adItems[2]?.customAd?.text, 'Electronics Store');
+  assert.equal(
+    adItems[2]?.customAd?.title,
+    'Khint Power International Trading Co.,Ltd.'
+  );
+  assert.equal(adItems[2]?.customAd?.text, 'Cargo & E-commerence');
   assert.equal(
     adItems[2]?.customAd?.href,
-    'https://web.facebook.com/nxegadgets'
+    'https://web.facebook.com/Khintpowercargo'
   );
   assert.equal(adItems[3]?.customAd, null);
 });

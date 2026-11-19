@@ -106,7 +106,7 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
                 src={authorAvatar}
                 alt={trip.traveler.name}
                 referrerPolicy="no-referrer"
-                className="w-full h-full object-cover p-0.5"
+                className="w-full h-full object-cover"
                 onError={(e) => handleAvatarImageError(e, trip.userId || trip.traveler?.name)}
               />
             </div>

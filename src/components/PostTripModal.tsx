@@ -337,7 +337,7 @@ export const PostTripModal: React.FC = () => {
                     src={normalizeAvatarUrl(user.avatarUrl, user.id, user)}
                     alt={user.name}
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover p-0.5"
+                    className="w-full h-full object-cover"
                     onError={(e) => handleAvatarImageError(e, user.id)}
                   />
                 </div>

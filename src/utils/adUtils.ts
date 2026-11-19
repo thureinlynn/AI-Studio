@@ -31,15 +31,6 @@ export const CUSTOM_FEED_ADS: readonly CustomFeedAd[] = [
     href: 'https://www.astronerd.me',
   },
   {
-    id: 'custom-ad-khint-power',
-    logoUrl:
-      'https://scontent.fbkk4-4.fna.fbcdn.net/v/t39.30808-1/481205225_643774498200913_6210346320837345925_n.jpg?stp=dst-jpg_tt6&cstp=mx1500x1500&ctp=s480x480&_nc_cat=107&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=2d3e12&_nc_eui2=AeF_TyNKUWZXZJYpBxsCfbidWSaUezzb0AZZJpR7PNvQBnQsiuj8wYfW06lAnXk04VwzgT56J1WpwM-_7pUIik6j&_nc_ohc=wK7OTa_PCm8Q7kNvwFPgTcO&_nc_oc=Adr5aUhZm90yI-J4wIkm0-_U6qteOxKVNWXWUnBd_XuUuuQudo1QFCEUpxoFEXDoK08&_nc_zt=24&_nc_ht=scontent.fbkk4-4.fna&_nc_gid=Oss3oMsGI3nRAju9fzCwWA&_nc_ss=7b2a8&oh=00_AQSc-LYGm668tiGzc7yl6MHo8Fw0cPJrmYowfzJcjDY4Kg&oe=6B015CC7',
-    fallbackLogoUrl: '/ads/khint-power-logo.jpg',
-    title: 'Khint Power International Trading Co.,Ltd.',
-    text: 'Cargo & E-commerence',
-    href: 'https://web.facebook.com/Khintpowercargo',
-  },
-  {
     id: 'custom-ad-nxe-gadgets',
     logoUrl:
       'https://scontent.fbkk33-3.fna.fbcdn.net/v/t39.30808-6/668831614_122189178782759077_293872300741641685_n.jpg?stp=dst-jpg_tt6&cstp=mx1080x1080&ctp=s1080x1080&_nc_cat=106&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeF3GfsNHjjJ3Bjx7elItY6tytK0KomyKLzK0rQqibIovJF2Y8Ha0zYzq3T_ljO5T3462Lq4DrOlZ61mrBjoorJy&_nc_ohc=pK2c0mXJJPQQ7kNvwGj8roJ&_nc_oc=AdqzYtxkxwQH3Bx_EyUgk81Glv4-9kTSpQvd2d-ZZH3ROHw1KxCBW1jVFsQnTkliAu4&_nc_zt=23&_nc_ht=scontent.fbkk33-3.fna&_nc_gid=dLjXBkHvgKjy2ZzLzcIfYA&_nc_ss=7b2a8&oh=00_AQQpf4dQOgQEcO0wv3CpeD-gKUC8UcvcjsmqpE0i2mGGag&oe=6B02568B',
@@ -47,6 +38,15 @@ export const CUSTOM_FEED_ADS: readonly CustomFeedAd[] = [
     title: 'NXE Gadgets',
     text: 'Electronics Store',
     href: 'https://web.facebook.com/nxegadgets',
+  },
+  {
+    id: 'custom-ad-khint-power',
+    logoUrl:
+      'https://scontent.fbkk4-4.fna.fbcdn.net/v/t39.30808-1/481205225_643774498200913_6210346320837345925_n.jpg?stp=dst-jpg_tt6&cstp=mx1500x1500&ctp=s480x480&_nc_cat=107&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=2d3e12&_nc_eui2=AeF_TyNKUWZXZJYpBxsCfbidWSaUezzb0AZZJpR7PNvQBnQsiuj8wYfW06lAnXk04VwzgT56J1WpwM-_7pUIik6j&_nc_ohc=wK7OTa_PCm8Q7kNvwFPgTcO&_nc_oc=Adr5aUhZm90yI-J4wIkm0-_U6qteOxKVNWXWUnBd_XuUuuQudo1QFCEUpxoFEXDoK08&_nc_zt=24&_nc_ht=scontent.fbkk4-4.fna&_nc_gid=Oss3oMsGI3nRAju9fzCwWA&_nc_ss=7b2a8&oh=00_AQSc-LYGm668tiGzc7yl6MHo8Fw0cPJrmYowfzJcjDY4Kg&oe=6B015CC7',
+    fallbackLogoUrl: '/ads/khint-power-logo.jpg',
+    title: 'Khint Power International Trading Co.,Ltd.',
+    text: 'Cargo & E-commerence',
+    href: 'https://web.facebook.com/Khintpowercargo',
   },
 ];
 

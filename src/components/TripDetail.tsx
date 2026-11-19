@@ -393,7 +393,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                     src={travelerAvatar}
                     alt={travelerName}
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover p-1 bg-white dark:bg-slate-800"
+                    className="w-full h-full object-cover"
                     onError={(e) => handleAvatarImageError(e, trip.userId || travelerName)}
                   />
                 </div>
