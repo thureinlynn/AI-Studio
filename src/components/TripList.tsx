@@ -176,11 +176,6 @@ export const TripList: React.FC = () => {
               ? `${filteredTrips.length} ${filteredTrips.length === 1 ? 'match' : 'matches'}`
               : `${visibleTrips.length} of ${filteredTrips.length} ${filteredTrips.length === 1 ? t('tripSingular') : t('tripPlural')}`}
           </span>
-          {hasActiveFilters && (
-            <span className="text-[11px] font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md">
-              Filtered in-memory from {allTrips.length} total
-            </span>
-          )}
         </div>
 
         {/* Sort Dropdown */}
