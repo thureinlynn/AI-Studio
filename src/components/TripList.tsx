@@ -282,22 +282,25 @@ export const TripList: React.FC = () => {
             )}
           </div>
 
-          {/* Infinite Scroll detector element */}
+          {/* Infinite Scroll detector element with elegant reloading animation */}
           {!hasActiveFilters && displayedCount < filteredTrips.length && (
-            <div ref={sentinelRef} className="py-6 flex flex-col items-center justify-center">
+            <div ref={sentinelRef} className="py-8 flex flex-col items-center justify-center space-y-3 animate-fadeIn">
               {isLoadingMore ? (
-                <div className="flex items-center gap-2 text-xs text-slate-400 py-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-blue-600 dark:text-blue-400" />
-                  <span>Loading more trips...</span>
+                <div className="flex items-center gap-3 px-6 py-3.5 bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-blue-200 dark:border-slate-700 text-xs font-bold text-blue-600 dark:text-blue-400">
+                  <div className="relative w-5 h-5 flex items-center justify-center">
+                    <div className="absolute inset-0 rounded-full border-2 border-blue-600/30 animate-ping" />
+                    <Loader2 className="w-5 h-5 animate-spin text-blue-600 dark:text-blue-400 relative z-10" />
+                  </div>
+                  <span>Discovering more community trips...</span>
                 </div>
               ) : (
                 <button
                   type="button"
                   onClick={loadMoreItems}
-                  className="px-5 py-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-600/25 transition-all transform active:scale-95 flex items-center gap-2 cursor-pointer border border-blue-400/30"
                 >
                   <span>Load More Trips ({filteredTrips.length - displayedCount} remaining)</span>
-                  <ChevronDown className="w-3.5 h-3.5" />
+                  <ChevronDown className="w-4 h-4 animate-bounce" />
                 </button>
               )}
             </div>

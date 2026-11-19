@@ -30,7 +30,7 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
   return (
     <article
       onClick={() => openTripDetail(trip.id)}
-      className="group bg-[#f0f7ff] dark:bg-slate-900/90 hover:bg-[#e4f1ff] dark:hover:bg-slate-800/90 rounded-2xl border border-sky-200/80 dark:border-slate-800 hover:border-sky-400/90 dark:hover:border-sky-500/50 p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between cursor-pointer relative"
+      className="group bg-[#f0f7ff] dark:bg-slate-900/90 hover:bg-[#e4f1ff] dark:hover:bg-slate-800/90 rounded-2xl border border-sky-200/80 dark:border-slate-800 hover:border-sky-400/90 dark:hover:border-sky-500/50 p-5 shadow-xs hover:shadow-md transition-all duration-300 transform active:scale-[0.96] hover:-translate-y-1 cursor-pointer relative animate-fadeIn flex flex-col justify-between"
     >
       <div>
         {/* Top Header: Route & Flight */}
