@@ -19,7 +19,9 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-30 pt-[env(safe-area-inset-top)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
+    <header className="sticky top-0 z-30 pt-[env(safe-area-inset-top)] bg-white/70 dark:bg-slate-900/75 backdrop-blur-2xl border-b border-white/60 dark:border-slate-800/80 shadow-xs transition-colors relative overflow-hidden">
+      {/* Subtle top liquid glass reflection gloss */}
+      <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/90 dark:via-white/25 to-transparent pointer-events-none" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-4 sm:gap-8">
         {/* Zone 1: Brand Wordmark */}
         <button
