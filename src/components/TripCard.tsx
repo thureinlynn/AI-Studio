@@ -6,6 +6,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { formatDateDisplay, countCompletedTripsForTraveler } from '../utils/tripUtils';
 import { normalizeAvatarUrl, handleAvatarImageError, isGoogleVerifiedUser } from '../utils/userUtils';
 import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
+import { CountryFlagByName } from './CountrySelect';
 import { ArrowRight, Calendar, Clock, ChevronRight, User } from 'lucide-react';
 
 interface TripCardProps {
@@ -33,35 +34,38 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
       className="group bg-[#f0f7ff] dark:bg-slate-900/90 hover:bg-[#e4f1ff] dark:hover:bg-slate-800/90 rounded-2xl border border-sky-200/80 dark:border-slate-800 hover:border-sky-400/90 dark:hover:border-sky-500/50 p-5 shadow-xs hover:shadow-md transition-all duration-300 transform active:scale-[0.96] hover:-translate-y-1 cursor-pointer relative animate-fadeIn flex flex-col justify-between"
     >
       <div>
-        {/* Top Header: Route & Flight */}
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div>
-            <div className="flex items-center gap-2 text-base sm:text-lg font-bold text-slate-900 dark:text-white group-hover:text-sky-800 dark:group-hover:text-sky-300 transition-colors">
+        {/* Top Header: Route & Country Pair */}
+        <div className="flex items-start justify-between gap-2.5 mb-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 text-base sm:text-lg font-bold text-slate-900 dark:text-white group-hover:text-sky-800 dark:group-hover:text-sky-300 transition-colors flex-wrap">
               <span>{trip.departureCity}</span>
-              <ArrowRight className="w-4 h-4 text-sky-400 group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight className="w-4 h-4 text-sky-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
               <span>{trip.arrivalCity}</span>
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex flex-wrap items-center gap-1.5">
-              <span>{trip.departureCountry}</span>
-              <span aria-hidden="true">·</span>
-              <span>{trip.arrivalCountry}</span>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-1.5">
               {trip.weightAvailableKg > 0 ? (
-                <>
-                  <span aria-hidden="true">·</span>
-                  <span className="font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 text-[11px]">
-                    {trip.weightAvailableKg} kg space
-                  </span>
-                </>
+                <span className="font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 text-[11px]">
+                  {trip.weightAvailableKg} kg space
+                </span>
               ) : trip.flightNumber ? (
-                <>
-                  <span aria-hidden="true">·</span>
-                  <span className="font-mono text-slate-600 dark:text-slate-300 bg-white/80 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-sky-100 dark:border-slate-700">
-                    {trip.flightNumber}
-                  </span>
-                </>
+                <span className="font-mono text-slate-600 dark:text-slate-300 bg-white/80 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-sky-100 dark:border-slate-700">
+                  {trip.flightNumber}
+                </span>
               ) : null}
             </div>
           </div>
+
+          {/* Right Corner: Both Country Flags */}
+          {(trip.departureCountry || trip.arrivalCountry) && (
+            <div
+              aria-label={`Route countries: ${trip.departureCountry || 'Global'} to ${trip.arrivalCountry || 'Global'}`}
+              className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-800/85 border border-sky-200/80 dark:border-slate-700 shadow-2xs"
+            >
+              <CountryFlagByName countryName={trip.departureCountry} className="w-5 h-3.5" />
+              <ArrowRight className="w-3 h-3 text-sky-500 shrink-0" />
+              <CountryFlagByName countryName={trip.arrivalCountry} className="w-5 h-3.5" />
+            </div>
+          )}
         </div>
 
         {/* Critical Dates Matrix */}

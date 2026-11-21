@@ -18,6 +18,7 @@ import {
 } from '../utils/tripUtils';
 import { useTravelerAccountDate, normalizeAvatarUrl, handleAvatarImageError, isGoogleVerifiedUser } from '../utils/userUtils';
 import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
+import { CountryFlagByName } from './CountrySelect';
 import { AdsterraAdCard } from './AdsterraAdCard';
 import {
   ArrowLeft,
@@ -148,13 +149,14 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
           <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden transition-colors">
             <div className="absolute top-0 right-0 w-48 h-48 bg-amber-100/40 dark:bg-amber-900/10 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
 
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
               <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-3 py-1 rounded-full border border-blue-200/60 dark:border-blue-800/60">
                 <Plane className="w-3.5 h-3.5" />
                 <span>{t('brandSubtitle')}</span>
               </div>
+
               {trip.weightAvailableKg > 0 && (
-                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/60 ml-auto">
                   <Luggage className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>{trip.weightAvailableKg} kg Baggage Space</span>
                 </div>
@@ -169,9 +171,10 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950 dark:text-white">
                   {trip.departureCity}
                 </h2>
-                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-                  {trip.departureCountry}
-                  {trip.departureAirportCode && <span className="ml-1 font-mono text-slate-700 dark:text-slate-300 font-semibold">({trip.departureAirportCode})</span>}
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1 inline-flex items-center gap-1.5">
+                  <CountryFlagByName countryName={trip.departureCountry} className="w-4 h-3" />
+                  <span>{trip.departureCountry}</span>
+                  {trip.departureAirportCode && <span className="ml-0.5 font-mono text-slate-700 dark:text-slate-300 font-semibold">({trip.departureAirportCode})</span>}
                 </div>
               </div>
 
@@ -192,9 +195,10 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950 dark:text-white">
                   {trip.arrivalCity}
                 </h2>
-                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-                  {trip.arrivalCountry}
-                  {trip.arrivalAirportCode && <span className="ml-1 font-mono text-slate-700 dark:text-slate-300 font-semibold">({trip.arrivalAirportCode})</span>}
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1 inline-flex items-center gap-1.5 sm:justify-end">
+                  <CountryFlagByName countryName={trip.arrivalCountry} className="w-4 h-3" />
+                  <span>{trip.arrivalCountry}</span>
+                  {trip.arrivalAirportCode && <span className="ml-0.5 font-mono text-slate-700 dark:text-slate-300 font-semibold">({trip.arrivalAirportCode})</span>}
                 </div>
               </div>
             </div>

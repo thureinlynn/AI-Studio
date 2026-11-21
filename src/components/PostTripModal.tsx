@@ -7,6 +7,7 @@ import { TripPost } from '../types/trip';
 import { formatMemberSince } from '../utils/tripUtils';
 import { normalizeAvatarUrl, handleAvatarImageError, isGoogleVerifiedUser } from '../utils/userUtils';
 import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
+import { CountrySelect } from './CountrySelect';
 import {
   X,
   MapPin,
@@ -382,15 +383,15 @@ export const PostTripModal: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  <label htmlFor="departure-country-select" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Departure Country
                   </label>
-                  <input
-                    type="text"
+                  <CountrySelect
+                    id="departure-country-select"
                     value={departureCountry}
-                    onChange={(e) => setDepartureCountry(e.target.value)}
-                    placeholder="e.g. Thailand"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    onChange={setDepartureCountry}
+                    placeholder="Select country (e.g. Thailand)"
+                    ariaLabel="Departure Country"
                   />
                 </div>
               </div>
@@ -410,15 +411,15 @@ export const PostTripModal: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  <label htmlFor="arrival-country-select" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Arrival Country
                   </label>
-                  <input
-                    type="text"
+                  <CountrySelect
+                    id="arrival-country-select"
                     value={arrivalCountry}
-                    onChange={(e) => setArrivalCountry(e.target.value)}
-                    placeholder="e.g. Myanmar"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    onChange={setArrivalCountry}
+                    placeholder="Select country (e.g. Myanmar)"
+                    ariaLabel="Arrival Country"
                   />
                 </div>
               </div>
