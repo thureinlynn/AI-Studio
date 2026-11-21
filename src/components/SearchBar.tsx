@@ -2,6 +2,7 @@ import React from 'react';
 import { useTrips } from '../context/TripContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Search, MapPin, X, Filter } from 'lucide-react';
+import { CitySelect } from './CitySelect';
 
 export const SearchBar: React.FC = () => {
   const { filters, updateFilterField, resetFilters } = useTrips();
@@ -34,34 +35,26 @@ export const SearchBar: React.FC = () => {
             </div>
 
             {/* Departure City */}
-            <div className="md:col-span-3 relative">
+            <div className="md:col-span-3">
               <label htmlFor="dept-city" className="sr-only">Departure city</label>
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
-                <MapPin className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <input
+              <CitySelect
                 id="dept-city"
-                type="text"
                 value={filters.departureCity}
-                onChange={(e) => updateFilterField('departureCity', e.target.value)}
+                onChange={(city) => updateFilterField('departureCity', city)}
                 placeholder={t('fromPlaceholder')}
-                className="w-full pl-10 pr-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                ariaLabel="Departure city"
               />
             </div>
 
             {/* Arrival City */}
-            <div className="md:col-span-3 relative">
+            <div className="md:col-span-3">
               <label htmlFor="arr-city" className="sr-only">Arrival city</label>
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
-                <MapPin className="w-4 h-4 text-rose-500 dark:text-rose-400" />
-              </div>
-              <input
+              <CitySelect
                 id="arr-city"
-                type="text"
                 value={filters.arrivalCity}
-                onChange={(e) => updateFilterField('arrivalCity', e.target.value)}
+                onChange={(city) => updateFilterField('arrivalCity', city)}
                 placeholder={t('toPlaceholder')}
-                className="w-full pl-10 pr-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                ariaLabel="Arrival city"
               />
             </div>
 
