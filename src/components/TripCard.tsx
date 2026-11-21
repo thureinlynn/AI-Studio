@@ -55,15 +55,15 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
             </div>
           </div>
 
-          {/* Right Corner: Both Country Flags */}
+          {/* Right: Both Country Flags */}
           {(trip.departureCountry || trip.arrivalCountry) && (
             <div
               aria-label={`Route countries: ${trip.departureCountry || 'Global'} to ${trip.arrivalCountry || 'Global'}`}
-              className="shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-800/85 border border-sky-200/80 dark:border-slate-700 shadow-2xs"
+              className="shrink-0 flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-white/90 dark:bg-slate-800/85 border border-sky-200/80 dark:border-slate-700 shadow-2xs"
             >
-              <CountryFlagByName countryName={trip.departureCountry} className="w-5 h-3.5" />
-              <ArrowRight className="w-3 h-3 text-sky-500 shrink-0" />
-              <CountryFlagByName countryName={trip.arrivalCountry} className="w-5 h-3.5" />
+              <CountryFlagByName countryName={trip.departureCountry} className="w-4 h-3" />
+              <ArrowRight className="w-2.5 h-2.5 text-sky-500 shrink-0" />
+              <CountryFlagByName countryName={trip.arrivalCountry} className="w-4 h-3" />
             </div>
           )}
         </div>

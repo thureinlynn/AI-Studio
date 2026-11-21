@@ -8,6 +8,7 @@ import { formatMemberSince } from '../utils/tripUtils';
 import { normalizeAvatarUrl, handleAvatarImageError, isGoogleVerifiedUser } from '../utils/userUtils';
 import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
 import { CountrySelect } from './CountrySelect';
+import { CitySelect } from './CitySelect';
 import {
   X,
   MapPin,
@@ -370,16 +371,21 @@ export const PostTripModal: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  <label htmlFor="departure-city-select" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Departure City *
                   </label>
-                  <input
-                    type="text"
+                  <CitySelect
+                    id="departure-city-select"
                     required
                     value={departureCity}
-                    onChange={(e) => setDepartureCity(e.target.value)}
-                    placeholder="e.g. Bangkok"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    onChange={(city, country) => {
+                      setDepartureCity(city);
+                      if (country && !departureCountry) {
+                        setDepartureCountry(country);
+                      }
+                    }}
+                    placeholder="Select or type city (e.g. Bangkok)"
+                    ariaLabel="Departure City"
                   />
                 </div>
                 <div>
@@ -398,16 +404,21 @@ export const PostTripModal: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  <label htmlFor="arrival-city-select" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Arrival City *
                   </label>
-                  <input
-                    type="text"
+                  <CitySelect
+                    id="arrival-city-select"
                     required
                     value={arrivalCity}
-                    onChange={(e) => setArrivalCity(e.target.value)}
-                    placeholder="e.g. Yangon"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    onChange={(city, country) => {
+                      setArrivalCity(city);
+                      if (country && !arrivalCountry) {
+                        setArrivalCountry(country);
+                      }
+                    }}
+                    placeholder="Select or type city (e.g. Yangon)"
+                    ariaLabel="Arrival City"
                   />
                 </div>
                 <div>

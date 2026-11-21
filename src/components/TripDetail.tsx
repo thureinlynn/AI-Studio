@@ -426,7 +426,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
 
           {/* Direct Contact Buttons (WhatsApp, Telegram, Viber) */}
           <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative transition-colors">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 {t('detailDirectContactTitle')}
               </h3>
@@ -434,6 +434,13 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                 Direct Links
               </span>
             </div>
+
+            {contacts.preferred && (
+              <div className="mb-4 inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-3 py-1 rounded-xl border border-amber-200 dark:border-amber-800/60">
+                <span>⭐ Preferred Contact Channel:</span>
+                <span className="uppercase tracking-wide font-extrabold">{contacts.preferred}</span>
+              </div>
+            )}
 
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-5 leading-normal">
               {t('detailDirectContactDesc')}
@@ -448,10 +455,17 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => trackConversion('contact_traveler', { channel: 'whatsapp', tripId: trip.id, route: `${trip.departureCity}-${trip.arrivalCity}` })}
-                    className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2.5 shadow-sm shadow-emerald-600/30 transition-all cursor-pointer"
+                    className={`w-full h-12 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2.5 shadow-sm shadow-emerald-600/30 transition-all cursor-pointer relative ${
+                      contacts.preferred === 'whatsapp' ? 'ring-2 ring-amber-400 dark:ring-amber-500 ring-offset-2 dark:ring-offset-slate-900' : ''
+                    }`}
                   >
                     <MessageCircle className="w-5 h-5" />
                     <span>{t('detailChatWhatsApp')}</span>
+                    {contacts.preferred === 'whatsapp' && (
+                      <span className="absolute right-3 bg-amber-400 text-slate-950 text-[10px] font-extrabold px-2 py-0.5 rounded-md shadow-2xs uppercase tracking-wider">
+                        Preferred
+                      </span>
+                    )}
                   </a>
                   <div className="flex items-center justify-between px-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                     <span>{contacts.whatsapp}</span>
@@ -474,10 +488,17 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => trackConversion('contact_traveler', { channel: 'telegram', tripId: trip.id, route: `${trip.departureCity}-${trip.arrivalCity}` })}
-                    className="w-full h-12 bg-sky-500 hover:bg-sky-400 active:scale-[0.98] text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2.5 shadow-sm shadow-sky-500/30 transition-all cursor-pointer"
+                    className={`w-full h-12 bg-sky-500 hover:bg-sky-400 active:scale-[0.98] text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2.5 shadow-sm shadow-sky-500/30 transition-all cursor-pointer relative ${
+                      contacts.preferred === 'telegram' ? 'ring-2 ring-amber-400 dark:ring-amber-500 ring-offset-2 dark:ring-offset-slate-900' : ''
+                    }`}
                   >
                     <Send className="w-5 h-5" />
                     <span>{t('detailMessageTelegram')}</span>
+                    {contacts.preferred === 'telegram' && (
+                      <span className="absolute right-3 bg-amber-400 text-slate-950 text-[10px] font-extrabold px-2 py-0.5 rounded-md shadow-2xs uppercase tracking-wider">
+                        Preferred
+                      </span>
+                    )}
                   </a>
                   <div className="flex items-center justify-between px-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                     <span>@{contacts.telegram.replace(/^@/, '')}</span>
@@ -500,10 +521,17 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => trackConversion('contact_traveler', { channel: 'facebook', tripId: trip.id, route: `${trip.departureCity}-${trip.arrivalCity}` })}
-                    className="w-full h-12 bg-[#1877F2] hover:bg-[#166fe5] active:scale-[0.98] text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2.5 shadow-sm shadow-[#1877F2]/30 transition-all cursor-pointer"
+                    className={`w-full h-12 bg-[#1877F2] hover:bg-[#166fe5] active:scale-[0.98] text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2.5 shadow-sm shadow-[#1877F2]/30 transition-all cursor-pointer relative ${
+                      contacts.preferred === 'facebook' ? 'ring-2 ring-amber-400 dark:ring-amber-500 ring-offset-2 dark:ring-offset-slate-900' : ''
+                    }`}
                   >
                     <Facebook className="w-5 h-5 fill-current" />
                     <span>{t('detailConnectFacebook')}</span>
+                    {contacts.preferred === 'facebook' && (
+                      <span className="absolute right-3 bg-amber-400 text-slate-950 text-[10px] font-extrabold px-2 py-0.5 rounded-md shadow-2xs uppercase tracking-wider">
+                        Preferred
+                      </span>
+                    )}
                   </a>
                   <div className="flex items-center justify-between px-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                     <span className="truncate max-w-[200px]">{getFacebookDisplay(contacts.facebook)}</span>
@@ -524,10 +552,17 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
                   <a
                     href={viberUrl}
                     onClick={() => trackConversion('contact_traveler', { channel: 'viber', tripId: trip.id, route: `${trip.departureCity}-${trip.arrivalCity}` })}
-                    className="w-full h-12 bg-purple-600 hover:bg-purple-500 active:scale-[0.98] text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2.5 shadow-sm shadow-purple-600/30 transition-all cursor-pointer"
+                    className={`w-full h-12 bg-purple-600 hover:bg-purple-500 active:scale-[0.98] text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2.5 shadow-sm shadow-purple-600/30 transition-all cursor-pointer relative ${
+                      contacts.preferred === 'viber' ? 'ring-2 ring-amber-400 dark:ring-amber-500 ring-offset-2 dark:ring-offset-slate-900' : ''
+                    }`}
                   >
                     <PhoneCall className="w-5 h-5" />
                     <span>{t('detailCallViber')}</span>
+                    {contacts.preferred === 'viber' && (
+                      <span className="absolute right-3 bg-amber-400 text-slate-950 text-[10px] font-extrabold px-2 py-0.5 rounded-md shadow-2xs uppercase tracking-wider">
+                        Preferred
+                      </span>
+                    )}
                   </a>
                   <div className="flex items-center justify-between px-2 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                     <span>{contacts.viber}</span>
