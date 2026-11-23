@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export type Language = 'en' | 'my';
+export type Language = 'en' | 'my' | 'zh' | 'ar' | 'es' | 'de' | 'fr' | 'it' | 'ja' | 'ko' | 'hi' | 'th';
 
 interface Translations {
   [key: string]: {
     en: string;
     my: string;
+    [key: string]: string;
   };
 }
 
@@ -402,8 +403,9 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
     try {
-      const saved = localStorage.getItem('luukyone_lang');
-      if (saved === 'en' || saved === 'my') return saved;
+      const saved = localStorage.getItem('luukyone_lang') as Language;
+      const valid: Language[] = ['en', 'my', 'zh', 'ar', 'es', 'de', 'fr', 'it', 'ja', 'ko', 'hi', 'th'];
+      if (saved && valid.includes(saved)) return saved;
     } catch {
       // ignore
     }

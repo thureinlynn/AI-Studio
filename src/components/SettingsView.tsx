@@ -184,42 +184,42 @@ export const SettingsView: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-1">
-            {/* English */}
-            <button
-              onClick={() => setLanguage('en')}
-              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
-                language === 'en'
-                  ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/30 text-blue-950 dark:text-blue-200 ring-2 ring-blue-500/20'
-                  : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:border-slate-300'
-              }`}
-            >
-              <div>
-                <span className="font-bold text-sm block">English</span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">United States</span>
-              </div>
-              {language === 'en' && (
-                <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-              )}
-            </button>
-
-            {/* Myanmar */}
-            <button
-              onClick={() => setLanguage('my')}
-              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
-                language === 'my'
-                  ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/30 text-blue-950 dark:text-blue-200 ring-2 ring-blue-500/20'
-                  : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:border-slate-300'
-              }`}
-            >
-              <div>
-                <span className="font-bold text-sm block">မြန်မာ</span>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">Burmese</span>
-              </div>
-              {language === 'my' && (
-                <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-              )}
-            </button>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
+            {[
+              { code: 'en', label: 'English', sub: 'United States' },
+              { code: 'my', label: 'မြန်မာ', sub: 'Burmese' },
+              { code: 'zh', label: '中文', sub: 'Mandarin' },
+              { code: 'ar', label: 'العربية', sub: 'Arabic' },
+              { code: 'es', label: 'Español', sub: 'Spanish' },
+              { code: 'de', label: 'Deutsch', sub: 'German' },
+              { code: 'fr', label: 'Français', sub: 'French' },
+              { code: 'it', label: 'Italiano', sub: 'Italian' },
+              { code: 'ja', label: '日本語', sub: 'Japanese' },
+              { code: 'ko', label: '한국어', sub: 'Korean' },
+              { code: 'hi', label: 'हिन्दी', sub: 'Hindi' },
+              { code: 'th', label: 'ไทย', sub: 'Thai' },
+            ].map((lang) => {
+              const isSelected = language === lang.code;
+              return (
+                <button
+                  key={lang.code}
+                  onClick={() => setLanguage(lang.code as any)}
+                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                    isSelected
+                      ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/30 text-blue-950 dark:text-blue-200 ring-2 ring-blue-500/20'
+                      : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="min-w-0">
+                    <span className="font-bold text-xs block truncate">{lang.label}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5 truncate">{lang.sub}</span>
+                  </div>
+                  {isSelected && (
+                    <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 ml-1" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </section>
 
