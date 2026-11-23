@@ -10,6 +10,30 @@ export const DEFAULT_KEYWORDS =
   'LuuKyone, traveler classifieds, luggage space sharing, extra baggage allowance, peer-to-peer package delivery, send parcel overseas, Bangkok to Yangon luggage, travel baggage space, international parcel courier alternative';
 
 /**
+ * Escapes HTML/script-breaking characters when embedding JSON-LD into <script> tags.
+ */
+export function safeJsonLdStringify(data: unknown): string {
+  return JSON.stringify(data)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
+/**
+ * Escapes XML special characters for safe sitemap generation.
+ */
+export function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+/**
  * Returns a standardized canonical URL for search engines
  */
 export function formatCanonicalUrl(tripId?: string | null, tab?: string | null): string {
@@ -214,10 +238,10 @@ export function generateSitemapXml(trips: TripPost[] = [], siteUrl: string = SIT
   const urlElements = allUrls
     .map(
       (u) => `  <url>
-    <loc>${u.loc}</loc>
-    <lastmod>${u.lastmod}</lastmod>
-    <changefreq>${u.changefreq}</changefreq>
-    <priority>${u.priority}</priority>
+    <loc>${escapeXml(u.loc)}</loc>
+    <lastmod>${escapeXml(u.lastmod)}</lastmod>
+    <changefreq>${escapeXml(u.changefreq)}</changefreq>
+    <priority>${escapeXml(u.priority)}</priority>
   </url>`
     )
     .join('\n');

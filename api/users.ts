@@ -1,69 +1,76 @@
 import {
+  findUserById,
   findUserByEmail,
   saveUser,
-  getAllUsers,
 } from '../server/storage.ts';
+import {
+  verifyFirebaseIdToken,
+  sanitizeUserInput,
+  applyCorsHeaders,
+  applySecurityHeaders,
+  checkRateLimit,
+} from '../server/security.ts';
+
+function parseBody(body: any) {
+  if (!body) return {};
+  if (typeof body === 'string') {
+    if (Buffer.byteLength(body, 'utf8') > 32768) {
+      throw new Error('PAYLOAD_TOO_LARGE');
+    }
+    return JSON.parse(body);
+  }
+  return body;
+}
 
 export default async function handler(req: any, res: any) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  applySecurityHeaders(req, res);
+  applyCorsHeaders(req, res, 'GET, POST, OPTIONS');
 
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    return res.status(204).end();
   }
 
   try {
+    if (!checkRateLimit(req, 'users-api', 45)) {
+      return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+    }
+
+    const authUser = await verifyFirebaseIdToken(req.headers?.authorization);
+    if (!authUser) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
     if (req.method === 'GET') {
-      const { email } = req.query;
-      if (typeof email === 'string' && email.trim()) {
-        const user = await findUserByEmail(email);
-        if (!user) return res.status(404).json({ error: 'User not found' });
-        return res.status(200).json(user);
+      const profile =
+        (await findUserById(authUser.uid)) ||
+        (authUser.email ? await findUserByEmail(authUser.email) : null);
+
+      if (!profile || profile.id !== authUser.uid) {
+        return res.status(404).json({ error: 'User profile not found' });
       }
-      return res.status(200).json(await getAllUsers());
+      return res.status(200).json(profile);
     }
 
     if (req.method === 'POST') {
-      const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-      const isLoginAction = req.query.action === 'login' || body.action === 'login';
+      const body = parseBody(req.body);
+      const isLoginAction = req.query?.action === 'login' || body?.action === 'login';
 
       if (isLoginAction) {
-        const { email, name } = body;
-        if (!email || !email.trim()) {
-          return res.status(400).json({ error: 'Email is required' });
-        }
-
-        let user = await findUserByEmail(email);
+        let user = await findUserById(authUser.uid);
         if (!user) {
-          user = {
-            id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-            email: email.trim(),
-            name: (name && name.trim()) || email.split('@')[0],
-            isVerified: true,
-            rating: 5.0,
-            tripsCompleted: 0,
-            memberSince: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-            bio: 'Community luggage traveler',
-            languages: ['English', 'Myanmar'],
-            createdAt: new Date().toISOString(),
-          };
-          await saveUser(user);
+          const sanitized = sanitizeUserInput(body, authUser);
+          if (sanitized.error || !sanitized.user) {
+            return res.status(400).json({ error: sanitized.error || 'Invalid user data' });
+          }
+          user = await saveUser(sanitized.user);
         }
         return res.status(200).json(user);
       }
 
-      // Normal user registration / save
-      if (!body || !body.email || !body.name) {
-        return res.status(400).json({ error: 'Name and email are required' });
+      const { user, error } = sanitizeUserInput(body, authUser);
+      if (error || !user) {
+        return res.status(400).json({ error: error || 'Invalid user data' });
       }
-
-      const user = {
-        ...body,
-        id: body.id || `user-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-        createdAt: body.createdAt || new Date().toISOString(),
-        isVerified: body.isVerified ?? true,
-      };
 
       const saved = await saveUser(user);
       return res.status(201).json(saved);
@@ -71,7 +78,13 @@ export default async function handler(req: any, res: any) {
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (err: any) {
+    if (err instanceof SyntaxError) {
+      return res.status(400).json({ error: 'Invalid JSON request body' });
+    }
+    if (err?.message === 'PAYLOAD_TOO_LARGE') {
+      return res.status(413).json({ error: 'Payload too large' });
+    }
     console.error('API Error in /api/users:', err);
-    return res.status(500).json({ error: err.message || 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }

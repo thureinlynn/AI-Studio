@@ -1,0 +1,111 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isNonEmptyString(val, maxLen) {
+      return val is string && val.size() > 0 && val.size() <= maxLen;
+    }
+
+    function isOptionalString(val, maxLen) {
+      return val is string && val.size() <= maxLen;
+    }
+
+    function isValidTripStatus(status) {
+      return status in ['active', 'fully_booked', 'completed'];
+    }
+
+    function isValidFeeType(feeType) {
+      return feeType in ['free', 'voluntary_tip', 'shared_cost'];
+    }
+
+    function isValidTripDoc(data) {
+      return data.keys().hasAll([
+          'id',
+          'userId',
+          'departureCity',
+          'departureCountry',
+          'arrivalCity',
+          'arrivalCountry',
+          'lastDropOffDate',
+          'checkOutDate',
+          'weightCapacityKg',
+          'weightAvailableKg',
+          'serviceFeeType',
+          'status',
+          'traveler'
+        ])
+        && isNonEmptyString(data.id, 100)
+        && data.userId == request.auth.uid
+        && isNonEmptyString(data.departureCity, 100)
+        && isNonEmptyString(data.departureCountry, 100)
+        && isNonEmptyString(data.arrivalCity, 100)
+        && isNonEmptyString(data.arrivalCountry, 100)
+        && isNonEmptyString(data.lastDropOffDate, 40)
+        && isNonEmptyString(data.checkOutDate, 40)
+        && data.weightCapacityKg is number
+        && data.weightCapacityKg >= 0.5
+        && data.weightCapacityKg <= 200
+        && data.weightAvailableKg is number
+        && data.weightAvailableKg >= 0.5
+        && data.weightAvailableKg <= 200
+        && isValidFeeType(data.serviceFeeType)
+        && isValidTripStatus(data.status)
+        && (!('announcement' in data) || isOptionalString(data.announcement, 2000))
+        && (!('dropOffLocationNote' in data) || isOptionalString(data.dropOffLocationNote, 500))
+        && (!('pickUpLocationNote' in data) || isOptionalString(data.pickUpLocationNote, 500))
+        && (!('feeDescription' in data) || isOptionalString(data.feeDescription, 200))
+        && data.traveler is map
+        && isNonEmptyString(data.traveler.name, 80)
+        && (!('isVerified' in data.traveler) || data.traveler.isVerified == false);
+    }
+
+    // Private User Profiles: strictly owner-only read/write to protect email and contact PII
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && (!('id' in request.resource.data) || request.resource.data.id == userId)
+        && (!('isVerified' in request.resource.data) || request.resource.data.isVerified == false)
+        && (!('name' in request.resource.data) || isOptionalString(request.resource.data.name, 80))
+        && (!('bio' in request.resource.data) || isOptionalString(request.resource.data.bio, 400))
+        && (!('email' in request.resource.data) || isOptionalString(request.resource.data.email, 160));
+      allow update: if isOwner(userId)
+        && (!('id' in request.resource.data) || request.resource.data.id == userId)
+        && (!('isVerified' in request.resource.data) || request.resource.data.isVerified == resource.data.isVerified)
+        && (!('name' in request.resource.data) || isOptionalString(request.resource.data.name, 80))
+        && (!('bio' in request.resource.data) || isOptionalString(request.resource.data.bio, 400))
+        && (!('email' in request.resource.data) || request.resource.data.email == resource.data.email);
+      allow delete: if isOwner(userId);
+    }
+
+    // Public Trip Listings: publicly readable, strictly authenticated & owner-scoped mutations
+    match /trips/{tripId} {
+      allow read: if true;
+      allow create: if isAuthenticated()
+        && isValidTripDoc(request.resource.data)
+        && request.resource.data.id == tripId;
+      allow update: if isAuthenticated()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.id == resource.data.id
+        && isValidTripStatus(request.resource.data.status)
+        && (!('traveler' in request.resource.data) || request.resource.data.traveler.isVerified == resource.data.traveler.isVerified);
+      allow delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // Default deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

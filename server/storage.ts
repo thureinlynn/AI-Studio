@@ -209,6 +209,11 @@ export function getAllTripsSync(): TripPost[] {
   return inMemoryTrips;
 }
 
+export async function getTripById(id: string): Promise<TripPost | null> {
+  const trips = await getAllTrips();
+  return trips.find((t) => t.id === id) || null;
+}
+
 export async function saveTrip(newTrip: TripPost): Promise<TripPost> {
   await getAllTrips();
   inMemoryTrips = [newTrip, ...inMemoryTrips.filter((t) => t.id !== newTrip.id)];
@@ -261,6 +266,12 @@ export async function getAllUsers(): Promise<UserAccount[]> {
   return inMemoryUsers;
 }
 
+export async function findUserById(id: string): Promise<UserAccount | null> {
+  const users = await getAllUsers();
+  const cleanId = id.trim();
+  return users.find((u) => u.id === cleanId) || null;
+}
+
 export async function findUserByEmail(email: string): Promise<UserAccount | null> {
   const users = await getAllUsers();
   const cleanEmail = email.trim().toLowerCase();
@@ -270,10 +281,10 @@ export async function findUserByEmail(email: string): Promise<UserAccount | null
 export async function saveUser(user: UserAccount): Promise<UserAccount> {
   await getAllUsers();
   const cleanEmail = user.email.trim().toLowerCase();
-  const existingIdx = inMemoryUsers.findIndex((u) => u.email.toLowerCase() === cleanEmail || u.id === user.id);
-  if (existingIdx !== -1) {
-    inMemoryUsers[existingIdx] = { ...inMemoryUsers[existingIdx], ...user };
-  } else {
+  const existingIdx = inMemoryUsers.findIndex((u) => u.id === user.id || u.email.toLowerCase() === cleanEmail);
+  if (existingIdx !== -1 && inMemoryUsers[existingIdx].id === user.id) {
+    inMemoryUsers[existingIdx] = { ...inMemoryUsers[existingIdx], ...user, id: inMemoryUsers[existingIdx].id };
+  } else if (existingIdx === -1) {
     inMemoryUsers.push(user);
   }
   writeFileUsers(inMemoryUsers);

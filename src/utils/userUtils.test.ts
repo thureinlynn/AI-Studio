@@ -59,3 +59,14 @@ test('normalizeAvatarUrl produces identical avatar across card, detail, and prof
   assert.equal(onCard, expected);
   assert.equal(onPublicProfile, expected);
 });
+
+test('avatar helpers reject SVG data URIs and javascript: schemes', () => {
+  assert.equal(isAuthenticPhotoUrl('data:image/svg+xml;base64,PHN2Zy8+'), false);
+  assert.equal(isAuthenticPhotoUrl('javascript:alert(1)'), false);
+
+  const normalizedJs = normalizeAvatarUrl('javascript:alert(1)', 'uid-safe-1', { id: 'uid-safe-1', name: 'Safe User' });
+  assert.equal(normalizedJs, getDicebearAvatar('uid-safe-1'));
+
+  const normalizedProtoRel = normalizeAvatarUrl('//evil.example.com/x.png', 'uid-safe-1', { id: 'uid-safe-1', name: 'Safe User' });
+  assert.equal(normalizedProtoRel, getDicebearAvatar('uid-safe-1'));
+});

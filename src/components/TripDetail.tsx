@@ -64,9 +64,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
 
   const dropOffStatus = getDropOffStatus(trip.lastDropOffDate);
 
-  const isOwner = Boolean(
-    user && (user.id === trip.userId || (travelerName && travelerName.trim().toLowerCase() === user.name.trim().toLowerCase()))
-  );
+  const isOwner = Boolean(user && trip.userId && user.id === trip.userId);
 
   const isOwnTrip = Boolean(user && user.id === trip.userId);
   const isGoogleVerified = isGoogleVerifiedUser(
@@ -448,7 +446,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
 
             <div className="space-y-3">
               {/* WhatsApp Button */}
-              {contacts.whatsapp ? (
+              {contacts.whatsapp && waUrl ? (
                 <div className="space-y-1">
                   <a
                     href={waUrl}
@@ -481,7 +479,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
               ) : null}
 
               {/* Telegram Button */}
-              {contacts.telegram ? (
+              {contacts.telegram && tgUrl ? (
                 <div className="space-y-1 pt-1">
                   <a
                     href={tgUrl}
@@ -514,7 +512,7 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
               ) : null}
 
               {/* Facebook Button (Positioned below Telegram link as requested) */}
-              {contacts.facebook ? (
+              {contacts.facebook && fbUrl ? (
                 <div className="space-y-1 pt-1">
                   <a
                     href={fbUrl}
@@ -547,10 +545,11 @@ export const TripDetail: React.FC<TripDetailProps> = ({ trip }) => {
               ) : null}
 
               {/* Viber Button */}
-              {contacts.viber ? (
+              {contacts.viber && viberUrl ? (
                 <div className="space-y-1 pt-1">
                   <a
                     href={viberUrl}
+                    rel="noopener noreferrer"
                     onClick={() => trackConversion('contact_traveler', { channel: 'viber', tripId: trip.id, route: `${trip.departureCity}-${trip.arrivalCity}` })}
                     className={`w-full h-12 bg-purple-600 hover:bg-purple-500 active:scale-[0.98] text-white font-semibold text-sm rounded-xl flex items-center justify-center gap-2.5 shadow-sm shadow-purple-600/30 transition-all cursor-pointer relative ${
                       contacts.preferred === 'viber' ? 'ring-2 ring-amber-400 dark:ring-amber-500 ring-offset-2 dark:ring-offset-slate-900' : ''

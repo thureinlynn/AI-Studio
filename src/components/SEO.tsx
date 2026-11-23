@@ -6,6 +6,7 @@ import {
   DEFAULT_KEYWORDS,
   SITE_NAME,
   SITE_URL,
+  safeJsonLdStringify,
 } from '../utils/seoUtils';
 
 export interface SEOProps {
@@ -89,7 +90,7 @@ export const SEO: React.FC<SEOProps> = ({
         scriptTag.type = 'application/ld+json';
         document.head.appendChild(scriptTag);
       }
-      scriptTag.text = JSON.stringify(jsonLd);
+      scriptTag.textContent = safeJsonLdStringify(jsonLd);
     } else if (scriptTag) {
       scriptTag.remove();
     }
@@ -119,12 +120,6 @@ export const SEO: React.FC<SEOProps> = ({
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />
-      {jsonLd && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      )}
     </>
   );
 };

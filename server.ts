@@ -5,13 +5,25 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import {
   getAllTrips,
+  getTripById,
   saveTrip,
   updateTripStatus,
   deleteTripById,
+  findUserById,
   findUserByEmail,
   saveUser,
-  getAllUsers,
 } from './server/storage.ts';
+import {
+  verifyFirebaseIdToken,
+  sanitizeTripInput,
+  sanitizeUserInput,
+  isValidTripStatus,
+  isValidTripId,
+  isTripOwner,
+  applyCorsHeaders,
+  applySecurityHeaders,
+  checkRateLimit,
+} from './server/security.ts';
 import { generateSitemapXml, SITE_URL } from './src/utils/seoUtils.ts';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -23,7 +35,34 @@ async function startServer() {
   const PORT = Number(process.env.PORT) || 3000;
   const isProduction = process.env.NODE_ENV === 'production';
 
-  app.use(express.json());
+  app.disable('x-powered-by');
+  app.set('trust proxy', 1);
+
+  // Global security headers
+  app.use((req, res, next) => {
+    applySecurityHeaders(req, res);
+    next();
+  });
+
+  // Strict JSON body size limit
+  app.use(express.json({ limit: '32kb' }));
+
+  // Clean JSON syntax error handler (no stack trace exposure)
+  app.use((err: any, _req: any, res: any, next: any) => {
+    if (err instanceof SyntaxError && 'body' in err) {
+      return res.status(400).json({ error: 'Invalid JSON request body' });
+    }
+    next(err);
+  });
+
+  // Allowlisted CORS for /api/*
+  app.use('/api', (req, res, next) => {
+    applyCorsHeaders(req, res, 'GET, POST, PATCH, DELETE, OPTIONS');
+    if (req.method === 'OPTIONS') {
+      return res.status(204).end();
+    }
+    next();
+  });
 
   // SEO Routes: Robots.txt & Dynamic Sitemap.xml
   app.get('/robots.txt', (req, res) => {
@@ -53,6 +92,9 @@ async function startServer() {
 
   // API Routes: Trips
   app.get('/api/trips', async (req, res) => {
+    if (!checkRateLimit(req, 'trips-read', 120)) {
+      return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+    }
     try {
       const trips = await getAllTrips();
       res.json(trips);
@@ -63,20 +105,27 @@ async function startServer() {
   });
 
   app.post('/api/trips', async (req, res) => {
+    if (!checkRateLimit(req, 'trips-write', 30)) {
+      return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+    }
     try {
-      const tripData = req.body;
-      if (!tripData || !tripData.departureCity || !tripData.arrivalCity) {
-        return res.status(400).json({ error: 'Departure and arrival cities are required' });
+      const authUser = await verifyFirebaseIdToken(req.headers.authorization);
+      if (!authUser) {
+        return res.status(401).json({ error: 'Authentication required' });
       }
 
-      const newTrip = {
-        ...tripData,
-        id: tripData.id || `trip-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-        createdAt: tripData.createdAt || new Date().toISOString(),
-        status: tripData.status || 'active',
-      };
+      const { trip, error } = sanitizeTripInput(req.body, authUser);
+      if (error || !trip) {
+        return res.status(400).json({ error: error || 'Invalid trip payload' });
+      }
 
-      const saved = await saveTrip(newTrip);
+      // If replacing an existing trip ID, verify ownership first
+      const existing = await getTripById(trip.id);
+      if (existing && !isTripOwner(existing, authUser.uid)) {
+        return res.status(403).json({ error: 'Forbidden: you do not own this trip' });
+      }
+
+      const saved = await saveTrip(trip);
       res.status(201).json(saved);
     } catch (err) {
       console.error('Error saving trip:', err);
@@ -85,16 +134,31 @@ async function startServer() {
   });
 
   const handlePatchTrip = async (req: any, res: any) => {
+    if (!checkRateLimit(req, 'trips-write', 30)) {
+      return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+    }
     try {
-      const id = req.params.id || req.query.id || req.body?.id;
-      const { status } = req.body;
-      if (!id || !status) {
-        return res.status(400).json({ error: 'ID and status are required' });
+      const authUser = await verifyFirebaseIdToken(req.headers.authorization);
+      if (!authUser) {
+        return res.status(401).json({ error: 'Authentication required' });
       }
-      const updated = await updateTripStatus(id, status);
-      if (!updated) {
+
+      const id = req.params.id || req.query.id || req.body?.id;
+      const { status } = req.body || {};
+      if (!isValidTripId(id) || !isValidTripStatus(status)) {
+        return res.status(400).json({ error: 'Valid trip ID and status are required' });
+      }
+
+      const existing = await getTripById(id);
+      if (!existing) {
         return res.status(404).json({ error: 'Trip not found' });
       }
+
+      if (!isTripOwner(existing, authUser.uid)) {
+        return res.status(403).json({ error: 'Forbidden: you can only modify your own trip listings' });
+      }
+
+      const updated = await updateTripStatus(id, status);
       res.json(updated);
     } catch (err) {
       console.error('Error updating trip:', err);
@@ -106,15 +170,30 @@ async function startServer() {
   app.patch('/api/trips', handlePatchTrip);
 
   const handleDeleteTrip = async (req: any, res: any) => {
+    if (!checkRateLimit(req, 'trips-write', 30)) {
+      return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+    }
     try {
-      const id = req.params.id || req.query.id || req.body?.id;
-      if (!id) {
-        return res.status(400).json({ error: 'Trip id is required' });
+      const authUser = await verifyFirebaseIdToken(req.headers.authorization);
+      if (!authUser) {
+        return res.status(401).json({ error: 'Authentication required' });
       }
-      const deleted = await deleteTripById(id);
-      if (!deleted) {
+
+      const id = req.params.id || req.query.id || req.body?.id;
+      if (!isValidTripId(id)) {
+        return res.status(400).json({ error: 'Valid trip id is required' });
+      }
+
+      const existing = await getTripById(id);
+      if (!existing) {
         return res.status(404).json({ error: 'Trip not found' });
       }
+
+      if (!isTripOwner(existing, authUser.uid)) {
+        return res.status(403).json({ error: 'Forbidden: you can only delete your own trip listings' });
+      }
+
+      await deleteTripById(id);
       res.json({ success: true, message: 'Trip deleted' });
     } catch (err) {
       console.error('Error deleting trip:', err);
@@ -125,35 +204,45 @@ async function startServer() {
   app.delete('/api/trips/:id', handleDeleteTrip);
   app.delete('/api/trips', handleDeleteTrip);
 
-  // API Routes: Users
+  // API Routes: Users (Strictly authenticated, self-only access)
   app.get('/api/users', async (req, res) => {
+    if (!checkRateLimit(req, 'users-read', 60)) {
+      return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+    }
     try {
-      const { email } = req.query;
-      if (typeof email === 'string' && email.trim()) {
-        const user = await findUserByEmail(email);
-        if (!user) return res.status(404).json({ error: 'User not found' });
-        return res.json(user);
+      const authUser = await verifyFirebaseIdToken(req.headers.authorization);
+      if (!authUser) {
+        return res.status(401).json({ error: 'Authentication required' });
       }
-      res.json(await getAllUsers());
+
+      const profile =
+        (await findUserById(authUser.uid)) ||
+        (authUser.email ? await findUserByEmail(authUser.email) : null);
+
+      if (!profile || profile.id !== authUser.uid) {
+        return res.status(404).json({ error: 'User profile not found' });
+      }
+      return res.json(profile);
     } catch (err) {
-      console.error('Error fetching users:', err);
-      res.status(500).json({ error: 'Failed to fetch users' });
+      console.error('Error fetching user profile:', err);
+      res.status(500).json({ error: 'Failed to fetch user profile' });
     }
   });
 
   app.post('/api/users', async (req, res) => {
+    if (!checkRateLimit(req, 'users-write', 30)) {
+      return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+    }
     try {
-      const userData = req.body;
-      if (!userData || !userData.email || !userData.name) {
-        return res.status(400).json({ error: 'Name and email are required' });
+      const authUser = await verifyFirebaseIdToken(req.headers.authorization);
+      if (!authUser) {
+        return res.status(401).json({ error: 'Authentication required' });
       }
 
-      const user = {
-        ...userData,
-        id: userData.id || `user-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-        createdAt: userData.createdAt || new Date().toISOString(),
-        isVerified: userData.isVerified ?? true,
-      };
+      const { user, error } = sanitizeUserInput(req.body, authUser);
+      if (error || !user) {
+        return res.status(400).json({ error: error || 'Invalid user data' });
+      }
 
       const saved = await saveUser(user);
       res.status(201).json(saved);
@@ -164,28 +253,22 @@ async function startServer() {
   });
 
   app.post('/api/users/login', async (req, res) => {
+    if (!checkRateLimit(req, 'users-write', 30)) {
+      return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+    }
     try {
-      const { email, name } = req.body;
-      if (!email || !email.trim()) {
-        return res.status(400).json({ error: 'Email is required' });
+      const authUser = await verifyFirebaseIdToken(req.headers.authorization);
+      if (!authUser) {
+        return res.status(401).json({ error: 'Authentication required' });
       }
 
-      let user = await findUserByEmail(email);
+      let user = await findUserById(authUser.uid);
       if (!user) {
-        // Create new account if user doesn't exist
-        user = {
-          id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-          email: email.trim(),
-          name: (name && name.trim()) || email.split('@')[0],
-          isVerified: true,
-          rating: 5.0,
-          tripsCompleted: 0,
-          memberSince: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-          bio: 'Community luggage traveler',
-          languages: ['English', 'Myanmar'],
-          createdAt: new Date().toISOString(),
-        };
-        await saveUser(user);
+        const sanitized = sanitizeUserInput(req.body || {}, authUser);
+        if (sanitized.error || !sanitized.user) {
+          return res.status(400).json({ error: sanitized.error || 'Invalid user profile' });
+        }
+        user = await saveUser(sanitized.user);
       }
 
       res.json(user);

@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getDropOffStatus, formatDateDisplay, filterAndSortTrips } from './tripUtils';
+import {
+  getDropOffStatus,
+  formatDateDisplay,
+  filterAndSortTrips,
+  formatFacebookUrl,
+  formatTelegramUrl,
+  sanitizeExternalHttpUrl,
+} from './tripUtils';
+import { safeJsonLdStringify, escapeXml } from './seoUtils';
 import type { TripPost } from '../types/trip';
 
 test('getDropOffStatus handles missing or invalid dates safely', () => {
@@ -95,3 +103,27 @@ test('filterAndSortTrips excludes expired and booked trips by default', () => {
   assert.equal(activeOnly.length, 1);
   assert.equal(activeOnly[0].id, 't1');
 });
+
+test('contact and external URL sanitizers block phishing domains and unsafe URI schemes', () => {
+  assert.equal(sanitizeExternalHttpUrl('https://airasia.com/deals'), 'https://airasia.com/deals');
+  assert.equal(sanitizeExternalHttpUrl('javascript:alert(1)'), '');
+  assert.equal(sanitizeExternalHttpUrl('data:text/html,<script>alert(1)</script>'), '');
+
+  assert.equal(formatFacebookUrl('https://www.facebook.com/traveler.alex'), 'https://www.facebook.com/traveler.alex');
+  assert.equal(formatFacebookUrl('alex_thant'), 'https://facebook.com/alex_thant');
+  assert.equal(formatFacebookUrl('https://evil-phishing.example.com/login'), '');
+  assert.equal(formatFacebookUrl('javascript:alert(1)'), 'https://facebook.com/javascriptalert1');
+
+  assert.equal(formatTelegramUrl('@alex_travel?start=evil/../foo'), 'https://t.me/alex_travelstartevilfoo');
+});
+
+test('SEO JSON-LD and XML helpers escape script breakout and XML metacharacters', () => {
+  const payload = { description: '</script><script>alert(1)</script>&test' };
+  const serialized = safeJsonLdStringify(payload);
+  assert.equal(serialized.includes('</script>'), false);
+  assert.equal(serialized.includes('\\u003c/script\\u003e'), true);
+
+  const xml = escapeXml('https://example.com/?a=1&b="<evil>"');
+  assert.equal(xml, 'https://example.com/?a=1&amp;b=&quot;&lt;evil&gt;&quot;');
+});
+

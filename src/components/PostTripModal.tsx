@@ -532,6 +532,7 @@ export const PostTripModal: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    maxLength={500}
                     value={dropOffLocationNote}
                     onChange={(e) => setDropOffLocationNote(e.target.value)}
                     placeholder="e.g. BTS Asok or Suvarnabhumi Airport Gate 4"
@@ -545,6 +546,7 @@ export const PostTripModal: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    maxLength={500}
                     value={pickUpLocationNote}
                     onChange={(e) => setPickUpLocationNote(e.target.value)}
                     placeholder="e.g. Junction City Mall or Yangon Airport Arrival Hall"
@@ -595,6 +597,7 @@ export const PostTripModal: React.FC = () => {
               <textarea
                 required
                 rows={3}
+                maxLength={2000}
                 value={announcement}
                 onChange={(e) => setAnnouncement(e.target.value)}
                 placeholder="e.g. Flying direct on Singapore Airlines SQ 638. Have 10 kg spare checked bag space. Can take sealed local snacks, clothes, or documents. Items must be inspected before packing. Drop off before 6 PM on Nov 11 at BTS Asok..."
@@ -627,6 +630,7 @@ export const PostTripModal: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    maxLength={40}
                     value={whatsapp}
                     onChange={(e) => setWhatsapp(e.target.value)}
                     placeholder="+66 81 234 5678"
@@ -642,6 +646,7 @@ export const PostTripModal: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    maxLength={64}
                     value={telegram}
                     onChange={(e) => setTelegram(e.target.value)}
                     placeholder="@traveler_username"
@@ -657,6 +662,7 @@ export const PostTripModal: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    maxLength={200}
                     value={facebook}
                     onChange={(e) => setFacebook(e.target.value)}
                     placeholder="https://facebook.com/username or @username"
@@ -672,6 +678,7 @@ export const PostTripModal: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    maxLength={40}
                     value={viber}
                     onChange={(e) => setViber(e.target.value)}
                     placeholder="+95 9 1234 5678"

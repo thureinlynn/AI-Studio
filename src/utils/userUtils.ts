@@ -83,16 +83,27 @@ export function isGoogleVerifiedUser(userOrTraveler?: any): boolean {
 
 /**
  * Returns true if the URL is an authentic uploaded or Google profile photo.
+ * Explicitly excludes SVG data URIs to avoid embedded script payloads.
  */
 export function isAuthenticPhotoUrl(url?: string): boolean {
-  if (!url) return false;
-  const lower = url.toLowerCase();
-  return (
-    lower.includes('googleusercontent.com') ||
-    lower.includes('lh3.google') ||
-    lower.includes('ggpht.com') ||
-    lower.startsWith('data:image/')
-  );
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  const lower = trimmed.toLowerCase();
+  if (/^data:image\/(png|jpeg|jpg|webp|gif);base64,[a-z0-9+/=]+$/i.test(trimmed)) {
+    return true;
+  }
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false;
+    const host = parsed.hostname.toLowerCase();
+    return (
+      host.endsWith('googleusercontent.com') ||
+      host.endsWith('lh3.google.com') ||
+      host.endsWith('ggpht.com')
+    );
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -128,7 +139,7 @@ export function normalizeAvatarUrl(avatarUrl?: string, seed?: string, userOrTrav
     return UNCLE_AVATAR_URL;
   }
 
-  // 4. Generate deterministic Dicebear avatar for missing or legacy placeholder URLs
+  // 4. Generate deterministic Dicebear avatar for missing, legacy, or unsafe URLs
   if (
     !avatarUrl ||
     avatarUrl.includes('traveler_profile_avatar') ||
@@ -137,7 +148,18 @@ export function normalizeAvatarUrl(avatarUrl?: string, seed?: string, userOrTrav
     return getDicebearAvatar(seed);
   }
 
-  return avatarUrl;
+  try {
+    const parsed = new URL(avatarUrl);
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+      return parsed.toString();
+    }
+  } catch {
+    if (avatarUrl.startsWith('/') && !avatarUrl.startsWith('//')) {
+      return avatarUrl;
+    }
+  }
+
+  return getDicebearAvatar(seed);
 }
 
 /**

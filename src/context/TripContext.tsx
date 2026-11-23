@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { TripPost, TripFilters } from '../types/trip';
 import { INITIAL_TRIPS } from '../data/mockTrips';
-import { db, trackPageView, trackConversion, trackEvent } from '../firebase';
+import { auth, db, trackPageView, trackConversion, trackEvent } from '../firebase';
 import { collection, onSnapshot, doc, getDoc, getDocs, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { formatMemberSince } from '../utils/tripUtils';
 import { getCachedAccountDate, getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
@@ -356,6 +356,19 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const openMyTripsModal = () => setIsMyTripsModalOpen(true);
   const closeMyTripsModal = () => setIsMyTripsModalOpen(false);
 
+  const getAuthHeaders = async (): Promise<Record<string, string>> => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+    } catch {
+      // Proceed without token when signed out or offline
+    }
+    return headers;
+  };
+
   const addNewTrip = (tripData: Omit<TripPost, 'id' | 'createdAt' | 'status'>): TripPost => {
     const newTrip: TripPost = {
       ...tripData,
@@ -383,12 +396,17 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn('[Firestore] setDoc error:', err);
     }
 
-    // 2. Persist to server API / Vercel KV for multi-environment durability
-    fetch('/api/trips', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newTrip),
-    }).catch((err) => console.error('Failed to persist trip to server:', err));
+    // 2. Persist to server API / Vercel KV with Firebase ID token authorization
+    getAuthHeaders()
+      .then((headers) => {
+        if (!headers.Authorization) return;
+        return fetch('/api/trips', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(newTrip),
+        });
+      })
+      .catch((err) => console.error('Failed to persist trip to server:', err));
 
     return newTrip;
   };
@@ -414,12 +432,17 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.warn('[Firestore] deleteDoc error:', err);
         }
 
-        // 2. Delete from server API
-        fetch(`/api/trips?id=${encodeURIComponent(id)}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id }),
-        }).catch((err) => console.error('Failed to delete trip from server:', err));
+        // 2. Delete from server API with Firebase ID token authorization
+        getAuthHeaders()
+          .then((headers) => {
+            if (!headers.Authorization) return;
+            return fetch(`/api/trips?id=${encodeURIComponent(id)}`, {
+              method: 'DELETE',
+              headers,
+              body: JSON.stringify({ id }),
+            });
+          })
+          .catch((err) => console.error('Failed to delete trip from server:', err));
       },
     });
   };
@@ -452,12 +475,17 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.warn('[Firestore] updateDoc error:', err);
         }
 
-        // 2. Update in server API
-        fetch(`/api/trips?id=${encodeURIComponent(id)}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, status: nextStatus }),
-        }).catch((err) => console.error('Failed to update trip status on server:', err));
+        // 2. Update in server API with Firebase ID token authorization
+        getAuthHeaders()
+          .then((headers) => {
+            if (!headers.Authorization) return;
+            return fetch(`/api/trips?id=${encodeURIComponent(id)}`, {
+              method: 'PATCH',
+              headers,
+              body: JSON.stringify({ id, status: nextStatus }),
+            });
+          })
+          .catch((err) => console.error('Failed to update trip status on server:', err));
       },
     });
   };

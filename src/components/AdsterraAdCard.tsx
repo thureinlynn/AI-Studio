@@ -9,6 +9,7 @@ import {
   CustomFeedAd,
   buildAdsterraBannerSrcDoc,
 } from '../utils/adUtils';
+import { sanitizeExternalHttpUrl } from '../utils/tripUtils';
 
 export interface AdsterraAdCardProps {
   /** 'feed' renders the 320x50 iframe banner (or custom ad); 'detail' renders the Native Banner */
@@ -95,6 +96,12 @@ export const AdsterraAdCard: React.FC<AdsterraAdCardProps> = ({
     const iframeEl = document.createElement('iframe');
     iframeEl.setAttribute(IFRAME_DATA_ATTR, resolvedSlotKey);
     iframeEl.setAttribute('data-adsterra-key', ADSTERRA_BANNER_KEY);
+    // Isolate third-party ad script from parent origin DOM, cookies, and localStorage
+    iframeEl.setAttribute(
+      'sandbox',
+      'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation'
+    );
+    iframeEl.referrerPolicy = 'no-referrer';
     iframeEl.title = 'Sponsored advertisement';
     iframeEl.width = String(ADSTERRA_BANNER_WIDTH);
     iframeEl.height = String(ADSTERRA_BANNER_HEIGHT);
@@ -157,7 +164,7 @@ export const AdsterraAdCard: React.FC<AdsterraAdCardProps> = ({
         </div>
 
         <a
-          href={customAd.href}
+          href={sanitizeExternalHttpUrl(customAd.href) || '#'}
           target="_blank"
           rel="noopener noreferrer"
           className="group flex-1 flex flex-col justify-between gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl"

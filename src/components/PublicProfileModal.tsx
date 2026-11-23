@@ -2,7 +2,16 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useTrips } from '../context/TripContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { formatDateDisplay, isDropOffDatePassed, countCompletedTripsForTraveler, formatMemberSince } from '../utils/tripUtils';
+import {
+  formatDateDisplay,
+  isDropOffDatePassed,
+  countCompletedTripsForTraveler,
+  formatMemberSince,
+  formatWhatsAppUrl,
+  formatTelegramUrl,
+  formatFacebookUrl,
+  formatViberUrl,
+} from '../utils/tripUtils';
 import { useTravelerAccountDate, normalizeAvatarUrl, handleAvatarImageError, isGoogleVerifiedUser } from '../utils/userUtils';
 import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
 import {
@@ -76,6 +85,10 @@ export const PublicProfileModal: React.FC = () => {
   });
 
   const contacts = publicProfileTraveler.contacts || {};
+  const waUrl = formatWhatsAppUrl(contacts.whatsapp);
+  const tgUrl = formatTelegramUrl(contacts.telegram);
+  const fbUrl = formatFacebookUrl(contacts.facebook);
+  const viberUrl = formatViberUrl(contacts.viber);
 
   const isOwnProfile = Boolean(user && publicProfileTraveler.userId && user.id === publicProfileTraveler.userId);
   const isGoogleVerified = isGoogleVerifiedUser(
@@ -150,15 +163,15 @@ export const PublicProfileModal: React.FC = () => {
             )}
 
             {/* Direct Contact Channels */}
-            {(contacts.whatsapp || contacts.telegram || contacts.viber) && (
+            {(waUrl || tgUrl || fbUrl || viberUrl) && (
               <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 space-y-2">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                   {t('detailDirectContactTitle')}
                 </span>
                 <div className="flex flex-wrap gap-2">
-                  {contacts.whatsapp && (
+                  {waUrl && (
                     <a
-                      href={`https://wa.me/${contacts.whatsapp.replace(/[^0-9]/g, '')}`}
+                      href={waUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
@@ -167,9 +180,9 @@ export const PublicProfileModal: React.FC = () => {
                       <span>WhatsApp</span>
                     </a>
                   )}
-                  {contacts.telegram && (
+                  {tgUrl && (
                     <a
-                      href={`https://t.me/${contacts.telegram.replace(/^@/, '')}`}
+                      href={tgUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
@@ -178,9 +191,9 @@ export const PublicProfileModal: React.FC = () => {
                       <span>Telegram</span>
                     </a>
                   )}
-                  {contacts.facebook && (
+                  {fbUrl && (
                     <a
-                      href={contacts.facebook.startsWith('http') ? contacts.facebook : `https://facebook.com/${contacts.facebook.replace(/^@/, '')}`}
+                      href={fbUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
@@ -189,9 +202,10 @@ export const PublicProfileModal: React.FC = () => {
                       <span>Facebook</span>
                     </a>
                   )}
-                  {contacts.viber && (
+                  {viberUrl && (
                     <a
-                      href={`viber://chat?number=%2B${contacts.viber.replace(/[^0-9]/g, '')}`}
+                      href={viberUrl}
+                      rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
                     >
                       <PhoneCall className="w-3.5 h-3.5" />

@@ -1,12 +1,42 @@
 import { TripPost, TripFilters } from '../types/trip';
 
+const ALLOWED_FACEBOOK_HOSTS = new Set([
+  'facebook.com',
+  'www.facebook.com',
+  'm.facebook.com',
+  'web.facebook.com',
+  'fb.com',
+  'www.fb.com',
+  'fb.me',
+]);
+
+/**
+ * Validates that an external link strictly uses http: or https: protocol.
+ */
+export function sanitizeExternalHttpUrl(input?: string): string {
+  if (!input || typeof input !== 'string') return '';
+  const trimmed = input.trim();
+  if (!trimmed) return '';
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      return '';
+    }
+    return parsed.toString();
+  } catch {
+    return '';
+  }
+}
+
 /**
  * Strips formatting symbols from phone numbers while preserving digits.
  * If leading plus is present or required, formats for WhatsApp (digits only, e.g. 15551234567 or 66812345678).
  */
 export function sanitizePhoneNumber(phone: string): string {
-  if (!phone) return '';
-  return phone.replace(/[^0-9]/g, '');
+  if (!phone || typeof phone !== 'string') return '';
+  const digits = phone.replace(/[^0-9]/g, '');
+  if (digits.length < 5 || digits.length > 15) return '';
+  return digits;
 }
 
 /**
@@ -26,29 +56,42 @@ export function formatWhatsAppUrl(phone: string, message?: string): string {
  * Sanitizes Telegram username and builds direct Telegram link.
  */
 export function formatTelegramUrl(username: string): string {
-  if (!username) return '';
-  const clean = username.trim().replace(/^@+/, '');
+  if (!username || typeof username !== 'string') return '';
+  const clean = username.trim().replace(/^@+/, '').replace(/[^a-zA-Z0-9_]/g, '');
   if (!clean) return '';
   return `https://t.me/${clean}`;
 }
 
 /**
- * Formats Facebook profile URL.
- * Accepts full URL (https://facebook.com/user), username with/without @, or profile ID.
+ * Formats Facebook profile URL safely.
+ * Allows only genuine Facebook domains when a full URL is supplied, or safe handle characters.
  */
 export function formatFacebookUrl(input?: string): string {
-  if (!input) return '';
+  if (!input || typeof input !== 'string') return '';
   const clean = input.trim();
   if (!clean) return '';
-  if (clean.startsWith('http://') || clean.startsWith('https://')) {
-    return clean;
+
+  if (/^https?:\/\//i.test(clean)) {
+    try {
+      const parsed = new URL(clean);
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+        return '';
+      }
+      if (!ALLOWED_FACEBOOK_HOSTS.has(parsed.hostname.toLowerCase())) {
+        return '';
+      }
+      return parsed.toString();
+    } catch {
+      return '';
+    }
   }
+
   const handle = clean
     .replace(/^@+/, '')
-    .replace(/^https?:\/\/(www\.)?facebook\.com\//, '')
-    .replace(/^https?:\/\/(www\.)?fb\.com\//, '')
-    .replace(/^facebook\.com\//, '')
-    .replace(/^fb\.com\//, '');
+    .replace(/^(www\.)?(facebook|fb)\.com\//i, '')
+    .replace(/[^a-zA-Z0-9._?=&/-]/g, '')
+    .replace(/^\/+/, '');
+  if (!handle) return '';
   return `https://facebook.com/${handle}`;
 }
 
@@ -56,10 +99,10 @@ export function formatFacebookUrl(input?: string): string {
  * Extracts clean readable display label for a Facebook link or handle.
  */
 export function getFacebookDisplay(input?: string): string {
-  if (!input) return '';
+  if (!input || typeof input !== 'string') return '';
   const clean = input.trim();
   if (!clean) return '';
-  if (clean.startsWith('http://') || clean.startsWith('https://')) {
+  if (/^https?:\/\//i.test(clean)) {
     try {
       const url = new URL(clean);
       const path = url.pathname.replace(/^\//, '').replace(/\/$/, '');
