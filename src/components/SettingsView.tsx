@@ -277,7 +277,7 @@ export const SettingsView: React.FC = () => {
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value as any)}
-                className="px-2.5 py-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer"
+                className="px-2.5 py-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-[11px] font-semibold text-slate-800 dark:text-slate-200 cursor-pointer"
               >
                 <option value="USD">USD ($)</option>
                 <option value="MMK">MMK (Ks)</option>

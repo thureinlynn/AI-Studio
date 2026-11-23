@@ -3,7 +3,6 @@ import { useTrips } from '../context/TripContext';
 import { useLanguage } from '../context/LanguageContext';
 import { TripCard } from './TripCard';
 import { AdsterraAdCard } from './AdsterraAdCard';
-import { FlyingPlaneAnimation } from './FlyingPlaneAnimation';
 import { filterAndSortTrips } from '../utils/tripUtils';
 import { buildFeedWithAds } from '../utils/adUtils';
 import { TripPost } from '../types/trip';
@@ -165,7 +164,6 @@ export const TripList: React.FC = () => {
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative">
-      <FlyingPlaneAnimation />
       
       {/* Sub-header: Results count & Sort control */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
