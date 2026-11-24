@@ -12,6 +12,7 @@ import { Header } from './components/Header';
 import { SearchBar } from './components/SearchBar';
 import { TripList } from './components/TripList';
 import { TripDetail } from './components/TripDetail';
+import { CargoPartnerDetail } from './components/CargoPartnerDetail';
 import { HowItWorksView } from './components/HowItWorksView';
 import { MyTripsView } from './components/MyTripsView';
 import { SettingsView } from './components/SettingsView';
@@ -34,12 +35,21 @@ import {
 } from './utils/seoUtils';
 
 const AppContent: React.FC = () => {
-  const { selectedTrip, selectedTripId, isLoadingTrips, closeTripDetail, activeTab } = useTrips();
+  const {
+    selectedTrip,
+    selectedTripId,
+    selectedPartner,
+    selectedPartnerId,
+    isLoadingTrips,
+    closeTripDetail,
+    closePartnerDetail,
+    activeTab,
+  } = useTrips();
 
   // Active page dynamic SEO metadata
   const pageSeo = React.useMemo(() => {
-    if (selectedTrip) {
-      // Handled by TripDetail component
+    if (selectedTrip || selectedPartner) {
+      // Handled by TripDetail / CargoPartnerDetail component
       return null;
     }
 
@@ -92,7 +102,7 @@ const AppContent: React.FC = () => {
       description: DEFAULT_DESCRIPTION,
       canonicalUrl: formatCanonicalUrl(),
     };
-  }, [selectedTrip, activeTab]);
+  }, [selectedTrip, selectedPartner, activeTab]);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-100 dark:selection:bg-blue-900/40 selection:text-blue-900 dark:selection:text-blue-200 transition-colors duration-150">
@@ -103,7 +113,23 @@ const AppContent: React.FC = () => {
       {/* Main View Router */}
       <main className="flex-1">
         <MobilePWAInstallAlert />
-        {selectedTrip ? (
+        {selectedPartner ? (
+          <CargoPartnerDetail partner={selectedPartner} />
+        ) : selectedPartnerId ? (
+          <div className="max-w-lg mx-auto px-4 py-20 text-center space-y-4">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Cargo partner not found</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              This cargo partner business page may have moved or is unavailable.
+            </p>
+            <button
+              type="button"
+              onClick={closePartnerDetail}
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
+            >
+              Back to all listings
+            </button>
+          </div>
+        ) : selectedTrip ? (
           <TripDetail trip={selectedTrip} />
         ) : selectedTripId ? (
           isLoadingTrips ? (

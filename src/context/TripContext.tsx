@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { TripPost, TripFilters } from '../types/trip';
+import { CargoPartner } from '../types/partner';
+import { getCargoPartnerById } from '../data/cargoPartners';
 import { INITIAL_TRIPS } from '../data/mockTrips';
 import { auth, db, trackPageView, trackConversion, trackEvent } from '../firebase';
 import { collection, onSnapshot, doc, getDoc, getDocs, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
@@ -25,6 +27,8 @@ interface TripContextType {
   isLoadingTrips: boolean;
   selectedTripId: string | null;
   selectedTrip: TripPost | null;
+  selectedPartnerId: string | null;
+  selectedPartner: CargoPartner | null;
   filters: TripFilters;
   isPostModalOpen: boolean;
   isAuthModalOpen: boolean;
@@ -39,6 +43,8 @@ interface TripContextType {
   resetFilters: () => void;
   openTripDetail: (id: string) => void;
   closeTripDetail: () => void;
+  openPartnerDetail: (id: string) => void;
+  closePartnerDetail: () => void;
   openPostModal: () => void;
   closePostModal: () => void;
   openAuthModal: () => void;
@@ -96,6 +102,15 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const params = new URLSearchParams(window.location.search);
       return params.get('trip');
+    } catch {
+      return null;
+    }
+  });
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(() => {
+    // Check URL search params for deep link ?partner=id
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('partner');
     } catch {
       return null;
     }
@@ -297,14 +312,16 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [selectedTripId, trips]);
 
-  // Keep selectedTripId in sync with browser Back/Forward navigation
+  // Keep selectedTripId & selectedPartnerId in sync with browser Back/Forward navigation
   useEffect(() => {
     const handlePopState = () => {
       try {
         const params = new URLSearchParams(window.location.search);
         setSelectedTripId(params.get('trip'));
+        setSelectedPartnerId(params.get('partner'));
       } catch {
         setSelectedTripId(null);
+        setSelectedPartnerId(null);
       }
     };
     window.addEventListener('popstate', handlePopState);
@@ -313,10 +330,12 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Sync selected trip with URL query param
   const openTripDetail = (id: string) => {
+    setSelectedPartnerId(null);
     setSelectedTripId(id);
     trackEvent('view_trip', { tripId: id });
     try {
       const url = new URL(window.location.href);
+      url.searchParams.delete('partner');
       url.searchParams.set('trip', id);
       window.history.pushState({}, '', url.toString());
     } catch {
@@ -330,6 +349,33 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const url = new URL(window.location.href);
       url.searchParams.delete('trip');
+      window.history.pushState({}, '', url.toString());
+    } catch {
+      // ignore
+    }
+  };
+
+  // Sync selected Cargo Partner with URL query param
+  const openPartnerDetail = (id: string) => {
+    setSelectedTripId(null);
+    setSelectedPartnerId(id);
+    trackEvent('view_cargo_partner', { partnerId: id });
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('trip');
+      url.searchParams.set('partner', id);
+      window.history.pushState({}, '', url.toString());
+    } catch {
+      // ignore
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const closePartnerDetail = () => {
+    setSelectedPartnerId(null);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('partner');
       window.history.pushState({}, '', url.toString());
     } catch {
       // ignore
@@ -497,12 +543,14 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('luggage_share_user');
       const url = new URL(window.location.href);
       url.searchParams.delete('trip');
+      url.searchParams.delete('partner');
       window.history.pushState({}, '', url.toString());
     } catch (e) {
       console.error('Error clearing storage on reset', e);
     }
     setTrips(INITIAL_TRIPS);
     setSelectedTripId(null);
+    setSelectedPartnerId(null);
     setFilters(defaultFilters);
     setActiveTab('browse');
     setIsPostModalOpen(false);
@@ -512,6 +560,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const selectedTrip = trips.find((t) => t.id === selectedTripId) || null;
+  const selectedPartner = getCargoPartnerById(selectedPartnerId);
 
   return (
     <TripContext.Provider
@@ -520,6 +569,8 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoadingTrips,
         selectedTripId,
         selectedTrip,
+        selectedPartnerId,
+        selectedPartner,
         filters,
         isPostModalOpen,
         isAuthModalOpen,
@@ -534,6 +585,8 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resetFilters,
         openTripDetail,
         closeTripDetail,
+        openPartnerDetail,
+        closePartnerDetail,
         openPostModal,
         closePostModal,
         openAuthModal,

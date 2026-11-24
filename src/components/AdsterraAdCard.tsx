@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, ChevronRight, Truck, MapPin } from 'lucide-react';
 import {
   ADSTERRA_BANNER_HEIGHT,
   ADSTERRA_BANNER_KEY,
@@ -10,9 +10,11 @@ import {
   buildAdsterraBannerSrcDoc,
 } from '../utils/adUtils';
 import { sanitizeExternalHttpUrl } from '../utils/tripUtils';
+import { useTrips } from '../context/TripContext';
+import { CountryFlagByName } from './CountrySelect';
 
 export interface AdsterraAdCardProps {
-  /** 'feed' renders the 320x50 iframe banner (or custom ad); 'detail' renders the Native Banner */
+  /** 'feed' renders the 320x50 iframe banner (or custom ad / cargo partner card); 'detail' renders the Native Banner */
   variant?: 'feed' | 'detail';
   /** Optional unique identifier for multi-slot feeds */
   slotKey?: string;
@@ -31,6 +33,7 @@ export const AdsterraAdCard: React.FC<AdsterraAdCardProps> = ({
   customAd = null,
   className = '',
 }) => {
+  const { openPartnerDetail } = useTrips();
   const hostRef = useRef<HTMLDivElement | null>(null);
   const instanceId = useId();
   const resolvedSlotKey = slotKey || instanceId;
@@ -132,6 +135,113 @@ export const AdsterraAdCard: React.FC<AdsterraAdCardProps> = ({
     variant === 'detail'
       ? 'w-full flex items-center justify-center rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 p-2 min-h-[132px] overflow-hidden'
       : 'w-full flex-1 flex flex-col items-center justify-center gap-2 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 py-2.5 px-2 min-h-[70px] overflow-hidden';
+
+  if (customAd && variant === 'feed' && customAd.category === 'cargo_partner' && customAd.partnerId) {
+    const initials = customAd.title
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() || '')
+      .join('');
+    const previewCountries = (customAd.serviceCountries || []).slice(0, 4);
+    const remainingCountriesCount = Math.max(0, (customAd.serviceCountries || []).length - previewCountries.length);
+
+    return (
+      <aside
+        aria-label={`Cargo Partner: ${customAd.title}`}
+        data-testid="adsterra-ad-card"
+        data-ad-variant="cargo_partner"
+        data-partner-id={customAd.partnerId}
+        className={`bg-amber-50/45 dark:bg-slate-900/95 hover:bg-amber-50/80 dark:hover:bg-slate-800/95 rounded-2xl border border-amber-200/90 dark:border-amber-800/50 hover:border-amber-400 dark:hover:border-amber-500/70 p-5 shadow-xs hover:shadow-md transition-all duration-300 transform active:scale-[0.98] hover:-translate-y-1 relative flex flex-col justify-between min-h-[212px] ${className}`.trim()}
+      >
+        <button
+          type="button"
+          onClick={() => openPartnerDetail(customAd.partnerId!)}
+          aria-label={`Open Cargo Partner business page for ${customAd.title}`}
+          className="group w-full h-full flex flex-col justify-between gap-3 text-left cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-xl"
+        >
+          {/* Top Category Header & Served Country Flags */}
+          <div className="w-full flex items-center justify-between gap-2">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-300 tracking-tight">
+              <Truck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span>Cargo Partner</span>
+            </span>
+
+            {previewCountries.length > 0 && (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white/90 dark:bg-slate-800 border border-amber-200/70 dark:border-slate-700 shrink-0"
+                title={`Service regions: ${(customAd.serviceCountries || []).join(', ')}`}
+              >
+                {previewCountries.map((country) => (
+                  <CountryFlagByName key={country} countryName={country} className="w-3.5 h-2.5" />
+                ))}
+                {remainingCountriesCount > 0 && (
+                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 pl-0.5 tabular-nums">
+                    +{remainingCountriesCount}
+                  </span>
+                )}
+              </span>
+            )}
+          </div>
+
+          {/* Partner Business Identity */}
+          <div className="w-full flex-1 flex items-center gap-3.5 p-3.5 rounded-xl bg-white/90 dark:bg-slate-800/80 border border-amber-200/70 dark:border-slate-700/80 group-hover:border-amber-300 dark:group-hover:border-amber-600/60 transition-colors">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700 shrink-0 overflow-hidden flex items-center justify-center p-1">
+              {logoStage !== 'initials' ? (
+                <img
+                  src={
+                    logoStage === 'fallback' && customAd.fallbackLogoUrl
+                      ? customAd.fallbackLogoUrl
+                      : customAd.logoUrl
+                  }
+                  alt={customAd.title}
+                  referrerPolicy="no-referrer"
+                  onError={() => {
+                    if (logoStage === 'primary' && customAd.fallbackLogoUrl) {
+                      setLogoStage('fallback');
+                    } else {
+                      setLogoStage('initials');
+                    }
+                  }}
+                  className="w-full h-full object-contain rounded-lg"
+                />
+              ) : (
+                <span className="text-sm font-bold text-amber-700 dark:text-amber-400">
+                  {initials}
+                </span>
+              )}
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors">
+                {customAd.title}
+              </h3>
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mt-0.5 line-clamp-1">
+                {customAd.text}
+              </p>
+              {customAd.freightBadges && customAd.freightBadges.length > 0 && (
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">
+                  {customAd.freightBadges.join(' · ')}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Footer Action Row */}
+          <div className="w-full pt-3 border-t border-amber-200/60 dark:border-slate-800 flex items-center justify-between gap-2 text-xs">
+            <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400 truncate">
+              <MapPin className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span className="truncate">Branches · Phone · WhatsApp · Viber</span>
+            </span>
+            <span className="inline-flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-300 group-hover:text-amber-800 dark:group-hover:text-amber-200 shrink-0 whitespace-nowrap">
+              <span>Business Page</span>
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </span>
+          </div>
+        </button>
+      </aside>
+    );
+  }
 
   if (customAd && variant === 'feed') {
     let hostname = '';

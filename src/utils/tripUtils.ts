@@ -127,6 +127,25 @@ export function formatViberUrl(phone: string): string {
 }
 
 /**
+ * Formats a direct phone dialer link (`tel:+<digits>`).
+ */
+export function formatTelUrl(phone: string): string {
+  const digits = sanitizePhoneNumber(phone);
+  if (!digits) return '';
+  return `tel:+${digits}`;
+}
+
+/**
+ * Builds a safe Google Maps search URL for a physical branch address.
+ */
+export function formatGoogleMapsSearchUrl(query: string): string {
+  if (!query || typeof query !== 'string') return '';
+  const trimmed = query.trim();
+  if (!trimmed) return '';
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trimmed)}`;
+}
+
+/**
  * Formats dates for human display (e.g. "Nov 15, 2026").
  */
 export function formatDateDisplay(dateStr: string): string {

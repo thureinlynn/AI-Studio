@@ -7,7 +7,7 @@ import { Plus, ShieldAlert, User } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 
 export const Header: React.FC = () => {
-  const { openPostModal, openAuthModal, openSafetyModal, activeTab, setActiveTab, closeTripDetail } = useTrips();
+  const { openPostModal, openAuthModal, openSafetyModal, activeTab, setActiveTab, closeTripDetail, closePartnerDetail } = useTrips();
   const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
 
@@ -15,6 +15,7 @@ export const Header: React.FC = () => {
 
   const handleNavClick = (tab: 'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings') => {
     closeTripDetail();
+    closePartnerDetail();
     setActiveTab(tab);
   };
 

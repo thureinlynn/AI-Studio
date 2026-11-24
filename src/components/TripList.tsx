@@ -4,7 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { TripCard } from './TripCard';
 import { AdsterraAdCard } from './AdsterraAdCard';
 import { filterAndSortTrips } from '../utils/tripUtils';
-import { buildFeedWithAds } from '../utils/adUtils';
+import { buildFeedWithAds, consumeNextAdRotationOffset } from '../utils/adUtils';
 import { TripPost } from '../types/trip';
 import { db } from '../firebase';
 import { collection, getDocs } from 'firebase/firestore';
@@ -21,6 +21,7 @@ export const TripList: React.FC = () => {
   // 2. Client-Side Pagination & Infinite Scroll state
   const [displayedCount, setDisplayedCount] = useState<number>(10);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const [adRotationOffset] = useState<number>(() => consumeNextAdRotationOffset());
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -91,10 +92,11 @@ export const TripList: React.FC = () => {
     return filteredTrips.slice(0, displayedCount);
   }, [hasActiveFilters, filteredTrips, displayedCount]);
 
-  // Interleave an Adsterra native banner card after every 5 regular trip cards (indices 4, 9, 14, ...)
+  // Interleave partner/ad cards after every 5 regular trip cards (indices 4, 9, 14, ...)
+  // Partner ad cards alternate across slot positions (1st, 2nd, 3rd) on each visit/reload
   const feedItems = useMemo(() => {
-    return buildFeedWithAds(visibleTrips, 5);
-  }, [visibleTrips]);
+    return buildFeedWithAds(visibleTrips, 5, adRotationOffset);
+  }, [visibleTrips, adRotationOffset]);
 
   // Function to load the next 10 items
   const loadMoreItems = useCallback(() => {

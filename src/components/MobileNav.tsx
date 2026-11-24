@@ -5,12 +5,13 @@ import { useLanguage } from '../context/LanguageContext';
 import { Home, Plane, User, Settings } from 'lucide-react';
 
 export const MobileNav: React.FC = () => {
-  const { activeTab, setActiveTab, openAuthModal, closeTripDetail } = useTrips();
+  const { activeTab, setActiveTab, openAuthModal, closeTripDetail, closePartnerDetail } = useTrips();
   const { isAuthenticated } = useAuth();
   const { t } = useLanguage();
 
   const handleTab = (tab: 'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings') => {
     closeTripDetail();
+    closePartnerDetail();
     setActiveTab(tab);
   };
 

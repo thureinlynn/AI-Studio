@@ -1,4 +1,5 @@
 import type { TripPost } from '../types/trip';
+import type { CargoPartner } from '../types/partner';
 
 export const SITE_URL = 'https://luukyone.astronerd.me';
 export const SITE_NAME = 'LuuKyone';
@@ -36,7 +37,10 @@ export function escapeXml(value: string): string {
 /**
  * Returns a standardized canonical URL for search engines
  */
-export function formatCanonicalUrl(tripId?: string | null, tab?: string | null): string {
+export function formatCanonicalUrl(tripId?: string | null, tab?: string | null, partnerId?: string | null): string {
+  if (partnerId && partnerId.trim()) {
+    return `${SITE_URL}/?partner=${encodeURIComponent(partnerId.trim())}`;
+  }
   if (tripId && tripId.trim()) {
     return `${SITE_URL}/?trip=${encodeURIComponent(tripId.trim())}`;
   }
@@ -255,3 +259,39 @@ ${urlElements}
 </urlset>
 `;
 }
+
+/**
+ * Generates Schema.org Organization & Freight Service JSON-LD for a Cargo Partner page
+ */
+export function generatePartnerJsonLd(partner: CargoPartner, siteUrl: string = SITE_URL) {
+  const partnerUrl = `${siteUrl}/?partner=${encodeURIComponent(partner.id)}`;
+  const sameAs = partner.contacts.facebook.map((fb) => fb.url).filter(Boolean);
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': `${partnerUrl}#organization`,
+    name: partner.name,
+    url: partnerUrl,
+    description: partner.description,
+    sameAs,
+    areaServed: partner.serviceRegions.map((r) => ({
+      '@type': 'Country',
+      name: r.country,
+    })),
+    address: partner.addresses.map((addr) => ({
+      '@type': 'PostalAddress',
+      streetAddress: addr.addressLine,
+      addressLocality: addr.city,
+      addressCountry: addr.country,
+      postalCode: addr.postalCode,
+    })),
+    contactPoint: partner.contacts.phones.map((phone) => ({
+      '@type': 'ContactPoint',
+      telephone: phone.number,
+      contactType: phone.label,
+      areaServed: phone.country,
+    })),
+  };
+}
+
