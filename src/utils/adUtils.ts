@@ -55,7 +55,7 @@ export const CUSTOM_FEED_ADS: readonly CustomFeedAd[] = [
     title: 'Khint Power International Trading Co.,Ltd.',
     text: 'Cargo & E-commerence',
     href: 'https://web.facebook.com/Khintpowercargo',
-    serviceCountries: ['Thailand', 'Myanmar', 'China', 'Singapore', 'Malaysia', 'Japan'],
+    serviceCountries: ['Thailand', 'Myanmar', 'China', 'Singapore', 'Malaysia', 'Japan', 'South Korea'],
     freightBadges: ['Air Cargo'],
   },
 ];

@@ -26,6 +26,20 @@ test('findCountryByName finds Thailand and Myanmar case-insensitively', () => {
   assert.equal(findCountryByName(''), undefined);
 });
 
+test('findCountryByName resolves city names and airport codes to country options', () => {
+  const bangkok = findCountryByName('Bangkok');
+  assert.equal(bangkok?.code, 'TH');
+
+  const yangon = findCountryByName('Yangon');
+  assert.equal(yangon?.code, 'MM');
+
+  const dubai = findCountryByName('Dubai');
+  assert.equal(dubai?.code, 'AE');
+
+  const tokyo = findCountryByName('Tokyo');
+  assert.equal(tokyo?.code, 'JP');
+});
+
 test('filterCountries filters by name or ISO code', () => {
   assert.equal(filterCountries('').length, COUNTRIES.length);
   const myanmarMatches = filterCountries('myan');

@@ -218,13 +218,25 @@ const COUNTRY_ALIASES: Record<string, string> = {
   'south korea': 'South Korea',
 };
 
+import { POPULAR_CITIES } from './cities';
+
 export function findCountryByName(name: string): CountryOption | undefined {
   const normalized = name.trim().toLowerCase();
   if (!normalized) return undefined;
   const resolvedName = COUNTRY_ALIASES[normalized] || normalized;
-  return COUNTRIES.find(
+  let found = COUNTRIES.find(
     (c) => c.name.toLowerCase() === resolvedName || c.code.toLowerCase() === normalized
   );
+  if (found) return found;
+
+  const cityMatch = POPULAR_CITIES.find(
+    (c) => c.city.toLowerCase() === normalized || (c.code && c.code.toLowerCase() === normalized)
+  );
+  if (cityMatch) {
+    return findCountryByName(cityMatch.country);
+  }
+
+  return COUNTRIES.find((c) => c.name.toLowerCase().includes(normalized));
 }
 
 export function filterCountries(query: string): CountryOption[] {

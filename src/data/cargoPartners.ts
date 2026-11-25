@@ -25,7 +25,7 @@ export const CARGO_PARTNERS: readonly CargoPartner[] = [
       { country: 'Singapore' },
       { country: 'Malaysia' },
       { country: 'Japan' },
-      { country: 'Korea' },
+      { country: 'South Korea' },
       { country: 'US' },
       { country: 'Canada' },
       { country: 'UK' },
