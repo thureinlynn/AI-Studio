@@ -34,6 +34,7 @@ interface TripContextType {
   isAuthModalOpen: boolean;
   isSafetyModalOpen: boolean;
   isMyTripsModalOpen: boolean;
+  isCalculatorModalOpen: boolean;
   activeTab: 'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings';
   publicProfileTraveler: PublicTravelerInfo | null;
   weightUnit: 'kg' | 'lb';
@@ -53,6 +54,8 @@ interface TripContextType {
   closeSafetyModal: () => void;
   openMyTripsModal: () => void;
   closeMyTripsModal: () => void;
+  openCalculatorModal: () => void;
+  closeCalculatorModal: () => void;
   openPublicProfile: (traveler: any, userId?: string, contacts?: any, createdAt?: string) => void;
   closePublicProfile: () => void;
   setActiveTab: (tab: 'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings') => void;
@@ -122,6 +125,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSafetyModalOpen, setIsSafetyModalOpen] = useState(false);
   const [isMyTripsModalOpen, setIsMyTripsModalOpen] = useState(false);
+  const [isCalculatorModalOpen, setIsCalculatorModalOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
     message: string;
@@ -402,6 +406,9 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const openMyTripsModal = () => setIsMyTripsModalOpen(true);
   const closeMyTripsModal = () => setIsMyTripsModalOpen(false);
 
+  const openCalculatorModal = () => setIsCalculatorModalOpen(true);
+  const closeCalculatorModal = () => setIsCalculatorModalOpen(false);
+
   const getAuthHeaders = async (): Promise<Record<string, string>> => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     try {
@@ -557,6 +564,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsAuthModalOpen(false);
     setIsSafetyModalOpen(false);
     setIsMyTripsModalOpen(false);
+    setIsCalculatorModalOpen(false);
   };
 
   const selectedTrip = trips.find((t) => t.id === selectedTripId) || null;
@@ -576,6 +584,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthModalOpen,
         isSafetyModalOpen,
         isMyTripsModalOpen,
+        isCalculatorModalOpen,
         activeTab,
         publicProfileTraveler,
         weightUnit,
@@ -595,6 +604,8 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         closeSafetyModal,
         openMyTripsModal,
         closeMyTripsModal,
+        openCalculatorModal,
+        closeCalculatorModal,
         openPublicProfile,
         closePublicProfile,
         setActiveTab,

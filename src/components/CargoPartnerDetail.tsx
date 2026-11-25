@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { CargoPartner, PartnerBranchAddress } from '../types/partner';
 import { useTrips } from '../context/TripContext';
+import { useLanguage } from '../context/LanguageContext';
 import { SEO } from './SEO';
 import { formatCanonicalUrl, generatePartnerJsonLd } from '../utils/seoUtils';
 import {
@@ -62,30 +63,11 @@ const ANNOUNCEMENT_CATEGORY_LABEL: Record<string, string> = {
 
 export const CargoPartnerDetail: React.FC<CargoPartnerDetailProps> = ({ partner }) => {
   const { closePartnerDetail } = useTrips();
+  const { t } = useLanguage();
   const [logoStage, setLogoStage] = useState<'primary' | 'fallback' | 'initials'>('primary');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // Interactive Volumetric Weight Calculator state for freight customers
-  const [lengthCm, setLengthCm] = useState<string>('40');
-  const [widthCm, setWidthCm] = useState<string>('30');
-  const [heightCm, setHeightCm] = useState<string>('25');
-  const [actualKg, setActualKg] = useState<string>('4.5');
 
-  const volumetricStats = useMemo(() => {
-    const l = Math.max(0, parseFloat(lengthCm) || 0);
-    const w = Math.max(0, parseFloat(widthCm) || 0);
-    const h = Math.max(0, parseFloat(heightCm) || 0);
-    const actual = Math.max(0, parseFloat(actualKg) || 0);
-    const cbm = (l * w * h) / 1_000_000;
-    const volumetricKg = (l * w * h) / 6000;
-    const chargeableKg = Math.max(actual, volumetricKg);
-    return {
-      cbm: cbm.toFixed(4),
-      volumetricKg: volumetricKg.toFixed(2),
-      chargeableKg: chargeableKg.toFixed(2),
-      billedBy: volumetricKg > actual ? 'Volumetric Weight' : 'Actual Weight',
-    };
-  }, [lengthCm, widthCm, heightCm, actualKg]);
 
   // Group multiple branch addresses by country
   const addressesByCountry = useMemo(() => {
@@ -152,7 +134,7 @@ export const CargoPartnerDetail: React.FC<CargoPartnerDetailProps> = ({ partner 
           className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white py-2 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to listings</span>
+          <span>{t('backToListings')}</span>
         </button>
 
         <button
@@ -165,7 +147,7 @@ export const CargoPartnerDetail: React.FC<CargoPartnerDetailProps> = ({ partner 
           ) : (
             <Share2 className="w-3.5 h-3.5" />
           )}
-          <span>{copiedKey === 'share' ? 'Link Copied' : 'Share Partner Page'}</span>
+          <span>{copiedKey === 'share' ? t('linkCopied') || 'Link Copied' : t('sharePartnerPage')}</span>
         </button>
       </div>
 
@@ -220,8 +202,8 @@ export const CargoPartnerDetail: React.FC<CargoPartnerDetailProps> = ({ partner 
               {partner.name}
             </h1>
 
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl">
-              {partner.description}
+            <p className="text-sm sm:text-base text-slate-700 dark:text-slate-200 leading-relaxed font-medium">
+              နိုင်ငံတကာကို ကုန်ပစ္စည်းပို့ချင်တဲ့ Customer တွေရှိရင် Khint Power Logistics နဲ့ ပို့ဆောင်လိုက်ပါ 🥳အိမ်အရောက်ပို့ဆောင်တဲ့အပြင်kilo စျေးလဲသက်သာပါတယ် 🤩service💝 အပိုင်းဆိုရင်လဲ Customer စိတ်တိုင်းကြ ပို့ဆောင်ပေးတာဖြစ်လို့ ကုန်ပစ္စည်းပို့ဖို့စိတ်ကူးရှိရင် Khint Power မှာ အသေးစိတ် စုံစမ်းမေးမြန်းလိုက်ပါ
             </p>
 
             {/* Core Services List (Clean Unboxed Typography) */}
@@ -237,33 +219,19 @@ export const CargoPartnerDetail: React.FC<CargoPartnerDetailProps> = ({ partner 
         </div>
       </section>
 
-      {/* Promotional Burmese Banner */}
-      <section className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white rounded-3xl p-6 sm:p-7 shadow-lg mb-8 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none -mr-16 -mt-16" />
-        <div className="relative z-10 space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/25 text-white text-xs font-bold uppercase tracking-wider backdrop-blur-xs">
-            <Megaphone className="w-3.5 h-3.5" />
-            <span>Khint Power Announcement</span>
-          </div>
-          <p className="text-base sm:text-lg font-bold leading-relaxed whitespace-pre-line">
-            နိုင်ငံတကာကို ကုန်ပစ္စည်းပို့ချင်တဲ့ Customer တွေရှိရင် Khint Power Logistics နဲ့ ပို့ဆောင်လိုက်ပါ 🥳အိမ်အရောက်ပို့ဆောင်တဲ့အပြင်kilo စျေးလဲသက်သာပါတယ် 🤩service💝 အပိုင်းဆိုရင်လဲ Customer စိတ်တိုင်းကြ ပို့ဆောင်ပေးတာဖြစ်လို့ ကုန်ပစ္စည်းပို့ဖို့စိတ်ကူးရှိရင် Khint Power မှာ အသေးစိတ် စုံစမ်းမေးမြန်းလိုက်ပါ
-          </p>
-        </div>
-      </section>
-
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Main Content (8 cols) */}
         <div className="lg:col-span-8 space-y-6">
-          {/* 1. Service Available Regions (Country Names & Flags) */}
-          <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs">
-            <div className="flex items-center justify-between gap-3 mb-5">
+          {/* 1. Service Available Regions (Compact Mobile-Optimized Chips) */}
+          <section className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div className="flex items-center justify-between gap-3 mb-4">
               <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <Globe className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  <span>Service Available Regions</span>
+                  <span>{t('serviceAvailableRegions')}</span>
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Active freight lanes, consolidation hubs, and destination delivery corridors
+                  Active destination delivery corridors worldwide
                 </p>
               </div>
               <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 tabular-nums shrink-0">
@@ -271,93 +239,65 @@ export const CargoPartnerDetail: React.FC<CargoPartnerDetailProps> = ({ partner 
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="flex flex-wrap gap-2">
               {partner.serviceRegions.map((region) => (
                 <div
                   key={region.country}
-                  className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/80 flex items-start gap-3"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200"
                 >
-                  <div className="mt-0.5 shrink-0">
-                    <CountryFlagByName countryName={region.country} className="w-7 h-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                      {region.country}
-                    </div>
-                    {region.corridorLabel && (
-                      <div className="text-[11px] font-medium text-amber-700 dark:text-amber-300 mt-0.5 leading-snug">
-                        {region.corridorLabel}
-                      </div>
-                    )}
-                    {region.transitEstimate && (
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 tabular-nums leading-snug">
-                        {region.transitEstimate}
-                      </div>
-                    )}
-                  </div>
+                  <CountryFlagByName countryName={region.country} className="w-4 h-3" />
+                  <span>{region.country}</span>
                 </div>
               ))}
             </div>
           </section>
 
-          {/* 2. Notes & Company Announcements Post Board */}
-          <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs">
-            <div className="flex items-center justify-between gap-3 mb-5">
+          {/* 2. Announcements & Information Section */}
+          {partner.announcements.length > 0 && (
+            <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
               <div>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <Megaphone className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                  <span>Announcements & Cargo Notices</span>
+                  <span>{t('announcementsAndInfo')}</span>
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Latest dispatch updates, cut-off reminders, consolidation offers, and packing notes
+                  Latest dispatch updates, cut-off schedules, and parcel notices
                 </p>
               </div>
-            </div>
 
-            <div className="space-y-4">
-              {partner.announcements.map((post) => (
-                <article
-                  key={post.id}
-                  className={`p-4 sm:p-5 rounded-2xl border transition-colors ${
-                    post.pinned
-                      ? 'bg-amber-50/70 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/60'
-                      : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/80'
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                      {post.pinned && (
-                        <span className="inline-flex items-center gap-1 font-bold text-amber-800 dark:text-amber-300">
-                          <Pin className="w-3.5 h-3.5" />
-                          <span>Pinned</span>
-                        </span>
-                      )}
-                      {post.pinned && <span aria-hidden="true">·</span>}
-                      <span className="font-semibold text-slate-700 dark:text-slate-200">
-                        {ANNOUNCEMENT_CATEGORY_LABEL[post.category] || 'Update'}
+              <div className="space-y-3">
+                {partner.announcements.map((post) => (
+                  <article
+                    key={post.id}
+                    className={`p-4 rounded-2xl border transition-colors ${
+                      post.pinned
+                        ? 'bg-amber-50/70 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/60'
+                        : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/80'
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                      <span className="text-xs font-bold text-amber-800 dark:text-amber-300">
+                        {post.title}
                       </span>
+                      <time className="text-[11px] font-medium text-slate-500 dark:text-slate-400 tabular-nums">
+                        {formatDateDisplay(post.date)}
+                      </time>
                     </div>
-                    <time className="text-[11px] font-medium text-slate-500 dark:text-slate-400 tabular-nums">
-                      {formatDateDisplay(post.date)}
-                    </time>
-                  </div>
-                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-1.5">
-                    {post.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
-                    {post.content}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </section>
+                    <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+                      {post.content}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* 3. Freight Forwarding Services, Transit & Rate Structure */}
           <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
             <div>
               <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                <span>Freight Modes, Schedules & Chargeable Weight</span>
+                <span>{t('freightModesAndSchedule')}</span>
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Compare air, land, sea, and parcel consolidation options before booking
@@ -413,107 +353,6 @@ export const CargoPartnerDetail: React.FC<CargoPartnerDetailProps> = ({ partner 
                   </div>
                 );
               })}
-            </div>
-
-            {/* Volumetric Weight Estimator & Formula Guide */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/60 dark:bg-slate-800/80 border border-blue-200/70 dark:border-slate-700 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Calculator className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                    Volumetric Weight & CBM Estimator
-                  </h3>
-                </div>
-                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
-                  Formula: L × W × H ÷ 6,000
-                </span>
-              </div>
-
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                {partner.volumetricRule}
-              </p>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <label className="block">
-                  <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">
-                    Length (cm)
-                  </span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    value={lengthCm}
-                    onChange={(e) => setLengthCm(e.target.value)}
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white tabular-nums"
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">
-                    Width (cm)
-                  </span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    value={widthCm}
-                    onChange={(e) => setWidthCm(e.target.value)}
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white tabular-nums"
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">
-                    Height (cm)
-                  </span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    value={heightCm}
-                    onChange={(e) => setHeightCm(e.target.value)}
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white tabular-nums"
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">
-                    Actual Weight (kg)
-                  </span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    value={actualKg}
-                    onChange={(e) => setActualKg(e.target.value)}
-                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white tabular-nums"
-                  />
-                </label>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3 pt-1">
-                <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700">
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
-                    Volumetric Weight
-                  </span>
-                  <span className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">
-                    {volumetricStats.volumetricKg} kg
-                  </span>
-                </div>
-                <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700">
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
-                    Sea Volume
-                  </span>
-                  <span className="text-sm font-bold text-slate-900 dark:text-white tabular-nums">
-                    {volumetricStats.cbm} CBM
-                  </span>
-                </div>
-                <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-300 dark:border-blue-700">
-                  <span className="text-[11px] text-blue-700 dark:text-blue-300 font-semibold block">
-                    Chargeable ({volumetricStats.billedBy})
-                  </span>
-                  <span className="text-sm font-extrabold text-blue-700 dark:text-blue-300 tabular-nums">
-                    {volumetricStats.chargeableKg} kg
-                  </span>
-                </div>
-              </div>
             </div>
           </section>
 

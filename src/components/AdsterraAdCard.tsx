@@ -152,24 +152,24 @@ export const AdsterraAdCard: React.FC<AdsterraAdCardProps> = ({
         data-testid="adsterra-ad-card"
         data-ad-variant="cargo_partner"
         data-partner-id={customAd.partnerId}
-        className={`bg-amber-50/45 dark:bg-slate-900/95 hover:bg-amber-50/80 dark:hover:bg-slate-800/95 rounded-2xl border border-amber-200/90 dark:border-amber-800/50 hover:border-amber-400 dark:hover:border-amber-500/70 p-5 shadow-xs hover:shadow-md transition-all duration-300 transform active:scale-[0.98] hover:-translate-y-1 relative flex flex-col justify-between min-h-[212px] ${className}`.trim()}
+        className={`bg-[#f0f7ff] dark:bg-slate-900/90 hover:bg-[#e4f1ff] dark:hover:bg-slate-800/90 rounded-2xl border border-sky-200/80 dark:border-slate-800 hover:border-sky-400/90 dark:hover:border-sky-500/50 p-5 shadow-xs hover:shadow-md transition-all duration-300 transform active:scale-[0.98] hover:-translate-y-1 relative flex flex-col justify-between min-h-[212px] ${className}`.trim()}
       >
         <button
           type="button"
           onClick={() => openPartnerDetail(customAd.partnerId!)}
           aria-label={`Open Cargo Partner business page for ${customAd.title}`}
-          className="group w-full h-full flex flex-col justify-between gap-3 text-left cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-xl"
+          className="group w-full h-full flex flex-col justify-between gap-3 text-left cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl"
         >
           {/* Top Category Header & Served Country Flags */}
           <div className="w-full flex items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-300 tracking-tight">
-              <Truck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-800 dark:text-sky-300 tracking-tight">
+              <Truck className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0" />
               <span>Cargo Partner</span>
             </span>
 
             {previewCountries.length > 0 && (
               <span
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white/90 dark:bg-slate-800 border border-amber-200/70 dark:border-slate-700 shrink-0"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white/90 dark:bg-slate-800 border border-sky-200/70 dark:border-slate-700 shrink-0"
                 title={`Service regions: ${(customAd.serviceCountries || []).join(', ')}`}
               >
                 {previewCountries.map((country) => (
@@ -185,7 +185,7 @@ export const AdsterraAdCard: React.FC<AdsterraAdCardProps> = ({
           </div>
 
           {/* Partner Business Identity */}
-          <div className="w-full flex-1 flex items-center gap-3.5 p-3.5 rounded-xl bg-white/90 dark:bg-slate-800/80 border border-amber-200/70 dark:border-slate-700/80 group-hover:border-amber-300 dark:group-hover:border-amber-600/60 transition-colors">
+          <div className="w-full flex-1 flex items-center gap-3.5 p-3.5 rounded-xl bg-white/85 dark:bg-slate-800/80 border border-sky-100 dark:border-slate-700 group-hover:border-blue-300 dark:group-hover:border-blue-700 transition-colors">
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700 shrink-0 overflow-hidden flex items-center justify-center p-1">
               {logoStage !== 'initials' ? (
                 <img
@@ -206,14 +206,14 @@ export const AdsterraAdCard: React.FC<AdsterraAdCardProps> = ({
                   className="w-full h-full object-contain rounded-lg"
                 />
               ) : (
-                <span className="text-sm font-bold text-amber-700 dark:text-amber-400">
+                <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
                   {initials}
                 </span>
               )}
             </div>
 
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                 {customAd.title}
               </h3>
               <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mt-0.5 line-clamp-1">
@@ -228,12 +228,12 @@ export const AdsterraAdCard: React.FC<AdsterraAdCardProps> = ({
           </div>
 
           {/* Footer Action Row */}
-          <div className="w-full pt-3 border-t border-amber-200/60 dark:border-slate-800 flex items-center justify-between gap-2 text-xs">
+          <div className="w-full pt-3 border-t border-sky-200/60 dark:border-slate-800 flex items-center justify-between gap-2 text-xs">
             <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400 truncate">
-              <MapPin className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+              <MapPin className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0" />
               <span className="truncate">Branches · Phone · WhatsApp · Viber</span>
             </span>
-            <span className="inline-flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-300 group-hover:text-amber-800 dark:group-hover:text-amber-200 shrink-0 whitespace-nowrap">
+            <span className="inline-flex items-center gap-1 font-semibold text-sky-600 dark:text-sky-400 group-hover:text-sky-700 dark:group-hover:text-sky-300 shrink-0 whitespace-nowrap">
               <span>Business Page</span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </span>

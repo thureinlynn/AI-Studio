@@ -203,10 +203,28 @@ export const COUNTRIES: CountryOption[] = [
   { code: 'ZW', name: 'Zimbabwe', flag: '🇿🇼' },
 ];
 
+const COUNTRY_ALIASES: Record<string, string> = {
+  uk: 'United Kingdom',
+  'united kingdom': 'United Kingdom',
+  britain: 'United Kingdom',
+  england: 'United Kingdom',
+  us: 'United States',
+  usa: 'United States',
+  'united states': 'United States',
+  uae: 'United Arab Emirates',
+  'united arab emirates': 'United Arab Emirates',
+  dubai: 'United Arab Emirates',
+  korea: 'South Korea',
+  'south korea': 'South Korea',
+};
+
 export function findCountryByName(name: string): CountryOption | undefined {
   const normalized = name.trim().toLowerCase();
   if (!normalized) return undefined;
-  return COUNTRIES.find((c) => c.name.toLowerCase() === normalized);
+  const resolvedName = COUNTRY_ALIASES[normalized] || normalized;
+  return COUNTRIES.find(
+    (c) => c.name.toLowerCase() === resolvedName || c.code.toLowerCase() === normalized
+  );
 }
 
 export function filterCountries(query: string): CountryOption[] {

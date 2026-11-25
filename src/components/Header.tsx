@@ -3,11 +3,11 @@ import { useTrips } from '../context/TripContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { normalizeAvatarUrl, handleAvatarImageError } from '../utils/userUtils';
-import { Plus, ShieldAlert, User } from 'lucide-react';
+import { Plus, ShieldAlert, User, Calculator } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 
 export const Header: React.FC = () => {
-  const { openPostModal, openAuthModal, openSafetyModal, activeTab, setActiveTab, closeTripDetail, closePartnerDetail } = useTrips();
+  const { openPostModal, openAuthModal, openSafetyModal, openCalculatorModal, activeTab, setActiveTab, closeTripDetail, closePartnerDetail } = useTrips();
   const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
 
@@ -114,9 +114,20 @@ export const Header: React.FC = () => {
           </button>
         </nav>
 
-        {/* Zone 3: Actions - Install App + Prominent Post Button */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Zone 3: Actions - Install App + Calculator + Prominent Post Button */}
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           <PWAInstallButton variant="header" />
+
+          {/* Volumetric Calculator Popup Button */}
+          <button
+            type="button"
+            onClick={openCalculatorModal}
+            title="Calculate Volumetric Weight & CBM"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl border border-slate-200 dark:border-slate-700 transition-all cursor-pointer whitespace-nowrap shrink-0"
+          >
+            <Calculator className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <span className="hidden sm:inline">Calculator</span>
+          </button>
 
           {/* Elevated Post Button */}
           <button

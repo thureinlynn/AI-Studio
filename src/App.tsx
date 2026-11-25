@@ -21,6 +21,7 @@ import { AuthModal } from './components/AuthModal';
 import { SafetyModal } from './components/SafetyModal';
 import { PublicProfileModal } from './components/PublicProfileModal';
 import { ConfirmDialogModal } from './components/ConfirmDialogModal';
+import { VolumetricCalculatorModal } from './components/VolumetricCalculatorModal';
 import { MobileNav } from './components/MobileNav';
 import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { OfflineIndicator } from './components/OfflineIndicator';
@@ -41,8 +42,10 @@ const AppContent: React.FC = () => {
     selectedPartner,
     selectedPartnerId,
     isLoadingTrips,
+    isCalculatorModalOpen,
     closeTripDetail,
     closePartnerDetail,
+    closeCalculatorModal,
     activeTab,
   } = useTrips();
 
@@ -175,6 +178,10 @@ const AppContent: React.FC = () => {
       <SafetyModal />
       <PublicProfileModal />
       <ConfirmDialogModal />
+      <VolumetricCalculatorModal
+        isOpen={isCalculatorModalOpen}
+        onClose={closeCalculatorModal}
+      />
 
       {/* Mobile Touch Navigation Anchor */}
       <MobileNav />
