@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { TripProvider, useTrips } from './context/TripContext';
@@ -11,17 +11,6 @@ import { LanguageProvider } from './context/LanguageContext';
 import { Header } from './components/Header';
 import { SearchBar } from './components/SearchBar';
 import { TripList } from './components/TripList';
-import { TripDetail } from './components/TripDetail';
-import { CargoPartnerDetail } from './components/CargoPartnerDetail';
-import { HowItWorksView } from './components/HowItWorksView';
-import { MyTripsView } from './components/MyTripsView';
-import { SettingsView } from './components/SettingsView';
-import { PostTripModal } from './components/PostTripModal';
-import { AuthModal } from './components/AuthModal';
-import { SafetyModal } from './components/SafetyModal';
-import { PublicProfileModal } from './components/PublicProfileModal';
-import { ConfirmDialogModal } from './components/ConfirmDialogModal';
-import { VolumetricCalculatorModal } from './components/VolumetricCalculatorModal';
 import { MobileNav } from './components/MobileNav';
 import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { OfflineIndicator } from './components/OfflineIndicator';
@@ -35,6 +24,48 @@ import {
   generateBreadcrumbJsonLd,
 } from './utils/seoUtils';
 
+const TripDetail = lazy(() =>
+  import('./components/TripDetail').then((m) => ({ default: m.TripDetail }))
+);
+const CargoPartnerDetail = lazy(() =>
+  import('./components/CargoPartnerDetail').then((m) => ({ default: m.CargoPartnerDetail }))
+);
+const HowItWorksView = lazy(() =>
+  import('./components/HowItWorksView').then((m) => ({ default: m.HowItWorksView }))
+);
+const MyTripsView = lazy(() =>
+  import('./components/MyTripsView').then((m) => ({ default: m.MyTripsView }))
+);
+const SettingsView = lazy(() =>
+  import('./components/SettingsView').then((m) => ({ default: m.SettingsView }))
+);
+const PostTripModal = lazy(() =>
+  import('./components/PostTripModal').then((m) => ({ default: m.PostTripModal }))
+);
+const AuthModal = lazy(() =>
+  import('./components/AuthModal').then((m) => ({ default: m.AuthModal }))
+);
+const SafetyModal = lazy(() =>
+  import('./components/SafetyModal').then((m) => ({ default: m.SafetyModal }))
+);
+const PublicProfileModal = lazy(() =>
+  import('./components/PublicProfileModal').then((m) => ({ default: m.PublicProfileModal }))
+);
+const ConfirmDialogModal = lazy(() =>
+  import('./components/ConfirmDialogModal').then((m) => ({ default: m.ConfirmDialogModal }))
+);
+const VolumetricCalculatorModal = lazy(() =>
+  import('./components/VolumetricCalculatorModal').then((m) => ({
+    default: m.VolumetricCalculatorModal,
+  }))
+);
+
+const ViewLoader: React.FC = () => (
+  <div className="max-w-3xl mx-auto px-4 py-20 flex items-center justify-center">
+    <div className="w-7 h-7 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+  </div>
+);
+
 const AppContent: React.FC = () => {
   const {
     selectedTrip,
@@ -42,7 +73,12 @@ const AppContent: React.FC = () => {
     selectedPartner,
     selectedPartnerId,
     isLoadingTrips,
+    isPostModalOpen,
+    isAuthModalOpen,
+    isSafetyModalOpen,
     isCalculatorModalOpen,
+    publicProfileTraveler,
+    confirmDialog,
     closeTripDetail,
     closePartnerDetail,
     closeCalculatorModal,
@@ -117,7 +153,9 @@ const AppContent: React.FC = () => {
       <main className="flex-1">
         <MobilePWAInstallAlert />
         {selectedPartner ? (
-          <CargoPartnerDetail partner={selectedPartner} />
+          <Suspense fallback={<ViewLoader />}>
+            <CargoPartnerDetail partner={selectedPartner} />
+          </Suspense>
         ) : selectedPartnerId ? (
           <div className="max-w-lg mx-auto px-4 py-20 text-center space-y-4">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">Cargo partner not found</h2>
@@ -133,7 +171,9 @@ const AppContent: React.FC = () => {
             </button>
           </div>
         ) : selectedTrip ? (
-          <TripDetail trip={selectedTrip} />
+          <Suspense fallback={<ViewLoader />}>
+            <TripDetail trip={selectedTrip} />
+          </Suspense>
         ) : selectedTripId ? (
           isLoadingTrips ? (
             <div className="max-w-3xl mx-auto px-4 py-24 text-center space-y-3">
@@ -156,11 +196,17 @@ const AppContent: React.FC = () => {
             </div>
           )
         ) : activeTab === 'settings' ? (
-          <SettingsView />
+          <Suspense fallback={<ViewLoader />}>
+            <SettingsView />
+          </Suspense>
         ) : activeTab === 'how_it_works' ? (
-          <HowItWorksView />
+          <Suspense fallback={<ViewLoader />}>
+            <HowItWorksView />
+          </Suspense>
         ) : activeTab === 'my_trips' ? (
-          <MyTripsView />
+          <Suspense fallback={<ViewLoader />}>
+            <MyTripsView />
+          </Suspense>
         ) : (
           <div>
             <SearchBar />
@@ -172,16 +218,20 @@ const AppContent: React.FC = () => {
       {/* Footer */}
       <Footer />
 
-      {/* Modals & Dialogs */}
-      <PostTripModal />
-      <AuthModal />
-      <SafetyModal />
-      <PublicProfileModal />
-      <ConfirmDialogModal />
-      <VolumetricCalculatorModal
-        isOpen={isCalculatorModalOpen}
-        onClose={closeCalculatorModal}
-      />
+      {/* Modals & Dialogs (lazy-loaded & mounted only when open) */}
+      <Suspense fallback={null}>
+        {isPostModalOpen && <PostTripModal />}
+        {isAuthModalOpen && <AuthModal />}
+        {isSafetyModalOpen && <SafetyModal />}
+        {Boolean(publicProfileTraveler) && <PublicProfileModal />}
+        {Boolean(confirmDialog) && <ConfirmDialogModal />}
+        {isCalculatorModalOpen && (
+          <VolumetricCalculatorModal
+            isOpen={isCalculatorModalOpen}
+            onClose={closeCalculatorModal}
+          />
+        )}
+      </Suspense>
 
       {/* Mobile Touch Navigation Anchor */}
       <MobileNav />

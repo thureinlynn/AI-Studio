@@ -427,6 +427,103 @@ export function formatMemberSince(dateInput?: string): string {
   return trimmed;
 }
 
+export interface CompletedTripsIndex {
+  byUserId: Map<string, Set<string>>;
+  byName: Map<string, Set<string>>;
+}
+
+/**
+ * Pre-indexes completed trips in a single O(N) pass so card renders can look up counts in O(1).
+ */
+export function buildCompletedTripsCountMap(
+  trips: TripPost[],
+  referenceDate?: Date
+): CompletedTripsIndex {
+  const byUserId = new Map<string, Set<string>>();
+  const byName = new Map<string, Set<string>>();
+
+  if (!Array.isArray(trips)) {
+    return { byUserId, byName };
+  }
+
+  for (let i = 0; i < trips.length; i++) {
+    const trip = trips[i];
+    if (!isDropOffDatePassed(trip.lastDropOffDate, referenceDate) && trip.status !== 'completed') {
+      continue;
+    }
+
+    const tripKey = trip.id || `idx-${i}`;
+    if (trip.userId) {
+      let set = byUserId.get(trip.userId);
+      if (!set) {
+        set = new Set<string>();
+        byUserId.set(trip.userId, set);
+      }
+      set.add(tripKey);
+    }
+
+    const normalizedName = trip.traveler?.name?.trim().toLowerCase();
+    if (normalizedName) {
+      let set = byName.get(normalizedName);
+      if (!set) {
+        set = new Set<string>();
+        byName.set(normalizedName, set);
+      }
+      set.add(tripKey);
+    }
+  }
+
+  return { byUserId, byName };
+}
+
+/**
+ * Resolves completed trips count for a traveler using a precomputed index.
+ */
+export function getCompletedTripsCount(
+  index: CompletedTripsIndex,
+  traveler: { name?: string; userId?: string }
+): number {
+  if (!traveler) return 0;
+  const uid = traveler.userId;
+  const name = traveler.name?.trim().toLowerCase();
+
+  const userSet = uid ? index.byUserId.get(uid) : undefined;
+  const nameSet = name ? index.byName.get(name) : undefined;
+
+  if (!userSet && !nameSet) return 0;
+  if (!userSet) return nameSet!.size;
+  if (!nameSet) return userSet.size;
+  if (userSet.size === nameSet.size && [...userSet].every((id) => nameSet.has(id))) {
+    return userSet.size;
+  }
+
+  const union = new Set<string>(userSet);
+  for (const id of nameSet) union.add(id);
+  return union.size;
+}
+
+/**
+ * Lightweight trip-array comparison to prevent redundant state updates and localStorage writes.
+ */
+export function areTripListsEquivalent(a: TripPost[], b: TripPost[]): boolean {
+  if (a === b) return true;
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i];
+    const y = b[i];
+    if (
+      x.id !== y.id ||
+      x.status !== y.status ||
+      x.createdAt !== y.createdAt ||
+      x.weightAvailableKg !== y.weightAvailableKg ||
+      x.lastDropOffDate !== y.lastDropOffDate
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /**
  * Calculates completed trips count for a given traveler.
  * A trip is counted as completed when its drop-off date has passed (it disappears from active board)
@@ -447,4 +544,5 @@ export function countCompletedTripsForTraveler(
     return isDropOffDatePassed(trip.lastDropOffDate) || trip.status === 'completed';
   }).length;
 }
+
 

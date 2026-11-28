@@ -5,62 +5,17 @@ import { TripCard } from './TripCard';
 import { AdsterraAdCard } from './AdsterraAdCard';
 import { filterAndSortTrips } from '../utils/tripUtils';
 import { buildFeedWithAds, consumeNextAdRotationOffset } from '../utils/adUtils';
-import { TripPost } from '../types/trip';
-import { db } from '../firebase';
-import { collection, getDocs } from 'firebase/firestore';
 import { SearchX, Luggage, ArrowUpDown, Plus, Loader2, ChevronDown } from 'lucide-react';
 
 export const TripList: React.FC = () => {
-  const { trips: contextTrips, filters, updateFilterField, resetFilters, openPostModal } = useTrips();
+  const { trips: allTrips, isLoadingTrips, filters, updateFilterField, resetFilters, openPostModal } = useTrips();
   const { t } = useLanguage();
 
-  // 1. Data Fetching: store all available trip listings from Firebase Firestore initial load in state
-  const [allTrips, setAllTrips] = useState<TripPost[]>(contextTrips || []);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  // 2. Client-Side Pagination & Infinite Scroll state
+  // Client-Side Pagination & Infinite Scroll state
   const [displayedCount, setDisplayedCount] = useState<number>(10);
-  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
   const [adRotationOffset] = useState<number>(() => consumeNextAdRotationOffset());
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-
-  // Fetch all available trip listings from Firebase Firestore initial load
-  useEffect(() => {
-    let isMounted = true;
-    const fetchAllFirestoreTrips = async () => {
-      try {
-        setIsLoading(true);
-        const snap = await getDocs(collection(db, 'trips'));
-        if (!snap.empty && isMounted) {
-          const fetched: TripPost[] = [];
-          snap.forEach((docSnap) => {
-            fetched.push({ ...(docSnap.data() as TripPost), id: docSnap.id });
-          });
-          fetched.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
-          setAllTrips(fetched);
-        }
-      } catch (err) {
-        console.warn('[Firestore] Initial trips fetch note:', err);
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchAllFirestoreTrips();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  // Sync with context trips in case trips are added, modified, or deleted in the app
-  useEffect(() => {
-    if (contextTrips && contextTrips.length > 0) {
-      setAllTrips(contextTrips);
-    }
-  }, [contextTrips]);
 
   // Determine if user has typed into search inputs or applied filters
   const hasActiveFilters = Boolean(
@@ -72,8 +27,7 @@ export const TripList: React.FC = () => {
     filters.dateFrom
   );
 
-  // 3. Search & Filtering Behavior:
-  // Perform search filtering across the ENTIRE allTrips dataset in memory, NOT just the visible/sliced array.
+  // Perform search filtering across the entire trips dataset in memory
   const filteredTrips = useMemo(() => {
     return filterAndSortTrips(allTrips, filters);
   }, [allTrips, filters]);
@@ -83,8 +37,7 @@ export const TripList: React.FC = () => {
     setDisplayedCount(10);
   }, [filters.query, filters.departureCity, filters.arrivalCity, filters.minWeight, filters.maxWeight, filters.dateFrom]);
 
-  // When rendering the default trip list (unfiltered), render only the first displayedCount items from allTrips.
-  // If a search/filter query is active, display all matching results from filteredTrips so users immediately find trips.
+  // Render displayedCount items when unfiltered, or all matching results when filtered
   const visibleTrips = useMemo(() => {
     if (hasActiveFilters) {
       return filteredTrips;
@@ -92,24 +45,18 @@ export const TripList: React.FC = () => {
     return filteredTrips.slice(0, displayedCount);
   }, [hasActiveFilters, filteredTrips, displayedCount]);
 
-  // Interleave partner/ad cards after every 5 regular trip cards (indices 4, 9, 14, ...)
-  // Partner ad cards alternate across slot positions (1st, 2nd, 3rd) on each visit/reload
+  // Interleave partner/ad cards after every 5 regular trip cards
   const feedItems = useMemo(() => {
     return buildFeedWithAds(visibleTrips, 5, adRotationOffset);
   }, [visibleTrips, adRotationOffset]);
 
-  // Function to load the next 10 items
+  // Load the next 10 items immediately without artificial timers
   const loadMoreItems = useCallback(() => {
-    if (hasActiveFilters || displayedCount >= filteredTrips.length || isLoadingMore) {
+    if (hasActiveFilters || displayedCount >= filteredTrips.length) {
       return;
     }
-    setIsLoadingMore(true);
-    // Simulate slight natural buffer for smooth rendering transition
-    setTimeout(() => {
-      setDisplayedCount((prev) => Math.min(prev + 10, filteredTrips.length));
-      setIsLoadingMore(false);
-    }, 150);
-  }, [hasActiveFilters, displayedCount, filteredTrips.length, isLoadingMore]);
+    setDisplayedCount((prev) => Math.min(prev + 10, filteredTrips.length));
+  }, [hasActiveFilters, displayedCount, filteredTrips.length]);
 
   // Infinite Scroll detector using IntersectionObserver
   useEffect(() => {
@@ -119,8 +66,7 @@ export const TripList: React.FC = () => {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const first = entries[0];
-        if (first.isIntersecting) {
+        if (entries[0]?.isIntersecting) {
           loadMoreItems();
         }
       },
@@ -142,26 +88,6 @@ export const TripList: React.FC = () => {
       }
       observer.disconnect();
     };
-  }, [hasActiveFilters, displayedCount, filteredTrips.length, loadMoreItems]);
-
-  // Fallback scroll listener in case IntersectionObserver is constrained
-  useEffect(() => {
-    if (hasActiveFilters || displayedCount >= filteredTrips.length) {
-      return;
-    }
-
-    const handleWindowScroll = () => {
-      const scrollY = window.scrollY || window.pageYOffset;
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
-
-      if (scrollY + windowHeight >= documentHeight - 350) {
-        loadMoreItems();
-      }
-    };
-
-    window.addEventListener('scroll', handleWindowScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleWindowScroll);
   }, [hasActiveFilters, displayedCount, filteredTrips.length, loadMoreItems]);
 
   return (
@@ -200,10 +126,10 @@ export const TripList: React.FC = () => {
       </div>
 
       {/* Loading state indicator */}
-      {isLoading && allTrips.length === 0 ? (
+      {isLoadingTrips && allTrips.length === 0 ? (
         <div className="py-20 flex flex-col items-center justify-center gap-3 text-slate-400">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600 dark:text-blue-400" />
-          <span className="text-xs font-medium">Loading listings from Firestore...</span>
+          <span className="text-xs font-medium">Loading listings...</span>
         </div>
       ) : allTrips.length === 0 ? (
         /* Empty State (No trips at all in database) */
@@ -279,27 +205,17 @@ export const TripList: React.FC = () => {
             )}
           </div>
 
-          {/* Infinite Scroll detector element with elegant reloading animation */}
+          {/* Infinite Scroll detector element */}
           {!hasActiveFilters && displayedCount < filteredTrips.length && (
-            <div ref={sentinelRef} className="py-8 flex flex-col items-center justify-center space-y-3 animate-fadeIn">
-              {isLoadingMore ? (
-                <div className="flex items-center gap-3 px-6 py-3.5 bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-blue-200 dark:border-slate-700 text-xs font-bold text-blue-600 dark:text-blue-400">
-                  <div className="relative w-5 h-5 flex items-center justify-center">
-                    <div className="absolute inset-0 rounded-full border-2 border-blue-600/30 animate-ping" />
-                    <Loader2 className="w-5 h-5 animate-spin text-blue-600 dark:text-blue-400 relative z-10" />
-                  </div>
-                  <span>Discovering more community trips...</span>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={loadMoreItems}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-600/25 transition-all transform active:scale-95 flex items-center gap-2 cursor-pointer border border-blue-400/30"
-                >
-                  <span>Load More Trips ({filteredTrips.length - displayedCount} remaining)</span>
-                  <ChevronDown className="w-4 h-4 animate-bounce" />
-                </button>
-              )}
+            <div ref={sentinelRef} className="py-8 flex flex-col items-center justify-center space-y-3">
+              <button
+                type="button"
+                onClick={loadMoreItems}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-600/25 transition-all transform active:scale-95 flex items-center gap-2 cursor-pointer border border-blue-400/30"
+              >
+                <span>Load More Trips ({filteredTrips.length - displayedCount} remaining)</span>
+                <ChevronDown className="w-4 h-4" />
+              </button>
             </div>
           )}
 

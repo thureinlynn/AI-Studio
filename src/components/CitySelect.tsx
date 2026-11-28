@@ -132,7 +132,7 @@ export const CitySelect: React.FC<CitySelectProps> = ({
                     role="option"
                     aria-selected={isSelected}
                     onClick={() => handleSelect(cityOpt)}
-                    className={`w-full px-2.5 py-2 rounded-xl text-xs flex items-center justify-between gap-2 text-left cursor-pointer transition-colors ${
+                    className={`w-full px-2.5 py-2 rounded-xl text-xs flex items-center justify-between gap-2 text-left cursor-pointer transition-colors [content-visibility:auto] [contain-intrinsic-size:36px] ${
                       isSelected
                         ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 font-semibold'
                         : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'

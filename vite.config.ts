@@ -57,6 +57,10 @@ export default defineConfig(() => {
           skipWaiting: true,
           maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
           globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,webp,svg,woff,woff2}'],
+          globIgnores: [
+            'assets/aistudio/Screenshot_*',
+            'assets/aistudio/Gemini_Generated_Image_*',
+          ],
           navigateFallbackDenylist: [/^\/api\//, /^\/__\//, /^\/ads\//],
           runtimeCaching: [
             {
@@ -90,12 +94,38 @@ export default defineConfig(() => {
           ],
         },
         devOptions: {
-          enabled: true,
-          type: 'module',
-          navigateFallback: 'index.html',
+          enabled: false,
         },
       }),
     ],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/scheduler/')) {
+                return 'react-vendor';
+              }
+              if (id.includes('@firebase/firestore') || id.includes('firebase/firestore')) {
+                return 'firebase-firestore';
+              }
+              if (id.includes('@firebase/auth') || id.includes('firebase/auth')) {
+                return 'firebase-auth';
+              }
+              if (id.includes('@firebase/analytics') || id.includes('firebase/analytics')) {
+                return undefined;
+              }
+              if (id.includes('/firebase/') || id.includes('/@firebase/')) {
+                return 'firebase-core';
+              }
+              if (id.includes('/lucide-react/')) {
+                return 'icons-vendor';
+              }
+            }
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': path.resolve(import.meta.dirname, '.'),

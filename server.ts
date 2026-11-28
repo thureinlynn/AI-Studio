@@ -2,6 +2,7 @@ import express from 'express';
 import http from 'http';
 import path from 'path';
 import fs from 'fs';
+import zlib from 'zlib';
 import { fileURLToPath } from 'url';
 import {
   getAllTrips,
@@ -41,6 +42,57 @@ async function startServer() {
   // Global security headers
   app.use((req, res, next) => {
     applySecurityHeaders(req, res);
+    next();
+  });
+
+  // Zero-dependency gzip compression for JSON APIs and text assets
+  app.use((req, res, next) => {
+    const acceptEncoding = String(req.headers['accept-encoding'] || '');
+    if (!/\bgzip\b/i.test(acceptEncoding)) {
+      return next();
+    }
+
+    const origSend = res.send.bind(res);
+    res.send = ((body?: any) => {
+      if (
+        res.headersSent ||
+        res.getHeader('Content-Encoding') ||
+        res.statusCode < 200 ||
+        res.statusCode >= 300 ||
+        res.statusCode === 204
+      ) {
+        return origSend(body);
+      }
+
+      const contentType = String(res.getHeader('Content-Type') || '');
+      const isCompressible =
+        !contentType ||
+        /^(text\/|application\/(json|javascript|xml)|image\/svg\+xml)/i.test(contentType);
+
+      if (!isCompressible || body === undefined || body === null) {
+        return origSend(body);
+      }
+
+      const buffer = Buffer.isBuffer(body)
+        ? body
+        : typeof body === 'string'
+        ? Buffer.from(body)
+        : Buffer.from(JSON.stringify(body));
+
+      if (buffer.length < 1024) {
+        return origSend(body);
+      }
+
+      if (!contentType && typeof body === 'object' && !Buffer.isBuffer(body)) {
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      }
+      res.removeHeader('Content-Length');
+      res.setHeader('Content-Encoding', 'gzip');
+      res.setHeader('Vary', 'Accept-Encoding');
+      const compressed = zlib.gzipSync(buffer, { level: 6 });
+      return res.end(compressed);
+    }) as typeof res.send;
+
     next();
   });
 
@@ -291,6 +343,7 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.resolve(__dirname, 'dist');
+    const assetsPrefix = `${path.resolve(distPath, 'assets')}${path.sep}`;
     app.use(
       express.static(distPath, {
         setHeaders(res, filePath) {
@@ -302,6 +355,8 @@ async function startServer() {
             base === 'manifest.webmanifest'
           ) {
             res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+          } else if (filePath.startsWith(assetsPrefix)) {
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
           }
         },
       })

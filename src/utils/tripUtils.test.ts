@@ -7,6 +7,10 @@ import {
   formatFacebookUrl,
   formatTelegramUrl,
   sanitizeExternalHttpUrl,
+  buildCompletedTripsCountMap,
+  getCompletedTripsCount,
+  countCompletedTripsForTraveler,
+  areTripListsEquivalent,
 } from './tripUtils';
 import { safeJsonLdStringify, escapeXml } from './seoUtils';
 import type { TripPost } from '../types/trip';
@@ -125,5 +129,76 @@ test('SEO JSON-LD and XML helpers escape script breakout and XML metacharacters'
 
   const xml = escapeXml('https://example.com/?a=1&b="<evil>"');
   assert.equal(xml, 'https://example.com/?a=1&amp;b=&quot;&lt;evil&gt;&quot;');
+});
+
+test('buildCompletedTripsCountMap matches countCompletedTripsForTraveler without double-counting', () => {
+  const refDate = new Date(2026, 10, 13);
+  const baseTrip = {
+    departureCity: 'Bangkok',
+    departureCountry: 'Thailand',
+    arrivalCity: 'Yangon',
+    arrivalCountry: 'Myanmar',
+    departureDate: '2026-11-01',
+    arrivalDate: '2026-11-01',
+    checkOutDate: '2026-11-02',
+    dropOffLocationNote: '',
+    pickUpLocationNote: '',
+    weightAvailableKg: 5,
+    weightCapacityKg: 10,
+    serviceFeeType: 'free' as const,
+    announcement: '',
+    acceptedItems: [],
+    prohibitedItems: [],
+    contacts: { whatsapp: '', viber: '', telegram: '', preferred: 'whatsapp' as const },
+    createdAt: '2026-10-20T00:00:00.000Z',
+  };
+
+  const trips: TripPost[] = [
+    {
+      ...baseTrip,
+      id: 'done-1',
+      userId: 'u1',
+      traveler: { name: 'Alice', avatarUrl: '', bio: '', isVerified: false, rating: 5, reviewCount: 0, memberSince: '2026', tripsCompleted: 0, languages: [] },
+      lastDropOffDate: '2026-11-01',
+      status: 'active',
+    },
+    {
+      ...baseTrip,
+      id: 'done-2',
+      userId: 'u1',
+      traveler: { name: 'Alice', avatarUrl: '', bio: '', isVerified: false, rating: 5, reviewCount: 0, memberSince: '2026', tripsCompleted: 0, languages: [] },
+      lastDropOffDate: '2026-11-25',
+      status: 'completed',
+    },
+    {
+      ...baseTrip,
+      id: 'active-3',
+      userId: 'u1',
+      traveler: { name: 'Alice', avatarUrl: '', bio: '', isVerified: false, rating: 5, reviewCount: 0, memberSince: '2026', tripsCompleted: 0, languages: [] },
+      lastDropOffDate: '2099-11-25',
+      status: 'active',
+    },
+  ];
+
+  const index = buildCompletedTripsCountMap(trips, refDate);
+  assert.equal(getCompletedTripsCount(index, { userId: 'u1', name: 'Alice' }), 2);
+  assert.equal(getCompletedTripsCount(index, { name: 'alice' }), 2);
+  assert.equal(getCompletedTripsCount(index, { userId: 'unknown', name: 'Nobody' }), 0);
+
+  // Verify parity with direct counter when using past date
+  assert.equal(
+    getCompletedTripsCount(buildCompletedTripsCountMap([trips[0]]), { userId: 'u1', name: 'Alice' }),
+    countCompletedTripsForTraveler([trips[0]], { userId: 'u1', name: 'Alice' })
+  );
+});
+
+test('areTripListsEquivalent detects matching and modified trip arrays accurately', () => {
+  const tripA = { id: 'a', status: 'active', createdAt: '2026-11-10', weightAvailableKg: 10, lastDropOffDate: '2026-11-20' } as TripPost;
+  const tripB = { id: 'a', status: 'active', createdAt: '2026-11-10', weightAvailableKg: 10, lastDropOffDate: '2026-11-20' } as TripPost;
+  const tripC = { id: 'a', status: 'fully_booked', createdAt: '2026-11-10', weightAvailableKg: 10, lastDropOffDate: '2026-11-20' } as TripPost;
+
+  assert.equal(areTripListsEquivalent([tripA], [tripB]), true);
+  assert.equal(areTripListsEquivalent([tripA], [tripC]), false);
+  assert.equal(areTripListsEquivalent([tripA], []), false);
 });
 

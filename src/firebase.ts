@@ -10,7 +10,6 @@ import {
   Firestore,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { getAnalytics, isSupported, logEvent, Analytics, setAnalyticsCollectionEnabled } from "firebase/analytics";
 import { CookieConsentChoice, isAnalyticsConsented } from "./utils/cookieConsentUtils";
 import { isBrowserOffline } from "./utils/firebaseUtils";
 
@@ -62,23 +61,29 @@ if (typeof window !== "undefined") {
   });
 }
 
-// Safe, consent-gated Google Analytics initialization
-export let analytics: Analytics | null = null;
+// Safe, consent-gated & lazy-loaded Google Analytics initialization
+type AnalyticsModule = typeof import("firebase/analytics");
+type AnalyticsInstance = import("firebase/analytics").Analytics;
+
+export let analytics: AnalyticsInstance | null = null;
+let analyticsModule: AnalyticsModule | null = null;
 
 const enableAnalyticsIfSupported = () => {
   if (typeof window === "undefined") return;
-  if (analytics) {
+  if (analytics && analyticsModule) {
     try {
-      setAnalyticsCollectionEnabled(analytics, true);
+      analyticsModule.setAnalyticsCollectionEnabled(analytics, true);
     } catch {}
     return;
   }
-  isSupported()
-    .then((supported) => {
+  import("firebase/analytics")
+    .then(async (mod) => {
+      analyticsModule = mod;
+      const supported = await mod.isSupported();
       if (supported && isAnalyticsConsented()) {
         try {
-          analytics = getAnalytics(app);
-          setAnalyticsCollectionEnabled(analytics, true);
+          analytics = mod.getAnalytics(app);
+          mod.setAnalyticsCollectionEnabled(analytics, true);
         } catch (err) {
           console.warn("[Firebase Analytics] Initialization warning:", err);
         }
@@ -97,9 +102,9 @@ export const syncAnalyticsConsent = (choice: CookieConsentChoice) => {
   if (typeof window === "undefined") return;
   if (choice === "accepted") {
     enableAnalyticsIfSupported();
-  } else if (analytics) {
+  } else if (analytics && analyticsModule) {
     try {
-      setAnalyticsCollectionEnabled(analytics, false);
+      analyticsModule.setAnalyticsCollectionEnabled(analytics, false);
     } catch {}
   }
 };
@@ -110,8 +115,8 @@ export const syncAnalyticsConsent = (choice: CookieConsentChoice) => {
 export const trackEvent = (eventName: string, eventParams?: Record<string, any>) => {
   if (typeof window === "undefined" || !isAnalyticsConsented()) return;
   try {
-    if (analytics) {
-      logEvent(analytics, eventName, eventParams);
+    if (analytics && analyticsModule) {
+      analyticsModule.logEvent(analytics, eventName, eventParams);
     }
   } catch (err) {
     console.debug("[Analytics] Event logging suppressed:", err);

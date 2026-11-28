@@ -1,12 +1,17 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { TripPost, TripFilters } from '../types/trip';
 import { CargoPartner } from '../types/partner';
 import { getCargoPartnerById } from '../data/cargoPartners';
 import { INITIAL_TRIPS } from '../data/mockTrips';
 import { auth, db, trackPageView, trackConversion, trackEvent } from '../firebase';
-import { collection, onSnapshot, doc, getDoc, getDocs, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { formatMemberSince } from '../utils/tripUtils';
-import { getCachedAccountDate, getDicebearAvatar, normalizeAvatarUrl } from '../utils/userUtils';
+import { collection, onSnapshot, doc, getDoc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import {
+  formatMemberSince,
+  buildCompletedTripsCountMap,
+  getCompletedTripsCount,
+  areTripListsEquivalent,
+} from '../utils/tripUtils';
+import { getCachedAccountDate, normalizeAvatarUrl } from '../utils/userUtils';
 import { isTransientFirestoreError } from '../utils/firebaseUtils';
 
 export interface PublicTravelerInfo {
@@ -64,12 +69,14 @@ interface TripContextType {
   addNewTrip: (tripData: Omit<TripPost, 'id' | 'createdAt' | 'status'>) => TripPost;
   deleteTrip: (id: string) => void;
   toggleTripStatus: (id: string) => void;
+  getTravelerCompletedCount: (traveler: { name?: string; userId?: string }) => number;
   confirmDialog: { title: string; message: string; onConfirm: () => void } | null;
   closeConfirmDialog: () => void;
   resetAllDataToDemoBeginning: () => void;
 }
 
 const STORAGE_KEY = 'luukyone_trips_v2';
+const FALLBACK_POLL_INTERVAL_MS = 60_000;
 
 const defaultFilters: TripFilters = {
   query: '',
@@ -81,6 +88,9 @@ const defaultFilters: TripFilters = {
 const TripContext = createContext<TripContextType | undefined>(undefined);
 
 export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const initialHydrationRef = useRef(true);
+  const lastPersistedRef = useRef<TripPost[] | null>(null);
+
   const [trips, setTrips] = useState<TripPost[]>(() => {
     try {
       // Purge all legacy test data keys on launch
@@ -91,6 +101,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
+          lastPersistedRef.current = parsed;
           return parsed;
         }
       }
@@ -101,7 +112,6 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const [selectedTripId, setSelectedTripId] = useState<string | null>(() => {
-    // Check URL search params for deep link ?trip=id
     try {
       const params = new URLSearchParams(window.location.search);
       return params.get('trip');
@@ -110,7 +120,6 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(() => {
-    // Check URL search params for deep link ?partner=id
     try {
       const params = new URLSearchParams(window.location.search);
       return params.get('partner');
@@ -132,18 +141,19 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     onConfirm: () => void;
   } | null>(null);
 
-  const closeConfirmDialog = () => setConfirmDialog(null);
+  const closeConfirmDialog = useCallback(() => setConfirmDialog(null), []);
 
   const [activeTab, setActiveTabState] = useState<'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings'>('browse');
 
-  const setActiveTab = (tab: 'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings') => {
+  const setActiveTab = useCallback((tab: 'browse' | 'how_it_works' | 'safety' | 'my_trips' | 'settings') => {
     setActiveTabState(tab);
     trackPageView(`LuuKyone - ${tab.replace(/_/g, ' ')}`, `/${tab}`);
-  };
+  }, []);
 
   useEffect(() => {
     trackPageView('LuuKyone - Peer Baggage Sharing', '/browse');
   }, []);
+
   const [publicProfileTraveler, setPublicProfileTraveler] = useState<PublicTravelerInfo | null>(null);
 
   const [weightUnit, setWeightUnitState] = useState<'kg' | 'lb'>(() => {
@@ -162,25 +172,25 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
-  const setWeightUnit = (unit: 'kg' | 'lb') => {
+  const setWeightUnit = useCallback((unit: 'kg' | 'lb') => {
     setWeightUnitState(unit);
     try {
       localStorage.setItem('luukyone_weight_unit', unit);
     } catch {
       // ignore
     }
-  };
+  }, []);
 
-  const setCurrency = (curr: 'USD' | 'MMK' | 'THB') => {
+  const setCurrency = useCallback((curr: 'USD' | 'MMK' | 'THB') => {
     setCurrencyState(curr);
     try {
       localStorage.setItem('luukyone_currency', curr);
     } catch {
       // ignore
     }
-  };
+  }, []);
 
-  const openPublicProfile = (traveler: any, userId?: string, contacts?: any, createdAt?: string) => {
+  const openPublicProfile = useCallback((traveler: any, userId?: string, contacts?: any, createdAt?: string) => {
     const targetUserId = userId || traveler?.userId || '';
     const resolvedAccountDate = getCachedAccountDate(targetUserId, traveler?.name) || createdAt || traveler?.createdAt;
     setPublicProfileTraveler({
@@ -196,42 +206,61 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       tripsCompleted: traveler?.tripsCompleted || 0,
       languages: traveler?.languages || ['English', 'Myanmar'],
     });
-  };
+  }, []);
 
-  const closePublicProfile = () => {
+  const closePublicProfile = useCallback(() => {
     setPublicProfileTraveler(null);
-  };
+  }, []);
 
+  // Persist trips to localStorage only when list actually changes (skip redundant initial hydration write)
   useEffect(() => {
+    if (initialHydrationRef.current) {
+      initialHydrationRef.current = false;
+      if (lastPersistedRef.current && areTripListsEquivalent(lastPersistedRef.current, trips)) {
+        return;
+      }
+    }
+    if (lastPersistedRef.current && areTripListsEquivalent(lastPersistedRef.current, trips)) {
+      return;
+    }
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(trips));
+      lastPersistedRef.current = trips;
     } catch (e) {
       console.error('Failed to persist trips', e);
     }
   }, [trips]);
 
-  // Sync trips with Firestore real-time listener and server API fallback
+  // Single-source real-time Firestore listener with smart fallback to /api/trips only when Firestore isn't active
   useEffect(() => {
     let isMounted = true;
+    let hasFirestoreSnapshot = false;
+    let fallbackInterval: ReturnType<typeof setInterval> | null = null;
+    const abortController = new AbortController();
 
-    // 1. Fetch initial trips via getDocs and listen to Firestore collection 'trips' for real-time updates
-    let hasSnapshotData = false;
-    getDocs(collection(db, 'trips'))
-      .then((snap) => {
-        if (!isMounted || hasSnapshotData) return;
-        if (!snap.empty) {
-          const fetched: TripPost[] = [];
-          snap.forEach((docSnap) => {
-            fetched.push({ ...(docSnap.data() as TripPost), id: docSnap.id });
+    const fetchServerTrips = async () => {
+      if (!isMounted || hasFirestoreSnapshot) return;
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+
+      try {
+        const res = await fetch('/api/trips', { signal: abortController.signal });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0 && isMounted && !hasFirestoreSnapshot) {
+          setTrips((prev) => {
+            const existingIds = new Set(data.map((d: TripPost) => d.id));
+            const localUnsynced = prev.filter((p) => !existingIds.has(p.id));
+            const merged = [...localUnsynced, ...data];
+            return areTripListsEquivalent(prev, merged) ? prev : merged;
           });
-          fetched.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
-          setTrips(fetched);
         }
-      })
-      .catch(() => {})
-      .finally(() => {
+      } catch {
+        // Ignore abort / transient offline errors; local cache stays intact
+      } finally {
         if (isMounted) setIsLoadingTrips(false);
-      });
+      }
+    };
 
     let unsubscribeFirestore: (() => void) | null = null;
     try {
@@ -239,7 +268,11 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
         collection(db, 'trips'),
         (snapshot) => {
           if (!isMounted) return;
-          hasSnapshotData = true;
+          hasFirestoreSnapshot = true;
+          if (fallbackInterval) {
+            clearInterval(fallbackInterval);
+            fallbackInterval = null;
+          }
           if (!snapshot.empty) {
             const firestoreTrips: TripPost[] = [];
             snapshot.forEach((docSnap) => {
@@ -247,7 +280,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
               firestoreTrips.push({ ...data, id: docSnap.id });
             });
             firestoreTrips.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
-            setTrips(firestoreTrips);
+            setTrips((prev) => (areTripListsEquivalent(prev, firestoreTrips) ? prev : firestoreTrips));
           }
           setIsLoadingTrips(false);
         },
@@ -255,7 +288,10 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (!isTransientFirestoreError(error)) {
             console.warn('[Firestore] Sync warning (using server API fallback):', error.message);
           }
-          if (isMounted) setIsLoadingTrips(false);
+          if (isMounted) {
+            setIsLoadingTrips(false);
+            fetchServerTrips();
+          }
         }
       );
     } catch (e) {
@@ -265,35 +301,21 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoadingTrips(false);
     }
 
-    // 2. Continuous fallback to server API / Vercel KV
-    const fetchServerTrips = async () => {
-      try {
-        const res = await fetch('/api/trips');
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length > 0 && isMounted) {
-            setTrips((prev) => {
-              // Merge preserving latest
-              const existingIds = new Set(data.map((d: TripPost) => d.id));
-              const localUnsynced = prev.filter((p) => !existingIds.has(p.id));
-              return [...localUnsynced, ...data];
-            });
-          }
-        }
-      } catch {
-        // Fallback to local storage state if server unavailable
-      } finally {
-        if (isMounted) setIsLoadingTrips(false);
+    // Fetch /api/trips once after a brief delay only if Firestore snapshot hasn't delivered yet,
+    // and only keep a slow 60s visibility-aware fallback if Firestore stays unconnected.
+    const initialFallbackTimer = setTimeout(() => {
+      if (!hasFirestoreSnapshot) {
+        fetchServerTrips();
+        fallbackInterval = setInterval(fetchServerTrips, FALLBACK_POLL_INTERVAL_MS);
       }
-    };
-
-    fetchServerTrips();
-    const interval = setInterval(fetchServerTrips, 5000);
+    }, 1500);
 
     return () => {
       isMounted = false;
+      abortController.abort();
+      clearTimeout(initialFallbackTimer);
+      if (fallbackInterval) clearInterval(fallbackInterval);
       if (unsubscribeFirestore) unsubscribeFirestore();
-      clearInterval(interval);
     };
   }, []);
 
@@ -332,8 +354,7 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Sync selected trip with URL query param
-  const openTripDetail = (id: string) => {
+  const openTripDetail = useCallback((id: string) => {
     setSelectedPartnerId(null);
     setSelectedTripId(id);
     trackEvent('view_trip', { tripId: id });
@@ -346,9 +367,9 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // ignore
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const closeTripDetail = () => {
+  const closeTripDetail = useCallback(() => {
     setSelectedTripId(null);
     try {
       const url = new URL(window.location.href);
@@ -357,10 +378,9 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // ignore
     }
-  };
+  }, []);
 
-  // Sync selected Cargo Partner with URL query param
-  const openPartnerDetail = (id: string) => {
+  const openPartnerDetail = useCallback((id: string) => {
     setSelectedTripId(null);
     setSelectedPartnerId(id);
     trackEvent('view_cargo_partner', { partnerId: id });
@@ -373,9 +393,9 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // ignore
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const closePartnerDetail = () => {
+  const closePartnerDetail = useCallback(() => {
     setSelectedPartnerId(null);
     try {
       const url = new URL(window.location.href);
@@ -384,32 +404,32 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // ignore
     }
-  };
+  }, []);
 
-  const updateFilterField = <K extends keyof TripFilters>(field: K, value: TripFilters[K]) => {
+  const updateFilterField = useCallback(<K extends keyof TripFilters>(field: K, value: TripFilters[K]) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setFilters(defaultFilters);
-  };
+  }, []);
 
-  const openPostModal = () => setIsPostModalOpen(true);
-  const closePostModal = () => setIsPostModalOpen(false);
+  const openPostModal = useCallback(() => setIsPostModalOpen(true), []);
+  const closePostModal = useCallback(() => setIsPostModalOpen(false), []);
 
-  const openAuthModal = () => setIsAuthModalOpen(true);
-  const closeAuthModal = () => setIsAuthModalOpen(false);
+  const openAuthModal = useCallback(() => setIsAuthModalOpen(true), []);
+  const closeAuthModal = useCallback(() => setIsAuthModalOpen(false), []);
 
-  const openSafetyModal = () => setIsSafetyModalOpen(true);
-  const closeSafetyModal = () => setIsSafetyModalOpen(false);
+  const openSafetyModal = useCallback(() => setIsSafetyModalOpen(true), []);
+  const closeSafetyModal = useCallback(() => setIsSafetyModalOpen(false), []);
 
-  const openMyTripsModal = () => setIsMyTripsModalOpen(true);
-  const closeMyTripsModal = () => setIsMyTripsModalOpen(false);
+  const openMyTripsModal = useCallback(() => setIsMyTripsModalOpen(true), []);
+  const closeMyTripsModal = useCallback(() => setIsMyTripsModalOpen(false), []);
 
-  const openCalculatorModal = () => setIsCalculatorModalOpen(true);
-  const closeCalculatorModal = () => setIsCalculatorModalOpen(false);
+  const openCalculatorModal = useCallback(() => setIsCalculatorModalOpen(true), []);
+  const closeCalculatorModal = useCallback(() => setIsCalculatorModalOpen(false), []);
 
-  const getAuthHeaders = async (): Promise<Record<string, string>> => {
+  const getAuthHeaders = useCallback(async (): Promise<Record<string, string>> => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     try {
       const token = await auth.currentUser?.getIdToken();
@@ -420,9 +440,9 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Proceed without token when signed out or offline
     }
     return headers;
-  };
+  }, []);
 
-  const addNewTrip = (tripData: Omit<TripPost, 'id' | 'createdAt' | 'status'>): TripPost => {
+  const addNewTrip = useCallback((tripData: Omit<TripPost, 'id' | 'createdAt' | 'status'>): TripPost => {
     const newTrip: TripPost = {
       ...tripData,
       id: `trip-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
@@ -432,7 +452,6 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setTrips((prev) => [newTrip, ...prev.filter((t) => t.id !== newTrip.id)]);
 
-    // Track conversion event in Google Analytics
     trackConversion('create_trip', {
       from: newTrip.departureCity,
       to: newTrip.arrivalCity,
@@ -440,7 +459,6 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       serviceFeeType: newTrip.serviceFeeType,
     });
 
-    // 1. Store in Firestore database
     try {
       setDoc(doc(db, 'trips', newTrip.id), newTrip).catch((err) => {
         console.warn('[Firestore] Failed to store trip in db:', err);
@@ -449,7 +467,6 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn('[Firestore] setDoc error:', err);
     }
 
-    // 2. Persist to server API / Vercel KV with Firebase ID token authorization
     getAuthHeaders()
       .then((headers) => {
         if (!headers.Authorization) return;
@@ -462,9 +479,9 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .catch((err) => console.error('Failed to persist trip to server:', err));
 
     return newTrip;
-  };
+  }, [getAuthHeaders]);
 
-  const deleteTrip = (id: string) => {
+  const deleteTrip = useCallback((id: string) => {
     const tripToDelete = trips.find((t) => t.id === id);
     const label = tripToDelete ? `${tripToDelete.departureCity} to ${tripToDelete.arrivalCity}` : 'this trip';
     setConfirmDialog({
@@ -476,7 +493,6 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
           closeTripDetail();
         }
 
-        // 1. Delete from Firestore
         try {
           deleteDoc(doc(db, 'trips', id)).catch((err) => {
             console.warn('[Firestore] Failed to delete trip from db:', err);
@@ -485,7 +501,6 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.warn('[Firestore] deleteDoc error:', err);
         }
 
-        // 2. Delete from server API with Firebase ID token authorization
         getAuthHeaders()
           .then((headers) => {
             if (!headers.Authorization) return;
@@ -498,9 +513,9 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .catch((err) => console.error('Failed to delete trip from server:', err));
       },
     });
-  };
+  }, [trips, selectedTripId, closeTripDetail, getAuthHeaders]);
 
-  const toggleTripStatus = (id: string) => {
+  const toggleTripStatus = useCallback((id: string) => {
     const tripToToggle = trips.find((t) => t.id === id);
     const currentStatus = tripToToggle ? tripToToggle.status : 'active';
     const actionLabel = currentStatus === 'active' ? 'mark this listing as Fully Booked' : 'reactivate this listing';
@@ -519,7 +534,6 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
           })
         );
 
-        // 1. Update in Firestore
         try {
           updateDoc(doc(db, 'trips', id), { status: nextStatus }).catch((err) => {
             console.warn('[Firestore] Failed to update trip status in db:', err);
@@ -528,7 +542,6 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.warn('[Firestore] updateDoc error:', err);
         }
 
-        // 2. Update in server API with Firebase ID token authorization
         getAuthHeaders()
           .then((headers) => {
             if (!headers.Authorization) return;
@@ -541,9 +554,9 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .catch((err) => console.error('Failed to update trip status on server:', err));
       },
     });
-  };
+  }, [trips, getAuthHeaders]);
 
-  const resetAllDataToDemoBeginning = () => {
+  const resetAllDataToDemoBeginning = useCallback(() => {
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem('luggage_share_current_user');
@@ -559,66 +572,122 @@ export const TripProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSelectedTripId(null);
     setSelectedPartnerId(null);
     setFilters(defaultFilters);
-    setActiveTab('browse');
+    setActiveTabState('browse');
     setIsPostModalOpen(false);
     setIsAuthModalOpen(false);
     setIsSafetyModalOpen(false);
     setIsMyTripsModalOpen(false);
     setIsCalculatorModalOpen(false);
-  };
+  }, []);
 
-  const selectedTrip = trips.find((t) => t.id === selectedTripId) || null;
-  const selectedPartner = getCargoPartnerById(selectedPartnerId);
+  const completedTripsIndex = useMemo(() => buildCompletedTripsCountMap(trips), [trips]);
+
+  const getTravelerCompletedCount = useCallback(
+    (traveler: { name?: string; userId?: string }) => getCompletedTripsCount(completedTripsIndex, traveler),
+    [completedTripsIndex]
+  );
+
+  const selectedTrip = useMemo(() => trips.find((t) => t.id === selectedTripId) || null, [trips, selectedTripId]);
+  const selectedPartner = useMemo(() => getCargoPartnerById(selectedPartnerId), [selectedPartnerId]);
+
+  const contextValue = useMemo<TripContextType>(
+    () => ({
+      trips,
+      isLoadingTrips,
+      selectedTripId,
+      selectedTrip,
+      selectedPartnerId,
+      selectedPartner,
+      filters,
+      isPostModalOpen,
+      isAuthModalOpen,
+      isSafetyModalOpen,
+      isMyTripsModalOpen,
+      isCalculatorModalOpen,
+      activeTab,
+      publicProfileTraveler,
+      weightUnit,
+      currency,
+      setFilters,
+      updateFilterField,
+      resetFilters,
+      openTripDetail,
+      closeTripDetail,
+      openPartnerDetail,
+      closePartnerDetail,
+      openPostModal,
+      closePostModal,
+      openAuthModal,
+      closeAuthModal,
+      openSafetyModal,
+      closeSafetyModal,
+      openMyTripsModal,
+      closeMyTripsModal,
+      openCalculatorModal,
+      closeCalculatorModal,
+      openPublicProfile,
+      closePublicProfile,
+      setActiveTab,
+      setWeightUnit,
+      setCurrency,
+      addNewTrip,
+      deleteTrip,
+      toggleTripStatus,
+      getTravelerCompletedCount,
+      confirmDialog,
+      closeConfirmDialog,
+      resetAllDataToDemoBeginning,
+    }),
+    [
+      trips,
+      isLoadingTrips,
+      selectedTripId,
+      selectedTrip,
+      selectedPartnerId,
+      selectedPartner,
+      filters,
+      isPostModalOpen,
+      isAuthModalOpen,
+      isSafetyModalOpen,
+      isMyTripsModalOpen,
+      isCalculatorModalOpen,
+      activeTab,
+      publicProfileTraveler,
+      weightUnit,
+      currency,
+      updateFilterField,
+      resetFilters,
+      openTripDetail,
+      closeTripDetail,
+      openPartnerDetail,
+      closePartnerDetail,
+      openPostModal,
+      closePostModal,
+      openAuthModal,
+      closeAuthModal,
+      openSafetyModal,
+      closeSafetyModal,
+      openMyTripsModal,
+      closeMyTripsModal,
+      openCalculatorModal,
+      closeCalculatorModal,
+      openPublicProfile,
+      closePublicProfile,
+      setActiveTab,
+      setWeightUnit,
+      setCurrency,
+      addNewTrip,
+      deleteTrip,
+      toggleTripStatus,
+      getTravelerCompletedCount,
+      confirmDialog,
+      closeConfirmDialog,
+      resetAllDataToDemoBeginning,
+    ]
+  );
 
   return (
-    <TripContext.Provider
-      value={{
-        trips,
-        isLoadingTrips,
-        selectedTripId,
-        selectedTrip,
-        selectedPartnerId,
-        selectedPartner,
-        filters,
-        isPostModalOpen,
-        isAuthModalOpen,
-        isSafetyModalOpen,
-        isMyTripsModalOpen,
-        isCalculatorModalOpen,
-        activeTab,
-        publicProfileTraveler,
-        weightUnit,
-        currency,
-        setFilters,
-        updateFilterField,
-        resetFilters,
-        openTripDetail,
-        closeTripDetail,
-        openPartnerDetail,
-        closePartnerDetail,
-        openPostModal,
-        closePostModal,
-        openAuthModal,
-        closeAuthModal,
-        openSafetyModal,
-        closeSafetyModal,
-        openMyTripsModal,
-        closeMyTripsModal,
-        openCalculatorModal,
-        closeCalculatorModal,
-        openPublicProfile,
-        closePublicProfile,
-        setActiveTab,
-        setWeightUnit,
-        setCurrency,
-        addNewTrip,
-        deleteTrip,
-        toggleTripStatus,
-        confirmDialog,
-        closeConfirmDialog,
-        resetAllDataToDemoBeginning,
-      }}
-    >
+    <TripContext.Provider value={contextValue}>
       {children}
     </TripContext.Provider>
   );

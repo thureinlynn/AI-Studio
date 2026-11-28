@@ -3,18 +3,18 @@ import { TripPost } from '../types/trip';
 import { useTrips } from '../context/TripContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { formatDateDisplay, countCompletedTripsForTraveler } from '../utils/tripUtils';
+import { formatDateDisplay } from '../utils/tripUtils';
 import { normalizeAvatarUrl, handleAvatarImageError, isGoogleVerifiedUser } from '../utils/userUtils';
 import { GoogleVerifiedBadge } from './GoogleVerifiedBadge';
 import { CountryFlagByName } from './CountrySelect';
-import { ArrowRight, Calendar, Clock, ChevronRight, User } from 'lucide-react';
+import { ArrowRight, Calendar, Clock, ChevronRight } from 'lucide-react';
 
 interface TripCardProps {
   trip: TripPost;
 }
 
-export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
-  const { openTripDetail, openPublicProfile, trips } = useTrips();
+export const TripCard: React.FC<TripCardProps> = React.memo(({ trip }) => {
+  const { openTripDetail, openPublicProfile, getTravelerCompletedCount } = useTrips();
   const { user } = useAuth();
   const { t } = useLanguage();
 
@@ -27,6 +27,10 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
     trip.userId || trip.traveler?.name,
     isOwnTrip ? user : trip.traveler
   );
+  const completedCount = getTravelerCompletedCount({
+    name: trip.traveler.name,
+    userId: trip.userId,
+  });
 
   return (
     <article
@@ -110,6 +114,10 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
               <img
                 src={authorAvatar}
                 alt={trip.traveler.name}
+                width={32}
+                height={32}
+                loading="lazy"
+                decoding="async"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
                 onError={(e) => handleAvatarImageError(e, trip.userId || trip.traveler?.name)}
@@ -122,7 +130,7 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
               {isGoogleVerified && <GoogleVerifiedBadge />}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400">
-              <span>{countCompletedTripsForTraveler(trips, { name: trip.traveler.name, userId: trip.userId })} {t('cardTripsCompleted')}</span>
+              <span>{completedCount} {t('cardTripsCompleted')}</span>
             </div>
           </div>
         </button>
@@ -135,4 +143,5 @@ export const TripCard: React.FC<TripCardProps> = ({ trip }) => {
       </div>
     </article>
   );
-};
+});
+TripCard.displayName = 'TripCard';
